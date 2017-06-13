@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>My Nav App</title>
+    <link rel="stylesheet" href="https://openlayers.org/en/v4.1.1/css/ol.css" type="text/css">
+    <!-- The line below is only needed for old environments like Internet Explorer and Android 4.x -->
+    <script src="https://cdn.polyfill.io/v2/polyfill.min.js?features=requestAnimationFrame,Element.prototype.classList,URL"></script>
+    <script src="https://openlayers.org/en/v4.1.1/build/ol.js"></script>
+  </head>
+  <body>
+    <div id="location"></div>
+    <div id="map" class="map">
+    </div>
+    <div id="tilesets"></div>
+    <script>
+      var map = null;
+
+      function curPosLayer(coord) {
+        var iconFeature = new ol.Feature({
+          geometry: new ol.geom.Point(coord),
+          name: 'Current position',
+        });
+
+        var iconStyle = new ol.style.Style({
+          image: new ol.style.Icon(/** @type {olx.style.IconOptions} */ ({
+            anchor: [0.5, 46],
+            anchorXUnits: 'fraction',
+            anchorYUnits: 'pixels',
+            src: 'images/sailing-boat.png',
+          }))
+        });
+        iconFeature.setStyle(iconStyle);
+
+        var vectorSource = new ol.source.Vector({
+          features: [iconFeature]
+        });
+
+        return new ol.layer.Vector({
+          source: vectorSource,
+          opacity: 0.85
+        });
+      }
+
+      var currTilesets = null; // current tilesets
+      var marker = null; // layer that marks current position
+
+      /* Render map */
+      function showMap(coord) {
+        let chartLayers = [ ];
+     
+        // ask the backend for the tilesets that match the current coordinates
+        const tilesetsUrl = 'tilesets/noaa/' + coord[0] + '/' + coord[1];
+        var xmlHttp = new XMLHttpRequest();
+        xmlHttp.open("GET", tilesetsUrl, false);
+        xmlHttp.send();
+        // console.log(xmlHttp.responseText);
+        
+        if (xmlHttp.responseText !== currTilesets) {
+          console.log('Tilesets have changed');
+          currTilesets = xmlHttp.responseText;
+          if (map) {
+            for (i = 0; i < chartLayers.length; ++i) {
+              map.removeLayer(chartLayers[i]);
+            }
+          }
+          //document.getElementById('tilesets').innerText = 'Chart tilesets: ' + currTilesets;
+
+          const noaaTilesets = JSON.parse(xmlHttp.responseText);
+          noaaTilesets.map(function(tileset) {
+            const url = 'tiles/noaa/' + tileset + '/{z}/{x}/{y}.png';
+            //const url = 'tileservice.charts.noaa.gov/tiles/' + tileset + '/{z}/{x}/{y}.png';
+
+            chartLayers.push(new ol.layer.Tile({
+              source: new ol.source.XYZ({url: url}),
+              opacity: 0.75
+            }));
+          })
+        }
+        const pos = ol.proj.fromLonLat(coord);
+
+        if (!map) {
+          var view = new ol.View({
+            center: pos,
+            zoom: 12,
+          });
+      
+          map = new ol.Map({
+            target: 'map',
+            // get base layer from Open Street Maps and append the chart layers
+            layers: [new ol.layer.Tile({
+              source: new ol.source.OSM()
+              })].concat(chartLayers),
+            view: view
+          });
+        }
+
+        if (marker) {
+          map.removeLayer(marker);
+        }
+        marker = curPosLayer(pos);
+        map.addLayer(marker);
+      }
+
+      function geoLocationUpdate(position) {
+        console.log(position);
+        coords = [position.coords.longitude, position.coords.latitude];
+        document.getElementById('location').innerText = 'Current position: ' + coords;
+        showMap(coords);
+      }
+      function geoLocationError(error) {
+        console.log(error, error.message);
+        alert(error.message);
+        let coords = [-122.50, 47.33];
+        showMap(coords);
+      }
+      const geoLocationOptions = {
+        enableHighAccuracy: true,
+        timeout: 1000,
+      };
+
+      navigator.geolocation.watchPosition(geoLocationUpdate, geoLocationError, geoLocationOptions);
+    </script>
+  </body>
+</html>
+
