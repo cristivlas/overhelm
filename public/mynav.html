@@ -5,12 +5,12 @@
     <!-- link rel="stylesheet" href="https://openlayers.org/en/v4.1.1/css/ol.css" type="text/css" -->
     <link rel="stylesheet" href="lib/OpenLayers/4.2.0/ol.css" type="text/css">
     <!-- The line below is only needed for old environments like Internet Explorer and Android 4.x -->
-    <script src="https://cdn.polyfill.io/v2/polyfill.min.js?features=requestAnimationFrame,Element.prototype.classList,URL"></script>
+    <!-- script src="https://cdn.polyfill.io/v2/polyfill.min.js?features=requestAnimationFrame,Element.prototype.classList,URL"></script -->
     <!-- script src="https://openlayers.org/en/v4.1.1/build/ol.js"></script-->
     <script src="lib/OpenLayers/4.2.0/ol.js"></script>
   </head>
   <body>
-    <div id="location" style="font-size: 200%; font-family: monospace;"></div>
+    <div id="location" style="font-size: 200%;"></div>
     <div id="map" class="map" style="height: 100%; width: 100%; position: fixed">
     </div>
     <script>
@@ -28,12 +28,28 @@
           name: 'Current position',
         });
 
+      function isHandHeld() { 
+        if( navigator.userAgent.match(/Android/i)
+          || navigator.userAgent.match(/webOS/i)
+          || navigator.userAgent.match(/iPhone/i)
+       // || navigator.userAgent.match(/iPad/i)
+          || navigator.userAgent.match(/iPod/i)
+          || navigator.userAgent.match(/BlackBerry/i)
+          || navigator.userAgent.match(/Windows Phone/i)){
+          return true;
+         }
+         else {
+           return false;
+         }
+        }
+        const iconUrl = isHandHeld() ? 'images/pointer-large.png' : 'images/pointer.png';
+
         var iconStyle = new ol.style.Style({
           image: new ol.style.Icon(/** @type {olx.style.IconOptions} */ ({
             anchor: [0.5, 46],
             anchorXUnits: 'fraction',
             anchorYUnits: 'pixels',
-            src: 'images/sailing-boat.png',
+            src: iconUrl
           }))
         });
         iconFeature.setStyle(iconStyle);
@@ -127,7 +143,8 @@
               center: pos,
               zoom: 12,
               minZoom: 2,
-              maxZoom: 15
+              maxZoom: 15,
+              enableRotation: false
             });
 
             //view.on('change:resolution', function(event) {
@@ -152,6 +169,41 @@
         });
       }
 
+      /**
+       * Convert decimal coords to degree,minutes,seconds
+       * 
+       * Credits: en.marnoto.com
+       */
+      function getDMS(val) {
+         val = Math.abs(val);
+
+         var valDeg = Math.floor(val);
+
+         // Add the degrees value to the result by adding the degrees symbol
+         var result = valDeg + '&deg;';
+
+         // Minutes
+         // Removing the integer of the initial value you get the decimal portion.
+         // Multiply the decimal portion by 60.
+         // Math.floor returns an integer discarding the decimal portion.
+         var valMin = Math.floor((val - valDeg) * 60);
+
+         // Add minutes to the result, adding the symbol minutes "'".
+         result += valMin + "'";
+
+         // Seconds
+         var valSec = Math.round((val - valDeg - valMin / 60) * 3600 * 1000) / 1000;
+
+         // Add the seconds value to the result, adding the seconds symbol
+         result += valSec + '"';
+
+         return result;
+      }
+
+      function convertDMS(coords) {
+        return getDMS(coords[1]) + (coords[1] >= 0 ? 'N' : 'S') + ' / ' 
+             + getDMS(coords[0]) + (coords[0] >= 0 ? 'E' : 'W')
+      }
 
       /** 
        * Track geolocation
@@ -159,20 +211,20 @@
       function geoLocationUpdate(position) {
         console.log(position);
         coords = [position.coords.longitude, position.coords.latitude];
-        document.getElementById('location').innerText = 'Current position: ' + coords;
+        var elem = document.getElementById('location');
+        elem.innerHTML = convertDMS(coords);
         updateMap(coords);
       }
 
       function geoLocationError(error) {
         console.log(error, error.message);
         alert(error.message);
-        let coords = [-122.50, 47.33];
-        updateMap(coords);
       }
 
       const geoLocationOptions = {
         enableHighAccuracy: true,
         timeout: 1000,
+        maximumAge: 2000,
       };
 
       navigator.geolocation.watchPosition(geoLocationUpdate, geoLocationError, geoLocationOptions);
