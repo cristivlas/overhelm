@@ -210,14 +210,14 @@
             });
 
             map.on('singleclick', function(e) {
-              const coord = e.coordinate;
-              const latLon = ol.proj.transform(coord, 'EPSG:3857', 'EPSG:4326');
-              updateMap(latLon, false);
               if (geoLocationWatchId) {
                 navigator.geolocation.clearWatch(geoLocationWatchId);
                 geoLocationWatchId = null;
                 alert('Location tracking paused');
               }
+              const coord = e.coordinate;
+              const latLon = ol.proj.transform(coord, 'EPSG:3857', 'EPSG:4326');
+              updateMap(latLon, false);
             });
           }
 

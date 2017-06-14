@@ -43,7 +43,7 @@ router.get('/tiles/:srv/:set/:z/:x/:y.png', function(req, res, next) {
   function formatTileCacheFileName(req, res, next) {
     let p = req.params;
     let fileName = [ p.set, p.z, p.x, p.y, 'png' ].join('.');
-    return urlJoin('cache', p.srv, 'tiles', fileName);
+    return urlJoin('cache', p.srv, 'tiles', p.set, fileName);
   }
 
   function formatTileUrl(req, res, next) {
