@@ -2,19 +2,26 @@
 <html>
   <head>
     <title>My Nav App</title>
-    <link rel="stylesheet" href="https://openlayers.org/en/v4.1.1/css/ol.css" type="text/css">
+    <!-- link rel="stylesheet" href="https://openlayers.org/en/v4.1.1/css/ol.css" type="text/css" -->
+    <link rel="stylesheet" href="lib/OpenLayers/4.2.0/ol.css" type="text/css">
     <!-- The line below is only needed for old environments like Internet Explorer and Android 4.x -->
     <script src="https://cdn.polyfill.io/v2/polyfill.min.js?features=requestAnimationFrame,Element.prototype.classList,URL"></script>
-    <script src="https://openlayers.org/en/v4.1.1/build/ol.js"></script>
+    <!-- script src="https://openlayers.org/en/v4.1.1/build/ol.js"></script-->
+    <script src="lib/OpenLayers/4.2.0/ol.js"></script>
   </head>
   <body>
-    <div id="location"></div>
-    <div id="map" class="map">
+    <div id="location" style="font-size: 200%; font-family: monospace;"></div>
+    <div id="map" class="map" style="height: 100%; width: 100%; position: fixed">
     </div>
-    <div id="tilesets"></div>
     <script>
-      var map = null;
+      var chartTilesets = null; // current tilesets, stringified
+      var chartLayers = [];     // current layers
+      var marker = null;        // layer that marks current position
+      var map = null;           // the map object
 
+      /**
+       * Construct position marker layer
+       */
       function curPosLayer(coord) {
         var iconFeature = new ol.Feature({
           geometry: new ol.geom.Point(coord),
@@ -37,82 +44,132 @@
 
         return new ol.layer.Vector({
           source: vectorSource,
-          opacity: 0.85
         });
       }
 
-      var currTilesets = null; // current tilesets
-      var marker = null; // layer that marks current position
 
-      /* Render map */
-      function showMap(coord) {
-        let chartLayers = [ ];
-     
-        // ask the backend for the tilesets that match the current coordinates
+      /**
+       * Ask the backend for the tilesets that match the current coordinates
+       */ 
+      function getChartTilesets(coord, callback) {
         const tilesetsUrl = 'tilesets/noaa/' + coord[0] + '/' + coord[1];
         var xmlHttp = new XMLHttpRequest();
-        xmlHttp.open("GET", tilesetsUrl, false);
-        xmlHttp.send();
-        // console.log(xmlHttp.responseText);
-        
-        if (xmlHttp.responseText !== currTilesets) {
-          console.log('Tilesets have changed');
-          currTilesets = xmlHttp.responseText;
-          if (map) {
-            for (i = 0; i < chartLayers.length; ++i) {
-              map.removeLayer(chartLayers[i]);
-            }
+        xmlHttp.onreadystatechange = function() {
+          if (xmlHttp.readyState == 4 && xmlHttp.status == 200) {
+            callback(xmlHttp.responseText);
           }
-          //document.getElementById('tilesets').innerText = 'Chart tilesets: ' + currTilesets;
-
-          const noaaTilesets = JSON.parse(xmlHttp.responseText);
-          noaaTilesets.map(function(tileset) {
-            const url = 'tiles/noaa/' + tileset + '/{z}/{x}/{y}.png';
-            //const url = 'tileservice.charts.noaa.gov/tiles/' + tileset + '/{z}/{x}/{y}.png';
-
-            chartLayers.push(new ol.layer.Tile({
-              source: new ol.source.XYZ({url: url}),
-              opacity: 0.75
-            }));
-          })
         }
-        const pos = ol.proj.fromLonLat(coord);
-
-        if (!map) {
-          var view = new ol.View({
-            center: pos,
-            zoom: 12,
-          });
-      
-          map = new ol.Map({
-            target: 'map',
-            // get base layer from Open Street Maps and append the chart layers
-            layers: [new ol.layer.Tile({
-              source: new ol.source.OSM()
-              })].concat(chartLayers),
-            view: view
-          });
-        }
-
-        if (marker) {
-          map.removeLayer(marker);
-        }
-        marker = curPosLayer(pos);
-        map.addLayer(marker);
+        xmlHttp.open("GET", tilesetsUrl);
+        xmlHttp.send();
       }
 
+      /**
+       * Ask the backend for the best chart tilesets for the given coordinates
+       * and recompute the chart layers if necessary (if tilesets changed).
+       */
+      function updateChartLayers(coord, callback) {
+        /**
+         * Heuristics for min/max resolutions
+         */
+        function getMinResolution(tileset) {
+          var minRes = Math.floor(tileset.height / 50) * 5000;
+          //console.log(tileset.ident, tileset.height, minRes);
+          return minRes;
+        }
+
+        function getMaxResolution(tileset) {
+          var maxRes = Math.floor(tileset.height * 1000);
+          //console.log(tileset.ident, tileset.height, maxRes);
+          return maxRes;
+        }
+
+        getChartTilesets(coord, function(tilesets) {
+          if (tilesets !== chartTilesets) {
+            console.log('Tilesets have changed');
+            chartTilesets = tilesets;
+            if (map) {
+              for (i = 0; i < chartLayers.length; ++i) {
+                map.removeLayer(chartLayers[i]);
+              }
+              chartLayers = [];
+            }
+
+            JSON.parse(tilesets).map(function(tileset) {
+              const url = 'tiles/noaa/' + tileset.ident + '/{z}/{x}/{y}.png';
+              const layer = new ol.layer.Tile({
+                source: new ol.source.XYZ({url: url}),
+                opacity: 0.75,
+                minResolution: getMinResolution(tileset),
+                maxResolution: getMaxResolution(tileset)
+              });
+              chartLayers.push(layer);
+            })
+            if (map) {
+              for (i = 0; i != chartLayers.length; ++i) {
+                map.addLayer(chartLayers[i]);
+              }
+            }
+          }
+          callback();
+        });
+      }
+
+
+      /**
+       * Construct / update the map object
+       */
+      function updateMap(coord) {
+    
+        const pos = ol.proj.fromLonLat(coord);
+        updateChartLayers(coord, function() {
+          if (!map) {
+            var view = new ol.View({
+              center: pos,
+              zoom: 12,
+              minZoom: 2,
+              maxZoom: 15
+            });
+
+            //view.on('change:resolution', function(event) {
+            //  console.log(view.getResolution());
+            //});
+            
+            map = new ol.Map({
+              target: 'map',
+              // get base layer from Open Street Maps and append the chart layers
+              layers: [new ol.layer.Tile({
+                source: new ol.source.OSM()
+                })].concat(chartLayers),
+              view: view
+            });
+          }
+
+          if (marker) {
+            map.removeLayer(marker);
+          }
+          marker = curPosLayer(pos);
+          map.addLayer(marker);
+        });
+      }
+
+
+      /** 
+       * Track geolocation
+       */
       function geoLocationUpdate(position) {
         console.log(position);
         coords = [position.coords.longitude, position.coords.latitude];
         document.getElementById('location').innerText = 'Current position: ' + coords;
-        showMap(coords);
+        updateMap(coords);
       }
+
       function geoLocationError(error) {
         console.log(error, error.message);
         alert(error.message);
         let coords = [-122.50, 47.33];
-        showMap(coords);
+        updateMap(coords);
       }
+
       const geoLocationOptions = {
         enableHighAccuracy: true,
         timeout: 1000,

@@ -25,8 +25,13 @@ router.get('/tilesets/:srv/:lon/:lat', function(req, res, next) {
   const lat = req.params.lat;
   tilesets[srv].map(function(t) {
     if (t.lower[0] < lon && t.lower[1] < lat && t.upper[0] > lon && t.upper[1] > lat) {
-      sets.push(t.ident);
+      sets.push({ident: t.ident, height: t.upper[1] - t.lower[1]});
     }
+  });
+  sets.sort(function(a, b) {
+    if (a.height < b.height) return -1;
+    if (a.height > b.height) return 1;
+    return 0;
   });
   res.end(JSON.stringify(sets));
 });
@@ -47,13 +52,13 @@ router.get('/tiles/:srv/:set/:z/:x/:y.png', function(req, res, next) {
   }
 
   function uploadTile(filePath, req, res, next) {
-    console.log('Uploading: ' + filePath);
+    //console.log('Uploading: ' + filePath);
     let file = fs.createReadStream(filePath);
     res.setHeader('content-type', 'image/png');
     file.pipe(res);
 
     file.on('close', function() {
-      console.log('Finished uploading: ' + filePath);
+      //console.log('Finished uploading: ' + filePath);
       res.end();
     });
 
@@ -110,10 +115,10 @@ router.get('/tiles/:srv/:set/:z/:x/:y.png', function(req, res, next) {
   }
 
   const cachedFilePath = formatTileCacheFileName(req, res, next);
-  console.log(cachedFilePath);
+  //console.log(cachedFilePath);
 
   if (fs.existsSync(cachedFilePath)) {
-    console.log('File exists: ' + cachedFilePath);
+    //console.log('File exists: ' + cachedFilePath);
     uploadTile(cachedFilePath, req, res, next);
   }
   else {
