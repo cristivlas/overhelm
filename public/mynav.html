@@ -8,16 +8,64 @@
     <!-- script src="https://cdn.polyfill.io/v2/polyfill.min.js?features=requestAnimationFrame,Element.prototype.classList,URL"></script -->
     <!-- script src="https://openlayers.org/en/v4.1.1/build/ol.js"></script-->
     <script src="lib/OpenLayers/4.2.0/ol.js"></script>
+    <style>
+      .re-center {
+        top: 65px;
+        left: .5em;
+      }
+      .ol-touch .re-center {
+        top: 80px;
+      }
+    </style>
   </head>
   <body>
     <div id="location" style="font-size: 200%;"></div>
     <div id="map" class="map" style="height: 100%; width: 100%; position: fixed">
     </div>
     <script>
+      /**
+       * Global vars
+       */
       var chartTilesets = null; // current tilesets, stringified
       var chartLayers = [];     // current layers
       var marker = null;        // layer that marks current position
       var map = null;           // the map object
+      var currentLocation = null;
+      var geoLocationWatchId = null;
+
+      /**
+       * Custom control for re-centering the map to the current geolocation
+       */
+      recenterControl = function(opt_options) {
+        var options = opt_options || {}
+
+        const button = document.createElement('button');
+        const icon = document.createElement('img');
+        icon.src = 'images/pointer-icon.png';
+        button.appendChild(icon);
+
+        var handler = function() {
+          updateMap(currentLocation);
+          const center = ol.proj.fromLonLat(currentLocation);
+          map.getView().setCenter(center);
+          if (!geoLocationWatchId) {
+            trackLocation();
+            alert('Location tracking resumed'); 
+          }
+        }
+        button.addEventListener('click', handler, false);
+        button.addEventListener('touchstart', handler, false);
+
+        var element = document.createElement('div');
+        element.className = 're-center ol-unselectable ol-control';
+        element.appendChild(button);
+
+        ol.control.Control.call(this, {
+          element: element,
+          target: options.target
+        });
+      }
+      ol.inherits(recenterControl, ol.control.Control);
 
       /**
        * Construct position marker layer
@@ -134,9 +182,10 @@
       /**
        * Construct / update the map object
        */
-      function updateMap(coord) {
+      function updateMap(coord, updateMarker = true) {
     
         const pos = ol.proj.fromLonLat(coord);
+
         updateChartLayers(coord, function() {
           if (!map) {
             var view = new ol.View({
@@ -147,11 +196,11 @@
               enableRotation: false
             });
 
-            //view.on('change:resolution', function(event) {
-            //  console.log(view.getResolution());
-            //});
-            
             map = new ol.Map({
+              controls: ol.control.defaults(
+              ).extend([
+                new recenterControl()
+              ]),
               target: 'map',
               // get base layer from Open Street Maps and append the chart layers
               layers: [new ol.layer.Tile({
@@ -159,13 +208,26 @@
                 })].concat(chartLayers),
               view: view
             });
+
+            map.on('singleclick', function(e) {
+              const coord = e.coordinate;
+              const latLon = ol.proj.transform(coord, 'EPSG:3857', 'EPSG:4326');
+              updateMap(latLon, false);
+              if (geoLocationWatchId) {
+                navigator.geolocation.clearWatch(geoLocationWatchId);
+                geoLocationWatchId = null;
+                alert('Location tracking paused');
+              }
+            });
           }
 
-          if (marker) {
-            map.removeLayer(marker);
+          if (updateMarker) {
+            if (marker) {
+              map.removeLayer(marker);
+            }
+            marker = curPosLayer(pos);
+            map.addLayer(marker);
           }
-          marker = curPosLayer(pos);
-          map.addLayer(marker);
         });
       }
 
@@ -208,26 +270,35 @@
       /** 
        * Track geolocation
        */
-      function geoLocationUpdate(position) {
-        console.log(position);
-        coords = [position.coords.longitude, position.coords.latitude];
-        var elem = document.getElementById('location');
-        elem.innerHTML = convertDMS(coords);
-        updateMap(coords);
+      function trackLocation() {
+
+        function geoLocationUpdate(position) {
+          console.log(position);
+          currentLocation = [position.coords.longitude, position.coords.latitude];
+          var elem = document.getElementById('location');
+          elem.innerHTML = 'Your location: ' + convertDMS(currentLocation);
+          updateMap(currentLocation);
+        }
+
+        function geoLocationError(error) {
+          console.log(error, error.message);
+          if (error.code != error.TIMEOUT) {
+            alert(error.message);
+          }
+        }
+
+        const geoLocationOptions = {
+          enableHighAccuracy: true,
+          timeout: 1000,
+          maximumAge: 2000,
+        };
+
+        geoLocationWatchId =
+          navigator.geolocation.watchPosition(geoLocationUpdate, geoLocationError, geoLocationOptions);
       }
 
-      function geoLocationError(error) {
-        console.log(error, error.message);
-        alert(error.message);
-      }
+      trackLocation();
 
-      const geoLocationOptions = {
-        enableHighAccuracy: true,
-        timeout: 1000,
-        maximumAge: 2000,
-      };
-
-      navigator.geolocation.watchPosition(geoLocationUpdate, geoLocationError, geoLocationOptions);
     </script>
   </body>
 </html>
