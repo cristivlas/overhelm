@@ -1,8 +1,10 @@
 const express = require('express');
 const fs = require('fs');
 const http = require('http');
+const https = require('https');
 const path = require('path');
 const urlJoin = require('url-join');
+const tmp = require('tmp');
 
 const router = express.Router();
 
@@ -37,18 +39,51 @@ router.get('/tilesets/:srv/:lon/:lat', function(req, res, next) {
 });
 
 
+/******************************************************************
+ * Supported tile service configurations
+ */
+var tileService = {
+    noaa: {
+      host: function() {
+        return 'tileservice.charts.noaa.gov';
+      },
+      url: function(set, x, y, z) {
+        return urlJoin('/tiles', set, z, x, y) + '.png';
+      }
+    },
+    osm: {
+      host: function(set) {
+        return set + '.tile.openstreetmap.org';
+      },
+      url: function(set, x, y, z) {
+        return urlJoin('', z, x, y) + '.png';
+      }
+    },
+    wikimedia: {
+      ssl: true,
+      host: function() {
+        return 'maps.wikimedia.org';
+      },
+      url: function(set, x, y, z) {
+        return urlJoin('', set, z, x, y) + '.png';
+      }
+    }
+};
+
 /* Tiles service proxy */
 router.get('/tiles/:srv/:set/:z/:x/:y.png', function(req, res, next) {
+
+  const service = tileService[req.params.srv];
+  if (!service) {
+    var err = new Error('Unrecognized tile service: ' + srv);
+    err.status = 500;
+    return next(err);
+  }
 
   function formatTileCacheFileName(req, res, next) {
     let p = req.params;
     let fileName = [ p.set, p.z, p.x, p.y, 'png' ].join('.');
-    return urlJoin('cache', p.srv, 'tiles', p.set, fileName);
-  }
-
-  function formatTileUrl(req, res, next) {
-    let p = req.params;
-    return urlJoin('/tiles', p.set, p.z, p.x, p.y) + '.png'
+    return urlJoin('tiles', p.srv, p.set, fileName);
   }
 
   function uploadTile(filePath, req, res, next) {
@@ -79,13 +114,18 @@ router.get('/tiles/:srv/:set/:z/:x/:y.png', function(req, res, next) {
     }
 
     ensureDirectoryExists(filePath);
-    let file = fs.createWriteStream(filePath);
+    const tmpFileName = tmp.tmpNameSync();
+    //console.log(tmpFileName);
+
+    let file = fs.createWriteStream(tmpFileName);
     let options = {
-      host: 'tileservice.charts.noaa.gov',
-      path:  formatTileUrl(req, res, next)
+      host: service.host(req.params.set),
+      path: service.url(req.params.set, req.params.x, req.params.y, req.params.z),
     };
+    //console.log(options.host, options.path);
     try {
-      let request = http.get(options, function(response) {
+      var protocol = service.ssl ? https : http;
+      let request = protocol.get(options, function(response) {
         response.pipe(file);
         file.on('finish', function() {
           file.close();
@@ -93,10 +133,18 @@ router.get('/tiles/:srv/:set/:z/:x/:y.png', function(req, res, next) {
 
           if (response.statusCode == 200) {
             console.log('Finished downloading: ' + filePath);
-            uploadTile(filePath, req, res, next);
+            fs.rename(tmpFileName, filePath, function(err) {
+              if (err) {
+                fs.unlink(tmpFileName);
+                next(err);
+              }
+              else {
+                uploadTile(filePath, req, res, next);
+              }
+            });
           }
           else {
-            fs.unlink(filePath);
+            fs.unlink(tmpFileName);
             res.statusCode = response.statusCode;
             res.send(response.statusMessage);
           }
@@ -105,11 +153,13 @@ router.get('/tiles/:srv/:set/:z/:x/:y.png', function(req, res, next) {
 
       request.on('error', function(err) {
         file.close();
-        fs.unlink(filePath);
+        fs.unlink(tmpFileName);
         next(err);
       });
     }
-    catch(err) {
+    catch (err) {
+      file.close();
+      fs.unlink(tmpFileName);
       next(err);
     }
   }

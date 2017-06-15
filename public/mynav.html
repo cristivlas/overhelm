@@ -2,11 +2,7 @@
 <html>
   <head>
     <title>My Nav App</title>
-    <!-- link rel="stylesheet" href="https://openlayers.org/en/v4.1.1/css/ol.css" type="text/css" -->
     <link rel="stylesheet" href="lib/OpenLayers/4.2.0/ol.css" type="text/css">
-    <!-- The line below is only needed for old environments like Internet Explorer and Android 4.x -->
-    <!-- script src="https://cdn.polyfill.io/v2/polyfill.min.js?features=requestAnimationFrame,Element.prototype.classList,URL"></script -->
-    <!-- script src="https://openlayers.org/en/v4.1.1/build/ol.js"></script-->
     <script src="lib/OpenLayers/4.2.0/ol.js"></script>
     <style>
       .re-center {
@@ -23,9 +19,7 @@
     <div id="map" class="map" style="height: 100%; width: 100%; position: fixed">
     </div>
     <script>
-      /**
-       * Global vars
-       */
+
       var chartTilesets = null; // current tilesets, stringified
       var chartLayers = [];     // current layers
       var marker = null;        // layer that marks current position
@@ -50,7 +44,7 @@
           map.getView().setCenter(center);
           if (!geoLocationWatchId) {
             trackLocation();
-            alert('Location tracking resumed'); 
+            alert('Location tracking resumed.'); 
           }
         }
         button.addEventListener('click', handler, false);
@@ -67,30 +61,15 @@
       }
       ol.inherits(recenterControl, ol.control.Control);
 
+
       /**
        * Construct position marker layer
        */
-      function curPosLayer(coord) {
+      function curPosLayer(coord, iconUrl) {
         var iconFeature = new ol.Feature({
           geometry: new ol.geom.Point(coord),
           name: 'Current position',
         });
-
-      function isHandHeld() { 
-        if( navigator.userAgent.match(/Android/i)
-          || navigator.userAgent.match(/webOS/i)
-          || navigator.userAgent.match(/iPhone/i)
-       // || navigator.userAgent.match(/iPad/i)
-          || navigator.userAgent.match(/iPod/i)
-          || navigator.userAgent.match(/BlackBerry/i)
-          || navigator.userAgent.match(/Windows Phone/i)){
-          return true;
-         }
-         else {
-           return false;
-         }
-        }
-        const iconUrl = isHandHeld() ? 'images/pointer-large.png' : 'images/pointer.png';
 
         var iconStyle = new ol.style.Style({
           image: new ol.style.Icon(/** @type {olx.style.IconOptions} */ ({
@@ -127,6 +106,7 @@
         xmlHttp.send();
       }
 
+
       /**
        * Ask the backend for the best chart tilesets for the given coordinates
        * and recompute the chart layers if necessary (if tilesets changed).
@@ -137,19 +117,16 @@
          */
         function getMinResolution(tileset) {
           var minRes = Math.floor(tileset.height / 50) * 5000;
-          //console.log(tileset.ident, tileset.height, minRes);
           return minRes;
         }
 
         function getMaxResolution(tileset) {
           var maxRes = Math.floor(tileset.height * 1000);
-          //console.log(tileset.ident, tileset.height, maxRes);
           return maxRes;
         }
 
         getChartTilesets(coord, function(tilesets) {
           if (tilesets !== chartTilesets) {
-            console.log('Tilesets have changed');
             chartTilesets = tilesets;
             if (map) {
               for (i = 0; i < chartLayers.length; ++i) {
@@ -162,7 +139,7 @@
               const url = 'tiles/noaa/' + tileset.ident + '/{z}/{x}/{y}.png';
               const layer = new ol.layer.Tile({
                 source: new ol.source.XYZ({url: url}),
-                opacity: 0.75,
+                opacity: 0.65,
                 minResolution: getMinResolution(tileset),
                 maxResolution: getMaxResolution(tileset)
               });
@@ -179,21 +156,51 @@
       }
 
 
+      function isHandHeld() { 
+        if( navigator.userAgent.match(/Android/i)
+          || navigator.userAgent.match(/webOS/i)
+          || navigator.userAgent.match(/iPhone/i)
+       // || navigator.userAgent.match(/iPad/i)
+          || navigator.userAgent.match(/iPod/i)
+          || navigator.userAgent.match(/BlackBerry/i)
+          || navigator.userAgent.match(/Windows Phone/i)){
+          return true;
+        }
+        else {
+          return false;
+        }
+      }
+      const currentLocationIconUrl = 
+        isHandHeld() ? 'images/pointer-large.png' : 'images/pointer.png';
+
+
       /**
        * Construct / update the map object
        */
-      function updateMap(coord, updateMarker = true) {
+      function updateMap(coord, iconUrl = currentLocationIconUrl) {
     
         const pos = ol.proj.fromLonLat(coord);
 
         updateChartLayers(coord, function() {
           if (!map) {
+
             var view = new ol.View({
               center: pos,
               zoom: 12,
-              minZoom: 2,
-              maxZoom: 15,
-              enableRotation: false
+              minZoom: 4,
+              maxZoom: 18,
+              enableRotation: false,
+            });
+
+            // get base layer from Open Street Maps and append the chart layers
+            const baseLayer = new ol.layer.Tile({
+                //*** direct
+                //source: new ol.source.OSM()
+                //source: new ol.source.XYZ({url:'https://{a-c}.tile.openstreetmap.org/{z}/{x}/{y}.png'})
+                //source: new ol.source.XYZ({url:'https://maps.wikimedia.org/osm-intl/{z}/{x}/{y}.png'})
+                //*** proxied
+                source: new ol.source.XYZ({url:'tiles/wikimedia/osm-intl/{z}/{x}/{y}.png'})
+                //source: new ol.source.XYZ({url:'tiles/osm/{a-c}/{z}/{x}/{y}.png'})
             });
 
             map = new ol.Map({
@@ -203,9 +210,7 @@
               ]),
               target: 'map',
               // get base layer from Open Street Maps and append the chart layers
-              layers: [new ol.layer.Tile({
-                source: new ol.source.OSM()
-                })].concat(chartLayers),
+              layers: [baseLayer].concat(chartLayers),
               view: view
             });
 
@@ -213,21 +218,22 @@
               if (geoLocationWatchId) {
                 navigator.geolocation.clearWatch(geoLocationWatchId);
                 geoLocationWatchId = null;
-                alert('Location tracking paused');
+                alert('Location tracking paused. Click on the location icon to resume.');
               }
               const coord = e.coordinate;
               const latLon = ol.proj.transform(coord, 'EPSG:3857', 'EPSG:4326');
-              updateMap(latLon, false);
+              var elem = document.getElementById('location');
+              elem.innerHTML = convertDMS(latLon);
+              
+              updateMap(latLon, 'images/navigate.png');
             });
           }
 
-          if (updateMarker) {
-            if (marker) {
-              map.removeLayer(marker);
-            }
-            marker = curPosLayer(pos);
-            map.addLayer(marker);
+          if (marker) {
+            map.removeLayer(marker);
           }
+          marker = curPosLayer(pos, iconUrl);
+          map.addLayer(marker);
         });
       }
 
