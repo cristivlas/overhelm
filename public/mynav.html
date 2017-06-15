@@ -7,7 +7,7 @@
     <script src="lib/OpenLayers/4.2.0/ol.js"></script>
     <style>
       .re-center {
-        top: 65px;
+        top: 120px;
         left: .5em;
       }
       .ol-touch .re-center {
@@ -49,12 +49,8 @@
         button.appendChild(icon);
 
         var handler = function() {
-          updateMap(currentLocation);
           map.getView().setZoom(defaultZoom);
-          if (!geoLocationWatchId) {
-            trackLocation();
-            alert('Location tracking resumed.'); 
-          }
+          trackLocation();
         }
         button.addEventListener('click', handler, false);
         button.addEventListener('touchstart', handler, false);
@@ -211,7 +207,7 @@
               center: pos,
               zoom: defaultZoom,
               minZoom: 4,
-              maxZoom: 15,
+              maxZoom: 16,
               enableRotation: false,
             });
         view.setCenter(pos);
@@ -238,7 +234,7 @@
               if (geoLocationWatchId) {
                 navigator.geolocation.clearWatch(geoLocationWatchId);
                 geoLocationWatchId = null;
-                alert('Location tracking paused. Click on the location icon to resume.');
+                alert('Location tracking paused. Click the location button to resume.');
               }
               const coord = e.coordinate;
               const latLon = ol.proj.transform(coord, 'EPSG:3857', 'EPSG:4326');
@@ -299,7 +295,7 @@
        */
       function trackLocation() {
 
-        function geoLocationUpdate(position) {
+        function update(position) {
           console.log(position);
           currentLocation = [position.coords.longitude, position.coords.latitude];
           var elem = document.getElementById('location');
@@ -307,21 +303,25 @@
           updateMap(currentLocation);
         }
 
-        function geoLocationError(error) {
+        function error(error) {
           console.log(error, error.message);
           if (error.code != error.TIMEOUT) {
             alert(error.message);
           }
         }
 
-        const geoLocationOptions = {
+        const options = {
           enableHighAccuracy: true,
-          timeout: 1000,
-          maximumAge: 2000,
+          timeout: 3000,
+          maximumAge: 5000,
         };
 
-        geoLocationWatchId =
-          navigator.geolocation.watchPosition(geoLocationUpdate, geoLocationError, geoLocationOptions);
+        if (geoLocationWatchId) {
+            navigator.geolocation.clearWatch(geoLocationWatchId);
+            geoLocationWatchId = null;
+        }
+        geoLocationWatchId = navigator.geolocation.watchPosition(update, error, options);
+        console.log('geoLocationWatchId', geoLocationWatchId);
       }
 
       trackLocation();
