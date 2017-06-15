@@ -28,6 +28,7 @@
     <div id="map" class="map">
     </div>
     <script>
+      const defaultZoom = 12;
 
       var chartTilesets = null; // current tilesets, stringified
       var chartLayers = [];     // current layers
@@ -49,8 +50,7 @@
 
         var handler = function() {
           updateMap(currentLocation);
-          const center = ol.proj.fromLonLat(currentLocation);
-          map.getView().setCenter(center);
+          map.getView().setZoom(defaultZoom);
           if (!geoLocationWatchId) {
             trackLocation();
             alert('Location tracking resumed.'); 
@@ -120,24 +120,16 @@
        * Ask the backend for the best chart tilesets for the given coordinates
        * and recompute the chart layers if necessary (if tilesets changed).
        */
-      function updateChartLayers(coord, callback) {
-        /**
-         * Heuristics for min/max resolutions
-         */
-        function getMinResolution(tileset) {
-          var minRes = 0;
-          return minRes;
-        }
-
-        function getMaxResolution(tileset) {
-          var maxRes = Math.floor(tileset.height * 200);
-          return maxRes;
-        }
+      function updateChartLayers(coord, view, callback) {
+        const viewMaxRes = view.getMaxResolution();
 
         getChartTilesets(coord, function(tilesets) {
           if (tilesets !== chartTilesets) {
             chartTilesets = tilesets;
-            var res = null;
+            console.log('----- Chart tilesets changed -----');
+            //
+            // remove old chart layers
+            //
             if (map) {
               res = map.getView().getResolution();
               for (i = 0; i < chartLayers.length; ++i) {
@@ -145,24 +137,49 @@
               }
               chartLayers = [];
             }
-          
+
+            let hMax = null;
+            let maxRes = viewMaxRes;
+
+            //
+            // apply new chart layers 
+            //
             JSON.parse(tilesets).map(function(tileset) {
-              const url = 'tiles/noaa/' + tileset.ident + '/{z}/{x}/{y}.png';
-              if (res) {
-                console.log(tileset.ident, tileset.height, getMinResolution(tileset), getMaxResolution(tileset), res);
+              if (!hMax) {
+                hMax = tileset.height;
               }
+              maxRes = Math.ceil((tileset.height * viewMaxRes) / hMax);
+              // console.log(tileset.ident, tileset.height, maxRes);
+
+              const url = 'tiles/noaa/' + tileset.ident + '/{z}/{x}/{y}.png';
               const layer = new ol.layer.Tile({
                 source: new ol.source.XYZ({url: url}),
                 opacity: 0.7,
-                minResolution: getMinResolution(tileset),
-                maxResolution: getMaxResolution(tileset),
-                ident: tileset.ident
+                maxResolution: maxRes,
               });
+              layer.ident = tileset.ident;
               chartLayers.push(layer);
             })
+
+            let prev = null;
+            for (i = chartLayers.length - 1; i >= 0; --i) {
+              let layer = chartLayers[i];
+              if (prev) {
+                if (layer.getMaxResolution() / prev.getMaxResolution() > 3) {
+                  layer.setMinResolution(prev.getMaxResolution());
+                }
+                else {
+                  layer.setMinResolution(prev.getMinResolution());
+                }
+              }
+              console.log(i, layer.ident, layer.getMinResolution(), layer.getMaxResolution());
+              prev = layer;
+            }
+
             if (map) {
               for (i = 0; i != chartLayers.length; ++i) {
-                map.addLayer(chartLayers[i]);
+                let layer = chartLayers[i];
+                map.addLayer(layer);
               }
             }
           }
@@ -171,47 +188,53 @@
       }
 
 
+      function baseLayer() {
+        return new ol.layer.Tile({
+          //*** direct
+          //source: new ol.source.OSM()
+          //source: new ol.source.XYZ({url:'https://{a-c}.tile.openstreetmap.org/{z}/{x}/{y}.png'})
+          //source: new ol.source.XYZ({url:'https://maps.wikimedia.org/osm-intl/{z}/{x}/{y}.png'})
+
+          //*** proxied
+          source: new ol.source.XYZ({url:'tiles/wikimedia/osm-intl/{z}/{x}/{y}.png'})
+          //source: new ol.source.XYZ({url:'tiles/osm/{a-c}/{z}/{x}/{y}.png'})
+        });
+      }
+
       /**
        * Construct / update the map object
        */
       function updateMap(coord, iconUrl = 'images/pointer.png') {
     
         const pos = ol.proj.fromLonLat(coord);
-
-        updateChartLayers(coord, function() {
-          if (!map) {
-
-            var view = new ol.View({
+        const view = map ? map.getView() : new ol.View({
               center: pos,
-              zoom: 12,
+              zoom: defaultZoom,
               minZoom: 4,
-              maxZoom: 18,
+              maxZoom: 15,
               enableRotation: false,
             });
+        view.setCenter(pos);
 
-            // get base layer from Open Street Maps and append the chart layers
-            const baseLayer = new ol.layer.Tile({
-                //*** direct
-                //source: new ol.source.OSM()
-                //source: new ol.source.XYZ({url:'https://{a-c}.tile.openstreetmap.org/{z}/{x}/{y}.png'})
-                //source: new ol.source.XYZ({url:'https://maps.wikimedia.org/osm-intl/{z}/{x}/{y}.png'})
-                //*** proxied
-                source: new ol.source.XYZ({url:'tiles/wikimedia/osm-intl/{z}/{x}/{y}.png'})
-                //source: new ol.source.XYZ({url:'tiles/osm/{a-c}/{z}/{x}/{y}.png'})
-            });
+        //view.on('change:resolution', function() {
+        //  console.log('resolution:', view.getResolution(), 'zoom:', view.getZoom());
+        //})
 
+        updateChartLayers(coord, view, function() {
+
+          if (!map) {
             map = new ol.Map({
               controls: ol.control.defaults(
               ).extend([
                 new recenterControl()
               ]),
               target: 'map',
-              // get base layer from Open Street Maps and append the chart layers
-              layers: [baseLayer].concat(chartLayers),
+              layers: [baseLayer()].concat(chartLayers),
               view: view
             });
 
-            map.on('singleclick', function(e) {
+            map.on('dblclick', function(e) {
+              e.preventDefault();
               if (geoLocationWatchId) {
                 navigator.geolocation.clearWatch(geoLocationWatchId);
                 geoLocationWatchId = null;
