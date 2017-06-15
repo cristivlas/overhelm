@@ -3,6 +3,7 @@
   <head>
     <title>My Nav App</title>
     <link rel="stylesheet" href="lib/OpenLayers/4.2.0/ol.css" type="text/css">
+    <meta name="viewport" content="initial-scale=1.0, user-scalable=no, width=device-width">
     <script src="lib/OpenLayers/4.2.0/ol.js"></script>
     <style>
       .re-center {
@@ -13,10 +14,18 @@
         top: 80px;
       }
     </style>
+    <style type="text/css">
+      html, body, .map {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        height: 100%;
+      }
+    </style>
   </head>
   <body>
-    <div id="location" style="font-size: 200%;"></div>
-    <div id="map" class="map" style="height: 100%; width: 100%; position: fixed">
+    <div id="location" style="font-size: 125%;"></div>
+    <div id="map" class="map">
     </div>
     <script>
 
@@ -116,32 +125,38 @@
          * Heuristics for min/max resolutions
          */
         function getMinResolution(tileset) {
-          var minRes = Math.floor(tileset.height / 50) * 5000;
+          var minRes = 0;
           return minRes;
         }
 
         function getMaxResolution(tileset) {
-          var maxRes = Math.floor(tileset.height * 1000);
+          var maxRes = Math.floor(tileset.height * 200);
           return maxRes;
         }
 
         getChartTilesets(coord, function(tilesets) {
           if (tilesets !== chartTilesets) {
             chartTilesets = tilesets;
+            var res = null;
             if (map) {
+              res = map.getView().getResolution();
               for (i = 0; i < chartLayers.length; ++i) {
                 map.removeLayer(chartLayers[i]);
               }
               chartLayers = [];
             }
-
+          
             JSON.parse(tilesets).map(function(tileset) {
               const url = 'tiles/noaa/' + tileset.ident + '/{z}/{x}/{y}.png';
+              if (res) {
+                console.log(tileset.ident, tileset.height, getMinResolution(tileset), getMaxResolution(tileset), res);
+              }
               const layer = new ol.layer.Tile({
                 source: new ol.source.XYZ({url: url}),
-                opacity: 0.65,
+                opacity: 0.7,
                 minResolution: getMinResolution(tileset),
-                maxResolution: getMaxResolution(tileset)
+                maxResolution: getMaxResolution(tileset),
+                ident: tileset.ident
               });
               chartLayers.push(layer);
             })
@@ -156,28 +171,10 @@
       }
 
 
-      function isHandHeld() { 
-        if( navigator.userAgent.match(/Android/i)
-          || navigator.userAgent.match(/webOS/i)
-          || navigator.userAgent.match(/iPhone/i)
-       // || navigator.userAgent.match(/iPad/i)
-          || navigator.userAgent.match(/iPod/i)
-          || navigator.userAgent.match(/BlackBerry/i)
-          || navigator.userAgent.match(/Windows Phone/i)){
-          return true;
-        }
-        else {
-          return false;
-        }
-      }
-      const currentLocationIconUrl = 
-        isHandHeld() ? 'images/pointer-large.png' : 'images/pointer.png';
-
-
       /**
        * Construct / update the map object
        */
-      function updateMap(coord, iconUrl = currentLocationIconUrl) {
+      function updateMap(coord, iconUrl = 'images/pointer.png') {
     
         const pos = ol.proj.fromLonLat(coord);
 
@@ -260,7 +257,8 @@
          result += valMin + "'";
 
          // Seconds
-         var valSec = Math.round((val - valDeg - valMin / 60) * 3600 * 1000) / 1000;
+         //var valSec = Math.round((val - valDeg - valMin / 60) * 3600 * 1000) / 1000;
+         var valSec = Math.round((val - valDeg - valMin / 60) * 3600 * 100) / 100;
 
          // Add the seconds value to the result, adding the seconds symbol
          result += valSec + '"';
@@ -269,7 +267,7 @@
       }
 
       function convertDMS(coords) {
-        return getDMS(coords[1]) + (coords[1] >= 0 ? 'N' : 'S') + ' / ' 
+        return getDMS(coords[1]) + (coords[1] >= 0 ? 'N' : 'S') + '  ' 
              + getDMS(coords[0]) + (coords[0] >= 0 ? 'E' : 'W')
       }
 
@@ -282,7 +280,7 @@
           console.log(position);
           currentLocation = [position.coords.longitude, position.coords.latitude];
           var elem = document.getElementById('location');
-          elem.innerHTML = 'Your location: ' + convertDMS(currentLocation);
+          elem.innerHTML = 'GPS: ' + convertDMS(currentLocation);
           updateMap(currentLocation);
         }
 
