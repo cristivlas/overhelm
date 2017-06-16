@@ -26,9 +26,20 @@ function parse_file(file) {
             if (err) {
                 throw(err);
             }
+            let stations = []
             result['wfs:FeatureCollection']['gml:featureMember'].map(function(member) {
-              console.log(JSON.stringify(member, null, 4));
+              member = member['CO_OPS_Stations:Waterlevel_Active_Stations'][0];
+              let station = {}
+              Object.keys(member).map(function(key) {
+                const prop = member[key][0];
+                key = key.split(':')[1];
+                if (key) {
+                  station[key] = prop;
+                }
+              });
+              stations.push(station);
             });
+            console.log(JSON.stringify(stations, null, 4));
         });
     });
 }
