@@ -1,0 +1,16 @@
+{
+  "name": "noaa",
+  "version": "1.0.0",
+  "description": "Download free PDF charts from NOAA",
+  "main": "get_pdf_charts.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Cristian Vlasceanu",
+  "license": "ISC",
+  "dependencies": {
+    "async": "^2.4.1",
+    "cheerio": "^1.0.0-rc.1",
+    "fs": "0.0.1-security"
+  }
+}
