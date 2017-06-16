@@ -24,11 +24,13 @@
     </style>
   </head>
   <body>
-    <div id="location" style="font-size: 125%;"></div>
+    <div id="location" style="font-weight: bold; font-style: italic; background-color: white; opacity: 0.7; visibility: hidden;">
+    </div>
     <div id="map" class="map">
     </div>
     <script>
-      const defaultZoom = 13;
+      const defaultZoom = 12;
+      var savedZoom = defaultZoom;
 
       var chartTilesets = null; // current tilesets, stringified
       var chartLayers = [];     // current layers
@@ -36,6 +38,8 @@
       var map = null;           // the map object
       var currentLocation = null;
       var geoLocationWatchId = null;
+
+      var popup = null;
 
       /**
        * Custom control for re-centering the map to the current geolocation
@@ -49,7 +53,7 @@
         button.appendChild(icon);
 
         var handler = function() {
-          map.getView().setZoom(defaultZoom);
+          map.getView().setZoom(savedZoom);
           trackLocation();
         }
         button.addEventListener('click', handler, false);
@@ -70,9 +74,9 @@
       /**
        * Construct position marker layer
        */
-      function curPosLayer(coord, iconUrl) {
+      function curPosLayer(xy, iconUrl) {
         var iconFeature = new ol.Feature({
-          geometry: new ol.geom.Point(coord),
+          geometry: new ol.geom.Point(xy),
           name: 'Current position',
         });
 
@@ -145,13 +149,12 @@
                 hMax = tileset.height;
               }
               maxRes = Math.ceil((tileset.height * viewMaxRes) / hMax);
-              // console.log(tileset.ident, tileset.height, maxRes);
 
               const url = 'tiles/noaa/' + tileset.ident + '/{z}/{x}/{y}.png';
               const layer = new ol.layer.Tile({
                 source: new ol.source.XYZ({url: url}),
-                opacity: 0.8,
                 maxResolution: maxRes,
+                opacity: 0.95
               });
               layer.ident = tileset.ident;
               chartLayers.push(layer);
@@ -184,19 +187,6 @@
       }
 
 
-      function baseLayer() {
-        return new ol.layer.Tile({
-          //*** direct
-          //source: new ol.source.OSM()
-          //source: new ol.source.XYZ({url:'https://{a-c}.tile.openstreetmap.org/{z}/{x}/{y}.png'})
-          //source: new ol.source.XYZ({url:'https://maps.wikimedia.org/osm-intl/{z}/{x}/{y}.png'})
-
-          //*** proxied
-          source: new ol.source.XYZ({url:'tiles/wikimedia/osm-intl/{z}/{x}/{y}.png'})
-          //source: new ol.source.XYZ({url:'tiles/osm/{a-c}/{z}/{x}/{y}.png'})
-        });
-      }
-
       /**
        * Construct / update the map object
        */
@@ -204,25 +194,34 @@
     
         const pos = ol.proj.fromLonLat(coord);
         const view = map ? map.getView() : new ol.View({
-              center: pos,
-              zoom: defaultZoom,
-              minZoom: 4,
-              maxZoom: 17,
-              enableRotation: false,
-            });
-        view.setCenter(pos);
-
-        //view.on('change:resolution', function() {
-        //  console.log('resolution:', view.getResolution(), 'zoom:', view.getZoom());
-        //})
+          center: pos,
+          zoom: defaultZoom,
+          minZoom: 4,
+          maxZoom: 17,
+          enableRotation: false,
+        });
+        
+        if (!ol.extent.containsXY(view.calculateExtent(), pos[0], pos[1])) {
+          view.setCenter(pos);
+        }
+        
+        function baseLayer() {
+          return new ol.layer.Tile({
+            //source: new ol.source.XYZ({url:'tiles/osm/{a-c}/{z}/{x}/{y}.png'})
+            source: new ol.source.XYZ({url:'tiles/wikimedia/osm-intl/{z}/{x}/{y}.png'})
+          });
+        }
 
         updateChartLayers(coord, view, function() {
 
           if (!map) {
             map = new ol.Map({
               controls: ol.control.defaults(
+                {attribution: false}
               ).extend([
-                new recenterControl()
+                new recenterControl(),
+                new ol.control.FullScreen(),
+                new ol.control.ScaleLine({units: 'nautical'}),
               ]),
               target: 'map',
               layers: [
@@ -236,6 +235,7 @@
               if (geoLocationWatchId) {
                 navigator.geolocation.clearWatch(geoLocationWatchId);
                 geoLocationWatchId = null;
+                savedZoom = map.getView().getZoom();
                 alert('Location tracking paused. Click the location button to resume.');
               }
               const coord = e.coordinate;
@@ -245,8 +245,13 @@
               
               updateMap(latLon, 'images/view.png');
             });
+
+            popup = new ol.Overlay({element: document.getElementById('location')});
+            map.addOverlay(popup);
+            popup.getElement().style.visibility = 'visible';
           }
 
+          popup.setPosition(pos);
           if (marker) {
             map.removeLayer(marker);
           }
@@ -255,42 +260,11 @@
         });
       }
 
-      /**
-       * Convert decimal coords to degree,minutes,seconds
-       * 
-       * Credits: en.marnoto.com
-       */
-      function getDMS(val) {
-         val = Math.abs(val);
-
-         var valDeg = Math.floor(val);
-
-         // Add the degrees value to the result by adding the degrees symbol
-         var result = valDeg + '&deg;';
-
-         // Minutes
-         // Removing the integer of the initial value you get the decimal portion.
-         // Multiply the decimal portion by 60.
-         // Math.floor returns an integer discarding the decimal portion.
-         var valMin = Math.floor((val - valDeg) * 60);
-
-         // Add minutes to the result, adding the symbol minutes "'".
-         result += valMin + "'";
-
-         // Seconds
-         //var valSec = Math.round((val - valDeg - valMin / 60) * 3600 * 1000) / 1000;
-         var valSec = Math.round((val - valDeg - valMin / 60) * 3600 * 100) / 100;
-
-         // Add the seconds value to the result, adding the seconds symbol
-         result += valSec + '"';
-
-         return result;
-      }
 
       function convertDMS(coords) {
-        return getDMS(coords[1]) + (coords[1] >= 0 ? 'N' : 'S') + '  ' 
-             + getDMS(coords[0]) + (coords[0] >= 0 ? 'E' : 'W')
+        return ol.coordinate.toStringHDMS(coords);
       }
+
 
       /** 
        * Track geolocation
@@ -301,7 +275,7 @@
           console.log(position);
           currentLocation = [position.coords.longitude, position.coords.latitude];
           var elem = document.getElementById('location');
-          elem.innerHTML = 'GPS: ' + convertDMS(currentLocation);
+          elem.innerHTML = convertDMS(currentLocation);
           updateMap(currentLocation);
         }
 
@@ -331,4 +305,4 @@
     </script>
   </body>
 </html>
-
+%
