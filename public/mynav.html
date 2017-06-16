@@ -150,7 +150,7 @@
               const url = 'tiles/noaa/' + tileset.ident + '/{z}/{x}/{y}.png';
               const layer = new ol.layer.Tile({
                 source: new ol.source.XYZ({url: url}),
-                opacity: 0.7,
+                opacity: 0.8,
                 maxResolution: maxRes,
               });
               layer.ident = tileset.ident;
@@ -225,7 +225,9 @@
                 new recenterControl()
               ]),
               target: 'map',
-              layers: [baseLayer()].concat(chartLayers),
+              layers: [
+                baseLayer(),
+              ].concat(chartLayers),
               view: view
             });
 
@@ -241,7 +243,7 @@
               var elem = document.getElementById('location');
               elem.innerHTML = convertDMS(latLon);
               
-              updateMap(latLon, 'images/navigate.png');
+              updateMap(latLon, 'images/view.png');
             });
           }
 
