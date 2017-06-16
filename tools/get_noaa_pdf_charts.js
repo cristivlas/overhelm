@@ -45,8 +45,8 @@ download(pdf_list_url, pdf_list_file, function(err, result) {
 		//console.log(elem);
 		const href = cheerio(elem).attr('href');
 		if (!href.match('.pdf')) {
-            return;
-        }
+       return;
+    }
 
 		const filename = pdf_folder + '/' + elem.children[0].data + '.pdf';
 
