@@ -3,9 +3,10 @@ const fs = require('fs');
 const http = require('http');
 const https = require('https');
 const path = require('path');
-const urlJoin = require('url-join');
 const tmp = require('tmp');
+const urlJoin = require('url-join');
 
+const waterLevelStations = require ('./Waterlevel_Active_Stations.json');
 const router = express.Router();
 
 /* GET home page. */
@@ -175,5 +176,47 @@ router.get('/tiles/:srv/:set/:z/:x/:y.png', function(req, res, next) {
     downloadAndUploadTile(cachedFilePath, req, res, next)
   }
 });
+
+
+/******************************************************************
+ * Get the nearest NOAA waterlevel station
+ */
+router.get('/nearestWaterLevelStation/:lat/:lon', function(req, res, next) {
+//
+// https://stackoverflow.com/questions/21279559/geolocation-closest-locationlat-long-from-my-position
+//
+  function getDistanceFromLatLonInKm(lat1,lon1,lat2,lon2) {
+    const R = 6371; // Radius of the earth in km
+    const dLat = deg2rad(lat2-lat1);  // deg2rad below
+    const dLon = deg2rad(lon2-lon1); 
+    const a = 
+      Math.sin(dLat/2) * Math.sin(dLat/2) +
+      Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) * 
+      Math.sin(dLon/2) * Math.sin(dLon/2); 
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); 
+    const d = R * c; // Distance in km
+    return d;
+  }
+
+  function deg2rad(deg) {
+    return deg * (Math.PI/180)
+  }
+
+  let minDiff = 999999;
+  let closest = null;
+  
+  for (i = 0; i < waterLevelStations.length; ++i) {
+    const st = waterLevelStations[i];
+    var diff = getDistanceFromLatLonInKm(req.params.lat, req.params.lon, st.Latitude, st.Longitude);
+    if (diff < minDiff) {
+      closest = st;
+      minDiff = diff;
+    }
+  }
+
+  res.send(JSON.stringify(closest));
+});
+
+
 
 module.exports = router;

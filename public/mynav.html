@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>My Nav App</title>
+    <title>Chart Navigator [Alpha]</title>
     <link rel="stylesheet" href="lib/OpenLayers/4.2.0/ol.css" type="text/css">
     <meta name="viewport" content="initial-scale=1.0, user-scalable=no, width=device-width">
     <script src="lib/OpenLayers/4.2.0/ol.js"></script>
@@ -22,10 +22,18 @@
         height: 100%;
       }
     </style>
+    <style>
+      .location {
+        font-weight: bold;
+        font-style: italic;
+        background-color: white;
+        opacity: 0.7;
+        visibility: hidden;
+      }
+    </style>
   </head>
   <body>
-    <div id="location" style="font-weight: bold; font-style: italic; background-color: white; opacity: 0.7; visibility: hidden;">
-    </div>
+    <div id="location" class="location"></div>
     <div id="map" class="map">
     </div>
     <script>
@@ -40,6 +48,7 @@
       var geoLocationWatchId = null;
 
       var popup = null;
+      var waterLevelStation = null;
 
       /**
        * Custom control for re-centering the map to the current geolocation
@@ -193,6 +202,7 @@
       function updateMap(coord, iconUrl = 'images/pointer.png') {
     
         const pos = ol.proj.fromLonLat(coord);
+
         const view = map ? map.getView() : new ol.View({
           center: pos,
           zoom: defaultZoom,
@@ -240,9 +250,6 @@
               }
               const coord = e.coordinate;
               const latLon = ol.proj.transform(coord, 'EPSG:3857', 'EPSG:4326');
-              var elem = document.getElementById('location');
-              elem.innerHTML = convertDMS(latLon);
-              
               updateMap(latLon, 'images/view.png');
             });
 
@@ -252,12 +259,45 @@
           }
 
           popup.setPosition(pos);
+
           if (marker) {
             map.removeLayer(marker);
           }
           marker = curPosLayer(pos, iconUrl);
           map.addLayer(marker);
         });
+        
+        var elem = document.getElementById('location');
+        elem.innerHTML = convertDMS(coord);
+
+        updateWaterLevel(coord);
+      }
+
+
+      function updateWaterLevel(coord) {
+        var xmlHttp = new XMLHttpRequest();
+        xmlHttp.onreadystatechange = function() {
+          if (xmlHttp.readyState == 4 && xmlHttp.status == 200) {
+            const station = JSON.parse(xmlHttp.responseText);
+            if (!waterLevelStation || station.Id != waterLevelStation.Id) {
+              waterLevelStation = station;
+            }
+          /*
+            let info = ' Nearest Station: ' + station.Id;
+            if (station.Name) {
+              info += ' ' + station.Name;
+            }
+            if (station.State) {
+              info += ' ' + station.State;
+            }
+            var elem = document.getElementById('location');
+            elem.innerHTML = convertDMS(coord) + info;
+           */
+          }
+        }
+        const url = 'nearestWaterLevelStation/' + coord[1] + '/' + coord[0];
+        xmlHttp.open("GET", url);
+        xmlHttp.send();
       }
 
 
@@ -274,8 +314,6 @@
         function update(position) {
           console.log(position);
           currentLocation = [position.coords.longitude, position.coords.latitude];
-          var elem = document.getElementById('location');
-          elem.innerHTML = convertDMS(currentLocation);
           updateMap(currentLocation);
         }
 
@@ -305,4 +343,4 @@
     </script>
   </body>
 </html>
-%
+
