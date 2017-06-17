@@ -16,7 +16,7 @@
       }
       .ol-touch .tide-chart {
         width: 75%;
-        right: -5px;
+        right: 0px;
       }
     </style>
     <style>
@@ -394,7 +394,6 @@
                   }
                 }
               });
-              console.log(tideChart);
             }
           }
         }
@@ -407,7 +406,7 @@
             const station = JSON.parse(xmlHttp.responseText);
 
             if (waterLevelStation && station.Id == waterLevelStation.Id) {
-              const now = Date();
+              const now = new Date();
               if (now.getTime() - tideChartTime.getTime() < 30 * 60 * 1000) {
                 return;
               }

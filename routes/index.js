@@ -202,15 +202,15 @@ router.get('/nearestWaterLevelStation/:lat/:lon', function(req, res, next) {
     return deg * (Math.PI/180)
   }
 
-  let minDiff = 999999;
+  let minDist = 999999;
   let closest = null;
   
-  for (i = 0; i < waterLevelStations.length; i += 10) {
+  for (i = 0; i < waterLevelStations.length; ++i) {
     const st = waterLevelStations[i];
-    var diff = getDistanceFromLatLonInKm(req.params.lat, req.params.lon, st.Latitude, st.Longitude);
-    if (diff < minDiff) {
+    var dist = getDistanceFromLatLonInKm(req.params.lat, req.params.lon, st.Latitude, st.Longitude);
+    if (dist < minDist) {
       closest = st;
-      minDiff = diff;
+      minDist = dist;
     }
   }
 
