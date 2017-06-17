@@ -14,7 +14,7 @@
         width: 35%;
       }
       .ol-touch .tide-chart {
-        width: 65%;
+        width: 75%;
         right: 0px;
       }
     </style>
@@ -322,12 +322,7 @@
       }
 
       function dateHelper(val) {
-        var result = '';
-        if (val < 10) {
-          result = '0';
-        }
-        result += val.toString();
-        return result;
+        return Math.floor(val / 10).toString() + (val % 10);
       }
 
       /**
@@ -361,7 +356,7 @@
               labels.push(a[0] + ' ' + dateHelper(date.getHours()) + ':'  + dateHelper(date.getMinutes()));
               datasets[0].data.push(predictions[i].v);
               if (date.getTime() <= now.getTime()) {
-                datasets[0].backgroundColor.push('gray');
+                datasets[0].backgroundColor.push('lightblue');
               }
               else {
                 datasets[0].backgroundColor.push('blue');
@@ -376,7 +371,7 @@
               tideChart.update();
             }
             else {
-              const ctx = document.getElementById('tideChart').getContext('2d');
+              const ctx = document.getElementById('tideChart');
 
               tideChart = new Chart(ctx, {
                 type: 'bar',
@@ -388,25 +383,37 @@
                   scales: {
                     xAxes: [ {
                         ticks: {
-                          display: true
+                          maxTicksLimit: 4,
+                          maxRotation: 0,
+                          autoSkip: true,
                         }
                       }
                     ]
                   }
                 }
               });
+              console.log(tideChart);
             }
           }
         }
 
+
         let xmlHttp = new XMLHttpRequest();
         xmlHttp.onreadystatechange = function() {
           if (xmlHttp.readyState == 4 && xmlHttp.status == 200) {
+
             const station = JSON.parse(xmlHttp.responseText);
+
             if (waterLevelStation && station.Id == waterLevelStation.Id) {
-              return;
+              const now = Date();
+              if (now.getTime() - tideChartTime.getTime() < 30 * 60 * 1000) {
+                return;
+              }
+              tideChartTime = now;
             }
+
             waterLevelStation = station;
+
             // 
             // Get station info
             // 
@@ -419,7 +426,9 @@
             }
 
             const date = new Date();
-            const url = 'https://tidesandcurrents.noaa.gov/api/datagetter?product=predictions' 
+            const url = 0 
+              ? 'mockWaterLevelData'
+              : 'https://tidesandcurrents.noaa.gov/api/datagetter?product=predictions' 
               + '&range=24&start_date=' + date.getUTCFullYear() 
               + dateHelper(date.getUTCMonth() + 1) + dateHelper(date.getUTCDate()) + ' '
               + '&datum=MLLW&station=' + station.Id + '&time_zone=GMT&units=english&interval=&format=json';
@@ -454,12 +463,17 @@
         }
 
         function error(error) {
-          //
-          // TODO: recover?
-          //
+
           console.log(error, error.message);
-          if (error.code != error.TIMEOUT) {
+          if (error.code == error.TIMEOUT) {
+            // trackLocation();
+          }
+          else {
             alert(error.message);
+            const location = [-122.4049, 47.6810] // Shilshole Bay
+            updateMap(location, 'images/view.png');
+            navigator.geolocation.clearWatch(geoLocationWatchId);
+            geoLocationWatchId = null;
           }
         }
 
