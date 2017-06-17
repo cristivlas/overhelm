@@ -205,7 +205,7 @@ router.get('/nearestWaterLevelStation/:lat/:lon', function(req, res, next) {
   let minDiff = 999999;
   let closest = null;
   
-  for (i = 0; i < waterLevelStations.length; ++i) {
+  for (i = 0; i < waterLevelStations.length; i += 10) {
     const st = waterLevelStations[i];
     var diff = getDistanceFromLatLonInKm(req.params.lat, req.params.lon, st.Latitude, st.Longitude);
     if (diff < minDiff) {
@@ -217,6 +217,33 @@ router.get('/nearestWaterLevelStation/:lat/:lon', function(req, res, next) {
   res.send(JSON.stringify(closest));
 });
 
+
+
+function formatDateTime(date) {
+  const month = date.getUTCMonth() + 1;
+  const day = date.getUTCDate();
+  const hour = date.getUTCHours();
+  const minute = date.getUTCMinutes()
+  return date.getUTCFullYear() + '-' + Math.floor(month / 10) + month % 10 + '-'
+    + Math.floor(day / 10) + day % 10 + ' ' + Math.floor(hour / 10)
+    + Math.floor(hour % 10) + ':' + Math.floor(minute / 10) + minute % 10;
+}
+
+
+router.get('/mockWaterLevelData/', function(req, res, next) {
+  let result = { predictions: [] }
+
+  const now = new Date();
+  now.setTime(now - now.getTimezoneOffset() * 60 * 1000);
+
+  for (t = now.getTime() - 12 * 3600 * 1000; t < now.getTime() + 12 * 3600 * 1000; t += 6 * 60 * 1000) {
+    result.predictions.push({
+      t: formatDateTime(new Date(t)),
+      v: Math.cos(t/(6 * 3600 * 1000)) * 10 + 10
+    });
+  }
+  res.send(JSON.stringify(result));
+});
 
 
 module.exports = router;
