@@ -14,7 +14,7 @@
         width: 35%;
       }
       .ol-touch .tide-chart {
-        width: 70%;
+        width: 65%;
         right: 0px;
       }
     </style>
@@ -70,6 +70,7 @@
       var locationOverlay = null;
       var waterLevelStation = null;
       var tideChart = null;
+      var tideChartTime = new Date();
 
       /**
        * Custom control for re-centering the map to the current geolocation
@@ -313,7 +314,7 @@
           marker = curPosLayer(pos, iconUrl);
           map.addLayer(marker);
         });
-        
+       
         var elem = document.getElementById('location');
         elem.innerHTML = convertDMS(coord);
 
@@ -323,14 +324,82 @@
       function dateHelper(val) {
         var result = '';
         if (val < 10) {
-          result += '0';
+          result = '0';
         }
-        result += val;
+        result += val.toString();
         return result;
       }
 
+      /**
+       * Update tide chart
+       */
       function updateWaterLevel(coord) {
-        var xmlHttp = new XMLHttpRequest();
+        var label;
+
+        function processWaterLevelRequest(event) {
+          const ajaxRequest = event.currentTarget;
+          if (ajaxRequest.readyState == 4 && ajaxRequest.status == 200) {
+
+            let labels = []
+            let datasets = [ {
+              label: label,
+              data: [],
+              backgroundColor: [ ],
+              borderWidth: 2
+            }]
+            const now = new Date();
+            //console.log(now.toString());
+            const predictions = JSON.parse(ajaxRequest.responseText).predictions;
+            for (i = 0; i < predictions.length; i += 5) {
+              const t = predictions[i].t;
+              //console.log(t);
+              const arr = t.split(/[- :]/);
+              const date = new Date(arr[0], arr[1]-1, arr[2], arr[3], arr[4]);
+              date.setTime(date.getTime() + date.getTimezoneOffset() * 60000);
+              //console.log(date.toString());
+              const a = date.toString().split(' ');
+              labels.push(a[0] + ' ' + dateHelper(date.getHours()) + ':'  + dateHelper(date.getMinutes()));
+              datasets[0].data.push(predictions[i].v);
+              if (date.getTime() <= now.getTime()) {
+                datasets[0].backgroundColor.push('gray');
+              }
+              else {
+                datasets[0].backgroundColor.push('blue');
+              }
+            }
+
+            if (tideChart) {
+              tideChart.data = {
+                labels: labels,
+                datasets: datasets
+              }
+              tideChart.update();
+            }
+            else {
+              const ctx = document.getElementById('tideChart').getContext('2d');
+
+              tideChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                  labels: labels,
+                  datasets: datasets
+                },
+                options: {
+                  scales: {
+                    xAxes: [ {
+                        ticks: {
+                          display: true
+                        }
+                      }
+                    ]
+                  }
+                }
+              });
+            }
+          }
+        }
+
+        let xmlHttp = new XMLHttpRequest();
         xmlHttp.onreadystatechange = function() {
           if (xmlHttp.readyState == 4 && xmlHttp.status == 200) {
             const station = JSON.parse(xmlHttp.responseText);
@@ -341,7 +410,7 @@
             // 
             // Get station info
             // 
-            let label = 'Station: ' + station.Id;
+            label = 'Station: ' + station.Id;
             if (station.Name) {
               label += ' ' + station.Name;
             }
@@ -349,60 +418,15 @@
               label += ' ' + station.State;
             }
 
-            const date1 = new Date();
-            const date2 = new Date();
-            //date1.setDate(date1.getDate() - 1);
-            date2.setDate(date2.getDate() + 1);
-            //const url = station.DataAPI + 'datagetter?product=predictions' 
+            const date = new Date();
             const url = 'https://tidesandcurrents.noaa.gov/api/datagetter?product=predictions' 
-              + '&begin_date=' + date1.getUTCFullYear() + dateHelper(date1.getUTCMonth() + 1)
-              + dateHelper(date1.getUTCDate())
-              + '&end_date=' + date2.getUTCFullYear() + dateHelper(date2.getUTCMonth() + 1)
-              + dateHelper(date2.getUTCDate())
+              + '&range=24&start_date=' + date.getUTCFullYear() 
+              + dateHelper(date.getUTCMonth() + 1) + dateHelper(date.getUTCDate()) + ' '
               + '&datum=MLLW&station=' + station.Id + '&time_zone=GMT&units=english&interval=&format=json';
 
             console.log(url);
-            var xmlHttp2 = new XMLHttpRequest();
-            xmlHttp2.onreadystatechange = function() {
-              if (xmlHttp2.readyState == 4 && xmlHttp2.status == 200) {
-
-                let labels = []
-                let datasets = [ {
-                  label: label,
-                  data: [],
-                  borderWidth: 1
-                } ]
-                const predictions = JSON.parse(xmlHttp2.responseText).predictions;
-                for (i = 0; i < predictions.length; ++i) {
-                  labels.push(predictions[i].t);
-                  datasets[0].data.push(predictions[i].v);
-                }
-
-                if (tideChart) {
-                  tideChart.data = {
-                    labels: labels,
-                    datasets: datasets
-                  }
-                  tideChart.update();
-                }
-                else {
-                  const ctx = document.getElementById('tideChart').getContext('2d');
-
-                  tideChart = new Chart(ctx, {
-                    type: 'line',
-                    data: {
-                      labels: labels,
-                      datasets: datasets
-                    },
-                    options: {
-                      scales: {
-                        xAxes: [{ display: false }]
-                      }
-                    }
-                  });
-                }
-              }
-            }
+            let xmlHttp2 = new XMLHttpRequest();
+            xmlHttp2.onreadystatechange = processWaterLevelRequest;
             xmlHttp2.open("GET", url);
             xmlHttp2.send();
           }
