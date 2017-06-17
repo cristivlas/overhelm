@@ -5,6 +5,15 @@
     <link rel="stylesheet" href="lib/OpenLayers/4.2.0/ol.css" type="text/css">
     <meta name="viewport" content="initial-scale=1.0, user-scalable=no, width=device-width">
     <script src="lib/OpenLayers/4.2.0/ol.js"></script>
+    <script src="lib/Chart.js"></script>
+    <style>
+      .tide-chart {
+        top: 0px;
+        right: .5em;
+        background-color: white;
+        width: 40%;
+      }
+    </style>
     <style>
       .re-center {
         top: 125px;
@@ -31,11 +40,17 @@
         visibility: hidden;
       }
     </style>
+    <style>
+      .chart {
+        background-color: white;
+        opacity: 0.7;
+        //visibility: hidden;
+      }
+    </style>
   </head>
   <body>
     <div id="location" class="location"></div>
-    <div id="map" class="map">
-    </div>
+    <div id="map" class="map"></div>
     <script>
       const defaultZoom = 12;
       var savedZoom = defaultZoom;
@@ -44,11 +59,13 @@
       var chartLayers = [];     // current layers
       var marker = null;        // layer that marks current position
       var map = null;           // the map object
+
       var currentLocation = null;
       var geoLocationWatchId = null;
 
-      var popup = null;
+      var locationOverlay = null;
       var waterLevelStation = null;
+      var tideChart = null;
 
       /**
        * Custom control for re-centering the map to the current geolocation
@@ -78,6 +95,26 @@
         });
       }
       ol.inherits(recenterControl, ol.control.Control);
+
+     
+      /**
+       * Custom control for drawing water levels
+       */
+      tideChartControl = function(opt_options) {
+        var options = opt_options || {}
+
+        const canvas = document.createElement('canvas');
+        canvas.id = 'tideChart';
+        var element = document.createElement('div');
+        element.className = 'tide-chart ol-unselectable ol-control';
+        element.appendChild(canvas);
+
+        ol.control.Control.call(this, {
+          element: element,
+          target: options.target
+        });
+      }
+      ol.inherits(tideChartControl, ol.control.Control);
 
 
       /**
@@ -195,6 +232,13 @@
         });
       }
 
+      function createOverlays(map, pos) {
+        let elem = document.getElementById('location');
+        locationOverlay = new ol.Overlay({element: elem});
+        map.addOverlay(locationOverlay);
+        locationOverlay.setPosition(pos);
+        elem.style.visibility = 'visible';
+      }
 
       /**
        * Construct / update the map object
@@ -229,6 +273,7 @@
               controls: ol.control.defaults(
                 {attribution: false}
               ).extend([
+                new tideChartControl(),
                 new recenterControl(),
                 new ol.control.FullScreen(),
                 new ol.control.ScaleLine({units: 'nautical'}),
@@ -253,12 +298,10 @@
               updateMap(latLon, 'images/view.png');
             });
 
-            popup = new ol.Overlay({element: document.getElementById('location')});
-            map.addOverlay(popup);
-            popup.getElement().style.visibility = 'visible';
+            createOverlays(map, pos);
           }
 
-          popup.setPosition(pos);
+          locationOverlay.setPosition(pos);
 
           if (marker) {
             map.removeLayer(marker);
@@ -273,26 +316,86 @@
         updateWaterLevel(coord);
       }
 
+      function dateHelper(val) {
+        var result = '';
+        if (val < 10) {
+          result += '0';
+        }
+        result += val;
+        return result;
+      }
 
       function updateWaterLevel(coord) {
         var xmlHttp = new XMLHttpRequest();
         xmlHttp.onreadystatechange = function() {
           if (xmlHttp.readyState == 4 && xmlHttp.status == 200) {
             const station = JSON.parse(xmlHttp.responseText);
-            if (!waterLevelStation || station.Id != waterLevelStation.Id) {
-              waterLevelStation = station;
+            if (waterLevelStation && station.Id == waterLevelStation.Id) {
+              return;
             }
-          /*
-            let info = ' Nearest Station: ' + station.Id;
+            waterLevelStation = station;
+            // 
+            // Get station info
+            // 
+            let label = 'Station: ' + station.Id;
             if (station.Name) {
-              info += ' ' + station.Name;
+              label += ' ' + station.Name;
             }
             if (station.State) {
-              info += ' ' + station.State;
+              label += ' ' + station.State;
             }
-            var elem = document.getElementById('location');
-            elem.innerHTML = convertDMS(coord) + info;
-           */
+
+            const date1 = new Date();
+            const date2 = new Date();
+            date1.setDate(date1.getDate() - 1);
+            date2.setDate(date2.getDate() + 1);
+            //const url = station.DataAPI + 'datagetter?product=predictions' 
+            const url = 'https://tidesandcurrents.noaa.gov/api/datagetter?product=predictions' 
+              + '&begin_date=' + date1.getUTCFullYear() + dateHelper(date1.getUTCMonth() + 1)
+              + dateHelper(date1.getUTCDate())
+              + '&end_date=' + date2.getUTCFullYear() + dateHelper(date2.getUTCMonth() + 1)
+              + dateHelper(date2.getUTCDate())
+              + '&datum=MLLW&station=' + station.Id + '&time_zone=GMT&units=english&interval=&format=json';
+
+            console.log(url);
+            var xmlHttp2 = new XMLHttpRequest();
+            xmlHttp2.onreadystatechange = function() {
+              if (xmlHttp2.readyState == 4 && xmlHttp2.status == 200) {
+
+                let labels = []
+                let datasets = [ {
+                  label: label,
+                  data: [],
+                  borderWidth: 1
+                } ]
+                const predictions = JSON.parse(xmlHttp2.responseText).predictions;
+                for (i = 0; i < predictions.length; ++i) {
+                  labels.push(predictions[i].t);
+                  datasets[0].data.push(predictions[i].v);
+                }
+
+                if (tideChart) {
+                  tideChart.data = {
+                    labels: labels,
+                    datasets: datasets
+                  }
+                  tideChart.update();
+                }
+                else {
+                  const ctx = document.getElementById('tideChart').getContext('2d');
+
+                  tideChart = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                      labels: labels,
+                      datasets: datasets
+                    }
+                  });
+                }
+              }
+            }
+            xmlHttp2.open("GET", url);
+            xmlHttp2.send();
           }
         }
         const url = 'nearestWaterLevelStation/' + coord[1] + '/' + coord[0];
@@ -318,6 +421,9 @@
         }
 
         function error(error) {
+          //
+          // TODO: recover?
+          //
           console.log(error, error.message);
           if (error.code != error.TIMEOUT) {
             alert(error.message);
