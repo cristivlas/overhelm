@@ -8,10 +8,14 @@
     <script src="lib/Chart.js"></script>
     <style>
       .tide-chart {
-        top: 0px;
+        top: .5em;
         right: .5em;
         background-color: white;
-        width: 40%;
+        width: 35%;
+      }
+      .ol-touch .tide-chart {
+        width: 70%;
+        right: 0px;
       }
     </style>
     <style>
@@ -347,7 +351,7 @@
 
             const date1 = new Date();
             const date2 = new Date();
-            date1.setDate(date1.getDate() - 1);
+            //date1.setDate(date1.getDate() - 1);
             date2.setDate(date2.getDate() + 1);
             //const url = station.DataAPI + 'datagetter?product=predictions' 
             const url = 'https://tidesandcurrents.noaa.gov/api/datagetter?product=predictions' 
@@ -389,6 +393,11 @@
                     data: {
                       labels: labels,
                       datasets: datasets
+                    },
+                    options: {
+                      scales: {
+                        xAxes: [{ display: false }]
+                      }
                     }
                   });
                 }
