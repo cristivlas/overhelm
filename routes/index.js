@@ -214,9 +214,15 @@ router.get('/nearestWaterLevelStation/:lat/:lon', function(req, res, next) {
     }
   }
 
-  res.send(JSON.stringify(closest));
+  const result = {
+    Id: closest.id,
+    Name: closest.Name,
+    State: closest.State,
+    Latitude: closest.Latitude,
+    Longitude: closest.Longitude
+  }
+  res.send(JSON.stringify(result));
 });
-
 
 
 function formatDateTime(date) {
