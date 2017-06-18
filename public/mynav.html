@@ -11,6 +11,7 @@
         top: .5em;
         right: .5em;
         background-color: rgb(255,255,235);
+        opacity: .97;
         width: 35%;
       }
       .ol-touch .tide-chart {
@@ -20,11 +21,11 @@
     </style>
     <style>
       .re-center {
-        top: 125px;
+        top: 85px;
         left: .5em;
       }
       .ol-touch .re-center {
-        top: 125px;
+        top: 102px;
       }
     </style>
     <style type="text/css">
@@ -48,7 +49,7 @@
       .chart {
         background-color: white;
         opacity: 0.7;
-        //visibility: hidden;
+        visibility: hidden;
       }
     </style>
   </head>
@@ -352,7 +353,7 @@
               data: [],
               backgroundColor: [] ,
               borderWidth: 2
-            }]
+            } ]
             const now = new Date();
 
             const predictions = JSON.parse(ajaxRequest.responseText).predictions;
@@ -361,7 +362,9 @@
               const arr = t.split(/[- :]/);
               const date = new Date(arr[0], arr[1]-1, arr[2], arr[3], arr[4]);
               date.setTime(date.getTime() - date.getTimezoneOffset() * 60000);
+
               //console.log(t, date.toString());
+
               const a = date.toString().split(' ');
               labels.push(a[0] + ' ' + dateHelper(date.getHours()) + ':'  + dateHelper(date.getMinutes()));
               datasets[0].data.push(predictions[i].v);
@@ -391,11 +394,6 @@
                 },
                 options: {
                   scales: {
-                    yAxes: [ {
-                        ticks: {
-                          minTicksLimit: 4,
-                        }
-                    } ],
                     xAxes: [ {
                         ticks: {
                           fontSize: 10,
@@ -443,7 +441,7 @@
             const begin = formatDateTimeUTC(now);
             now.setTime(now.getTime() + 24 * 3600 * 1000);
             const end = formatDateTimeUTC(now);
-            console.log(begin, end);
+            //console.log(begin, end);
             const useMockData = 0;
             const url = useMockData ? 'mockWaterLevelData'
               : 'https://tidesandcurrents.noaa.gov/api/datagetter?product=predictions' 
