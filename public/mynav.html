@@ -322,15 +322,26 @@
         updateWaterLevel(coord);
       }
 
-      function dateHelper(val) {
-        return Math.floor(val / 10).toString() + (val % 10);
-      }
-
       /**
        * Update tide chart
        */
       function updateWaterLevel(coord) {
-        var label;
+
+        var label; // for water station info
+
+        function dateHelper(val) {
+          return Math.floor(val / 10).toString() + (val % 10);
+        }
+
+        function formatDateTimeUTC(date) {
+          const month = date.getUTCMonth() + 1;
+          const day = date.getUTCDate();
+          const hour = date.getUTCHours();
+          const minute = date.getUTCMinutes()
+          return date.getUTCFullYear().toString() + Math.floor(month / 10) + month % 10 + 
+            + Math.floor(day / 10) + day % 10 + ' ' + Math.floor(hour / 10)
+            + Math.floor(hour % 10) + ':' + Math.floor(minute / 10) + minute % 10;
+        }
 
         function processWaterLevelRequest(event) {
           const ajaxRequest = event.currentTarget;
@@ -340,19 +351,18 @@
             let datasets = [ {
               label: label,
               data: [],
-              backgroundColor: [ ],
+              backgroundColor: [] ,
               borderWidth: 2
             }]
             const now = new Date();
-            //console.log(now.toString());
+
             const predictions = JSON.parse(ajaxRequest.responseText).predictions;
             for (i = 0; i < predictions.length; i += 5) {
               const t = predictions[i].t;
-              //console.log(t);
               const arr = t.split(/[- :]/);
               const date = new Date(arr[0], arr[1]-1, arr[2], arr[3], arr[4]);
-              date.setTime(date.getTime() + date.getTimezoneOffset() * 60000);
-              //console.log(date.toString());
+              date.setTime(date.getTime() - date.getTimezoneOffset() * 60000);
+              //console.log(t, date.toString());
               const a = date.toString().split(' ');
               labels.push(a[0] + ' ' + dateHelper(date.getHours()) + ':'  + dateHelper(date.getMinutes()));
               datasets[0].data.push(predictions[i].v);
@@ -382,6 +392,11 @@
                 },
                 options: {
                   scales: {
+                    yAxes: [ {
+                        ticks: {
+                          minTicksLimit: 2,
+                        }
+                    } ],
                     xAxes: [ {
                         ticks: {
                           fontSize: 8,
@@ -426,13 +441,17 @@
               label += ' ' + station.State;
             }
 
-            const date = new Date();
-            const url = 0 
-              ? 'mockWaterLevelData'
+            const now = new Date();
+            now.setTime(now.getTime() - 12 * 3600 * 1000);
+            const begin = formatDateTimeUTC(now);
+            now.setTime(now.getTime() + 24 * 3600 * 1000);
+            const end = formatDateTimeUTC(now);
+            console.log(begin, end);
+            const useMockData = 0;
+            const url = useMockData ? 'mockWaterLevelData'
               : 'https://tidesandcurrents.noaa.gov/api/datagetter?product=predictions' 
-              + '&range=24&start_date=' + date.getUTCFullYear() 
-              + dateHelper(date.getUTCMonth() + 1) + dateHelper(date.getUTCDate()) + ' '
-              + '&datum=MLLW&station=' + station.Id + '&time_zone=GMT&units=english&interval=&format=json';
+              + '&begin_date=' + begin + '&end_date=' + end + '&datum=MLLW&station=' 
+              + station.Id + '&time_zone=GMT&units=english&interval=&format=json';
 
             console.log(url);
             let xmlHttp2 = new XMLHttpRequest();
