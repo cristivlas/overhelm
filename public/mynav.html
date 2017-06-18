@@ -433,10 +433,8 @@
             // Get station info
             // 
             label = 'Station: ' + station.Id;
-            if (station.Name) {
-              label += ' ' + station.Name;
-            }
-            if (station.State) {
+            label += ' ' + station.Name;
+            if (station.State != 'None') {
               label += ' ' + station.State;
             }
 
