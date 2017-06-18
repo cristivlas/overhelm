@@ -10,12 +10,11 @@
       .tide-chart {
         top: .5em;
         right: .5em;
-        background-color: white;
-        opacity: 0.95;
+        background-color: rgb(255,255,235);
         width: 35%;
       }
       .ol-touch .tide-chart {
-        width: 75%;
+        width: 80%;
         right: 0px;
       }
     </style>
@@ -357,7 +356,7 @@
             const now = new Date();
 
             const predictions = JSON.parse(ajaxRequest.responseText).predictions;
-            for (i = 0; i < predictions.length; i += 5) {
+            for (i = 0; i < predictions.length; ++i) {
               const t = predictions[i].t;
               const arr = t.split(/[- :]/);
               const date = new Date(arr[0], arr[1]-1, arr[2], arr[3], arr[4]);
@@ -394,12 +393,12 @@
                   scales: {
                     yAxes: [ {
                         ticks: {
-                          minTicksLimit: 2,
+                          minTicksLimit: 4,
                         }
                     } ],
                     xAxes: [ {
                         ticks: {
-                          fontSize: 8,
+                          fontSize: 10,
                           maxTicksLimit: 4,
                           maxRotation: 0,
                           autoSkip: true,
@@ -450,7 +449,7 @@
             const useMockData = 0;
             const url = useMockData ? 'mockWaterLevelData'
               : 'https://tidesandcurrents.noaa.gov/api/datagetter?product=predictions' 
-              + '&begin_date=' + begin + '&end_date=' + end + '&datum=MLLW&station=' 
+              + '&begin_date=' + begin + '&end_date=' + end + '&interval=h&datum=MLLW&station=' 
               + station.Id + '&time_zone=GMT&units=english&interval=&format=json';
 
             console.log(url);
