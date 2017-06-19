@@ -54,7 +54,6 @@
     </style>
   </head>
   <body>
-    <div id="heading"></div>
     <div id="map" class="map"></div>
     <script>
       const defaultZoom = 12;
@@ -532,9 +531,6 @@
           console.log(position);
           currentLocation = [position.coords.longitude, position.coords.latitude];
           updateMap(currentLocation);
-          if (position.coords.heading) {
-            document.getElementById('heading').innerHTML = heading;
-          }
         }
 
         function error(error) {
