@@ -15,7 +15,7 @@
         width: 35%;
       }
       .ol-touch .tide-chart {
-        width: 80%;
+        width: 75%;
         right: 0px;
       }
     </style>
@@ -25,7 +25,7 @@
         left: .5em;
       }
       .ol-touch .re-center {
-        top: 102px;
+        top: 95px;
       }
     </style>
     <style type="text/css">
@@ -54,8 +54,8 @@
     </style>
   </head>
   <body>
-    <div id="location" class="location"></div>
     <div id="heading"></div>
+    <div id="location" class="location"></div>
     <div id="map" class="map"></div>
     <script>
       const defaultZoom = 12;
@@ -430,7 +430,7 @@
               });
 
               // console.log(tideChart);
-
+            /*
               tideChart.handleEvent = function(event) {
                 if (event.type == 'click') {
                   console.log(waterLevelStation);
@@ -446,6 +446,7 @@
                   updateMap(currentLocation, marker);
                 }
               };
+            */
             }
           }
         }
@@ -517,7 +518,8 @@
           console.log(position);
           currentLocation = [position.coords.longitude, position.coords.latitude];
           updateMap(currentLocation);
-          document.getElementById('heeading').innerHTML = position.coords.heading;
+          document.getElementById('heading').innerHTML = position.coords.heading ?
+            position.coords.heading : '0.0';
         }
 
         function error(error) {
