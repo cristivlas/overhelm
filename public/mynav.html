@@ -68,6 +68,7 @@
 
       var currentLocation = null;
       var geoLocationWatchId = null;
+      var heading = null;
 
       var locationOverlay = null;
       var waterLevelStation = null;
@@ -75,10 +76,10 @@
       var tideChartTime = new Date();
 
       window.addEventListener('deviceorientation', function(e) {
-        const heading = e.webkitCompassHeading;
-        if (heading) {
-          document.getElementById('heading').innerHTML = heading;
-        }
+        heading = e.webkitCompassHeading;
+        //if (heading) {
+        //  document.getElementById('heading').innerHTML = heading;
+        //}
       });
 
 
@@ -141,13 +142,13 @@
           name: 'Current position',
         });
 
-        var rotation = (heading && geoLocationWatchId) ? heading : 0;
+        const rotation = (heading && geoLocationWatchId) ? -heading * (Math.PI / 180) : 0;
 
         var iconStyle = new ol.style.Style({
           image: new ol.style.Icon(/** @type {olx.style.IconOptions} */ ({
-            anchor: [0.5, 46],
+            anchor: [0.5, 0.5],
             anchorXUnits: 'fraction',
-            anchorYUnits: 'pixels',
+            anchorYUnits: 'fraction',
             src: iconUrl,
             rotateWithView: true,
             rotation: rotation
@@ -252,11 +253,17 @@
       }
 
 
+      function updatePosition(locationOverlay, pos) {
+        const xy = [pos[0] - 1750, pos[1] - 750];
+        locationOverlay.setPosition(xy);
+      }
+
+
       function createOverlays(map, pos) {
         let elem = document.getElementById('location');
         locationOverlay = new ol.Overlay({element: elem});
         map.addOverlay(locationOverlay);
-        locationOverlay.setPosition(pos);
+        updatePosition(locationOverlay, pos);
         elem.style.visibility = 'visible';
       }
 
@@ -334,7 +341,7 @@
             createOverlays(map, pos);
           }
 
-          locationOverlay.setPosition(pos);
+          updatePosition(locationOverlay, pos);
 
           if (marker) {
             map.removeLayer(marker);
