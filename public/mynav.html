@@ -141,12 +141,16 @@
           name: 'Current position',
         });
 
+        var rotation = (heading && geoLocationWatchId) ? heading : 0;
+
         var iconStyle = new ol.style.Style({
           image: new ol.style.Icon(/** @type {olx.style.IconOptions} */ ({
             anchor: [0.5, 46],
             anchorXUnits: 'fraction',
             anchorYUnits: 'pixels',
-            src: iconUrl
+            src: iconUrl,
+            rotateWithView: true,
+            rotation: rotation
           }))
         });
         iconFeature.setStyle(iconStyle);
@@ -260,7 +264,7 @@
       /**
        * Construct / update the map object
        */
-      function updateMap(coord, iconUrl = 'images/pointer.png') {
+      function updateMap(coord, iconUrl = 'images/marker.png') {
     
         const pos = ol.proj.fromLonLat(coord);
 
@@ -450,7 +454,7 @@
                 }
                 else if (event.type == 'mouseout') {
                   const marker = geoLocationWatchId
-                    ? 'images/pointer.png' : 'images/view.png';
+                    ? 'images/marker.png' : 'images/view.png';
                   updateMap(currentLocation, marker);
                 }
               };
