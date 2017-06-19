@@ -66,7 +66,7 @@
 
       var currentLocation = null;
       var geoLocationWatchId = null;
-      var heading = null;
+      var heading = 0;
 
       var waterLevelStation = null;
       var tideChart = null;
@@ -154,7 +154,7 @@
           name: 'Current position',
         });
 
-        const rotation = (heading && geoLocationWatchId) ? -heading * (Math.PI / 180) : 0;
+        const rotation = (heading && geoLocationWatchId) ? heading * (Math.PI / 180) : 0;
 
         var iconStyle = new ol.style.Style({
           image: new ol.style.Icon(/** @type {olx.style.IconOptions} */ ({
