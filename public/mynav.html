@@ -485,7 +485,7 @@
             now.setTime(now.getTime() + 24 * 3600 * 1000);
             const end = formatDateTimeUTC(now);
 
-            const useMockData = 1;
+            const useMockData = 0;
             const url = useMockData ? ('mockWaterLevelData/' + now.getTime())
               : 'https://tidesandcurrents.noaa.gov/api/datagetter?product=predictions' 
               + '&begin_date=' + begin + '&end_date=' + end + '&interval=h&datum=MLLW&station=' 
