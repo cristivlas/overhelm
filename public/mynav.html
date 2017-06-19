@@ -39,10 +39,11 @@
     <style>
       .location {
         font-weight: bold;
-        font-style: italic;
+				font-size: 150%;
         background-color: white;
         opacity: 0.7;
-        visibility: hidden;
+				bottom: .15em;
+				right: .5em;
       }
     </style>
     <style>
@@ -55,7 +56,6 @@
   </head>
   <body>
     <div id="heading"></div>
-    <div id="location" class="location"></div>
     <div id="map" class="map"></div>
     <script>
       const defaultZoom = 12;
@@ -70,16 +70,12 @@
       var geoLocationWatchId = null;
       var heading = null;
 
-      var locationOverlay = null;
       var waterLevelStation = null;
       var tideChart = null;
       var tideChartTime = new Date();
 
       window.addEventListener('deviceorientation', function(e) {
         heading = e.webkitCompassHeading;
-        //if (heading) {
-        //  document.getElementById('heading').innerHTML = heading;
-        //}
       });
 
 
@@ -87,7 +83,7 @@
        * Custom control for re-centering the map to the current geolocation
        */
       recenterControl = function(opt_options) {
-        var options = opt_options || {}
+        const options = opt_options || {};
 
         const button = document.createElement('button');
         const icon = document.createElement('img');
@@ -117,7 +113,7 @@
        * Custom control for drawing water levels
        */
       tideChartControl = function(opt_options) {
-        var options = opt_options || {}
+        const options = opt_options || {};
 
         const canvas = document.createElement('canvas');
         canvas.id = 'tideChart';
@@ -132,6 +128,24 @@
       }
       ol.inherits(tideChartControl, ol.control.Control);
 
+
+		  /**
+			 * Custom control for displaying current location
+			 */
+			locationControl = function(opt_options) {
+				const options = opt_options || {};
+				var element = document.createElement('div');
+			  element.className = 'location ol-unselectable ol-control';
+				element.id = 'location';
+				console.log('locationControl:', options.coords);
+				element.innerHTML = convertDMS(options.coords);
+				ol.control.Control.call(this, {
+					element: element,
+					target: options.target
+				});
+			}
+			ol.inherits(locationControl, ol.control.Control);
+				
 
       /**
        * Construct position marker layer
@@ -253,20 +267,6 @@
       }
 
 
-      function updatePosition(locationOverlay, pos) {
-        const xy = [pos[0] - 1750, pos[1] - 750];
-        locationOverlay.setPosition(xy);
-      }
-
-
-      function createOverlays(map, pos) {
-        let elem = document.getElementById('location');
-        locationOverlay = new ol.Overlay({element: elem});
-        map.addOverlay(locationOverlay);
-        updatePosition(locationOverlay, pos);
-        elem.style.visibility = 'visible';
-      }
-
 
       /**
        * Construct / update the map object
@@ -303,9 +303,6 @@
          */
         updateChartLayers(coord, view, function() {
           const tideChartCtrl = new tideChartControl();
-          //tideChartCtrl.on('dblclick', function(e) {
-          //  e.preventDefault();
-          //});
 
           if (!map) {
             map = new ol.Map({
@@ -313,6 +310,7 @@
                 {attribution: false}
               ).extend([
                 tideChartCtrl,
+								new locationControl({coords: coord}),
                 new recenterControl(),
                 new ol.control.FullScreen(),
                 new ol.control.ScaleLine({units: 'nautical'}),
@@ -337,11 +335,7 @@
               currentLocation = latLon;
               updateMap(latLon, 'images/view.png');
             });
-
-            createOverlays(map, pos);
           }
-
-          updatePosition(locationOverlay, pos);
 
           if (marker) {
             map.removeLayer(marker);
@@ -351,10 +345,12 @@
         });
        
         var elem = document.getElementById('location');
-        elem.innerHTML = convertDMS(coord);
-
+				if (elem) {
+        	elem.innerHTML = convertDMS(coord);
+				}
         updateWaterLevel(coord);
-      }
+			}
+
 
       /**
        * Update tide chart
