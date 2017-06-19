@@ -55,6 +55,7 @@
   </head>
   <body>
     <div id="location" class="location"></div>
+    <div id="heading"></div>
     <div id="map" class="map"></div>
     <script>
       const defaultZoom = 12;
@@ -238,6 +239,7 @@
         });
       }
 
+
       function createOverlays(map, pos) {
         let elem = document.getElementById('location');
         locationOverlay = new ol.Overlay({element: elem});
@@ -245,6 +247,7 @@
         locationOverlay.setPosition(pos);
         elem.style.visibility = 'visible';
       }
+
 
       /**
        * Construct / update the map object
@@ -256,7 +259,7 @@
         const view = map ? map.getView() : new ol.View({
           center: pos,
           zoom: defaultZoom,
-          minZoom: 4,
+          minZoom: 3,
           maxZoom: 17,
           enableRotation: false,
         });
@@ -264,22 +267,33 @@
         if (!ol.extent.containsXY(view.calculateExtent(), pos[0], pos[1])) {
           view.setCenter(pos);
         }
-        
+       
+        /**
+         * Construct the base layer using map tiles from wikimedia
+         * (or alternatively: use OpenStreetMaps, etc.) 
+         */
         function baseLayer() {
           return new ol.layer.Tile({
-            //source: new ol.source.XYZ({url:'tiles/osm/{a-c}/{z}/{x}/{y}.png'})
             source: new ol.source.XYZ({url:'tiles/wikimedia/osm-intl/{z}/{x}/{y}.png'})
+            //source: new ol.source.XYZ({url:'tiles/osm/{a-c}/{z}/{x}/{y}.png'})
           });
         }
 
+        /**
+         * Build marine chart layers
+         */
         updateChartLayers(coord, view, function() {
+          const tideChartCtrl = new tideChartControl();
+          //tideChartCtrl.on('dblclick', function(e) {
+          //  e.preventDefault();
+          //});
 
           if (!map) {
             map = new ol.Map({
               controls: ol.control.defaults(
                 {attribution: false}
               ).extend([
-                new tideChartControl(),
+                tideChartCtrl,
                 new recenterControl(),
                 new ol.control.FullScreen(),
                 new ol.control.ScaleLine({units: 'nautical'}),
@@ -301,6 +315,7 @@
               }
               const coord = e.coordinate;
               const latLon = ol.proj.transform(coord, 'EPSG:3857', 'EPSG:4326');
+              currentLocation = latLon;
               updateMap(latLon, 'images/view.png');
             });
 
@@ -345,25 +360,25 @@
 
         function processWaterLevelRequest(event) {
           const ajaxRequest = event.currentTarget;
-          if (ajaxRequest.readyState == 4 && ajaxRequest.status == 200) {
 
+          if (ajaxRequest.readyState == 4 && ajaxRequest.status == 200) {
             let labels = []
             let datasets = [ {
-              label: label,
+              label: '',
               data: [],
               backgroundColor: [] ,
-              borderWidth: 2
             } ]
             const now = new Date();
 
             const predictions = JSON.parse(ajaxRequest.responseText).predictions;
+
             for (i = 0; i < predictions.length; ++i) {
               const t = predictions[i].t;
               const arr = t.split(/[- :]/);
               const date = new Date(arr[0], arr[1]-1, arr[2], arr[3], arr[4]);
-              date.setTime(date.getTime() - date.getTimezoneOffset() * 60000);
 
-              //console.log(t, date.toString());
+              // Convert to local time
+              date.setTime(date.getTime() - date.getTimezoneOffset() * 60000);
 
               const a = date.toString().split(' ');
               labels.push(a[0] + ' ' + dateHelper(date.getHours()) + ':'  + dateHelper(date.getMinutes()));
@@ -393,6 +408,13 @@
                   datasets: datasets
                 },
                 options: {
+                  legend: {
+                    display: false
+                  },
+                  title: {
+                    display: true,
+                    text: label
+                  },
                   scales: {
                     xAxes: [ {
                         ticks: {
@@ -406,6 +428,24 @@
                   }
                 }
               });
+
+              // console.log(tideChart);
+
+              tideChart.handleEvent = function(event) {
+                if (event.type == 'click') {
+                  console.log(waterLevelStation);
+                  const loc = JSON.parse('[' +
+                    waterLevelStation.Longitude + ',' +
+                    waterLevelStation.Latitude + ']');
+                  console.log(loc);
+                  updateMap(loc, 'images/view.png');
+                }
+                else if (event.type == 'mouseout') {
+                  const marker = geoLocationWatchId
+                    ? 'images/pointer.png' : 'images/view.png';
+                  updateMap(currentLocation, marker);
+                }
+              };
             }
           }
         }
@@ -426,7 +466,6 @@
             }
 
             waterLevelStation = station;
-
             // 
             // Get station info
             // 
@@ -435,15 +474,18 @@
             if (station.State != 'None') {
               label += ' ' + station.State;
             }
+            if (tideChart) {
+              tideChart.options.title.text = label;
+            }
 
             const now = new Date();
             now.setTime(now.getTime() - 12 * 3600 * 1000);
             const begin = formatDateTimeUTC(now);
             now.setTime(now.getTime() + 24 * 3600 * 1000);
             const end = formatDateTimeUTC(now);
-            //console.log(begin, end);
-            const useMockData = 0;
-            const url = useMockData ? 'mockWaterLevelData'
+
+            const useMockData = 1;
+            const url = useMockData ? ('mockWaterLevelData/' + now.getTime())
               : 'https://tidesandcurrents.noaa.gov/api/datagetter?product=predictions' 
               + '&begin_date=' + begin + '&end_date=' + end + '&interval=h&datum=MLLW&station=' 
               + station.Id + '&time_zone=GMT&units=english&interval=&format=json';
@@ -475,6 +517,7 @@
           console.log(position);
           currentLocation = [position.coords.longitude, position.coords.latitude];
           updateMap(currentLocation);
+          document.getElementById('heeading').innerHTML = position.coords.heading;
         }
 
         function error(error) {
@@ -485,8 +528,8 @@
           }
           else {
             alert(error.message);
-            const location = [-122.4049, 47.6810] // Shilshole Bay
-            updateMap(location, 'images/view.png');
+            currentLocation = [-122.4049, 47.6810] // Shilshole Bay
+            updateMap(currentLocation, 'images/view.png');
             navigator.geolocation.clearWatch(geoLocationWatchId);
             geoLocationWatchId = null;
           }

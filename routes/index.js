@@ -236,16 +236,16 @@ function formatDateTime(date) {
 }
 
 
-router.get('/mockWaterLevelData/', function(req, res, next) {
+router.get('/mockWaterLevelData/:end', function(req, res, next) {
   let result = { predictions: [] }
 
-  const now = new Date();
-  now.setTime(now - now.getTimezoneOffset() * 60 * 1000);
+  const begin = req.params.end - 24 * 3600 * 1000;
+  const end = req.params.end;
 
-  for (t = now.getTime() - 12 * 3600 * 1000; t < now.getTime() + 12 * 3600 * 1000; t += 6 * 60 * 1000) {
+  for (t = begin; t < end; t += 3600000) {
     result.predictions.push({
       t: formatDateTime(new Date(t)),
-      v: Math.cos(t/(6 * 3600 * 1000)) * 10 + 10
+      v: Math.cos(t/(3 * 3600 * 1000)) * 10 + 10
     });
   }
   res.send(JSON.stringify(result));
