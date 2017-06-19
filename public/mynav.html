@@ -74,6 +74,14 @@
       var tideChart = null;
       var tideChartTime = new Date();
 
+      window.addEventListener('deviceorientation', function(e) {
+        const heading = e.webkitCompassHeading;
+        if (heading) {
+          document.getElementById('heading').innerHTML = heading;
+        }
+      });
+
+
       /**
        * Custom control for re-centering the map to the current geolocation
        */
@@ -518,8 +526,9 @@
           console.log(position);
           currentLocation = [position.coords.longitude, position.coords.latitude];
           updateMap(currentLocation);
-          document.getElementById('heading').innerHTML = position.coords.heading ?
-            position.coords.heading : '0.0';
+          if (position.coords.heading) {
+            document.getElementById('heading').innerHTML = heading;
+          }
         }
 
         function error(error) {
