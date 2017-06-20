@@ -217,7 +217,7 @@ router.get('/nearestWaterLevelStation/:lat/:lon', function(req, res, next) {
   const result = {
     Id: closest.Id,
     Name: closest.Name,
-    State: closest.State,
+    State: closest.State == 'None' ? '' : closest.State,
     Latitude: closest.Latitude,
     Longitude: closest.Longitude
   }

@@ -400,19 +400,21 @@
 
 
       /**
-       * Update tide chart
+       * Update tide chart:
+       * 1) ask the backend for the closest water level station to current location
+       * 2) in response to the async request, processWaterLevelStation sends a 
+       *    request to the NOAA web service, using a time interval centered around 
+       *    the current time.
        */
       function updateWaterLevel(coord) {
-        if (!tideChartVisible) {
-          return;
-        }
-
-        var label; // for water station info
 
         function dateHelper(val) {
           return Math.floor(val / 10).toString() + (val % 10);
         }
 
+        /**
+         * Helper for formatting begin_date and end_date for water level requests
+         */
         function formatDateTimeUTC(date) {
           const month = date.getUTCMonth() + 1;
           const day = date.getUTCDate();
@@ -423,8 +425,62 @@
             + Math.floor(hour % 10) + ':' + Math.floor(minute / 10) + minute % 10;
         }
 
-        function processWaterLevelRequest(event) {
-          const ajaxRequest = event.currentTarget;
+        /**
+         * Process response from backend.
+         */
+        function processWaterLevelStation(event) {
+          const xmlHttp = event.currentTarget;
+          
+          if (xmlHttp.readyState == 4 && xmlHttp.status == 200) {
+
+            let s = JSON.parse(xmlHttp.responseText);
+
+            if (waterLevelStation && s.Id == waterLevelStation.Id) {
+              //
+              // same station? update every 30 minutes
+              //
+              const now = new Date();
+              if (now.getTime() - tideChartTime.getTime() < 30 * 60 * 1000) {
+                return;
+              }
+              tideChartTime = now;
+            }
+        
+            waterLevelStation = s;
+
+           const stationInfo = 'Station: ' + s.Id + ' ' + s.Name + ' ' + s.State;
+
+            if (tideChart) {
+              tideChart.options.title.text = stationInfo;
+            }
+
+            const now = new Date();
+            now.setTime(now.getTime() - 12 * 3600 * 1000);
+            const begin = formatDateTimeUTC(now);
+            now.setTime(now.getTime() + 24 * 3600 * 1000);
+            const end = formatDateTimeUTC(now);
+
+            const useMockData = 0;
+            const url = useMockData ? ('mockWaterLevelData/' + now.getTime())
+              : 'https://tidesandcurrents.noaa.gov/api/datagetter?product=predictions' 
+              + '&begin_date=' + begin + '&end_date=' + end + '&interval=h&datum=MLLW&station=' 
+              + waterLevelStation.Id + '&time_zone=GMT&units=english&interval=&format=json';
+
+            console.log(url);
+            
+            let xmlHttp2 = new XMLHttpRequest();
+            xmlHttp2.onreadystatechange = processWaterLevelRequest.bind(null, stationInfo);
+            xmlHttp2.open("GET", url);
+            xmlHttp2.send();
+          }
+        }
+
+        
+        /**
+         * Process response from NOAA
+         */
+        function processWaterLevelRequest(stationInfo, event) {
+          const ajaxRequest = event.target;
 
           if (ajaxRequest.readyState == 4 && ajaxRequest.status == 200) {
             let labels = []
@@ -478,7 +534,10 @@
                   },
                   title: {
                     display: true,
-                    text: label
+                    fontSize: 10,
+                    padding: 0,
+                    position: 'bottom',
+                    text: stationInfo
                   },
                   scales: {
                     xAxes: [ {
@@ -497,55 +556,10 @@
           }
         }
 
+        const xmlHttp = new XMLHttpRequest();
+        xmlHttp.onreadystatechange = processWaterLevelStation;
 
-        let xmlHttp = new XMLHttpRequest();
-        xmlHttp.onreadystatechange = function() {
-          if (xmlHttp.readyState == 4 && xmlHttp.status == 200) {
-
-            const station = JSON.parse(xmlHttp.responseText);
-
-            if (waterLevelStation && station.Id == waterLevelStation.Id) {
-              const now = new Date();
-              if (now.getTime() - tideChartTime.getTime() < 30 * 60 * 1000) {
-                return;
-              }
-              tideChartTime = now;
-            }
-
-            waterLevelStation = station;
-            // 
-            // Get station info
-            // 
-            label = 'Station: ' + station.Id;
-            label += ' ' + station.Name;
-            if (station.State != 'None') {
-              label += ' ' + station.State;
-            }
-            if (tideChart) {
-              tideChart.options.title.text = label;
-            }
-
-            const now = new Date();
-            now.setTime(now.getTime() - 12 * 3600 * 1000);
-            const begin = formatDateTimeUTC(now);
-            now.setTime(now.getTime() + 24 * 3600 * 1000);
-            const end = formatDateTimeUTC(now);
-
-            const useMockData = 0;
-            const url = useMockData ? ('mockWaterLevelData/' + now.getTime())
-              : 'https://tidesandcurrents.noaa.gov/api/datagetter?product=predictions' 
-              + '&begin_date=' + begin + '&end_date=' + end + '&interval=h&datum=MLLW&station=' 
-              + station.Id + '&time_zone=GMT&units=english&interval=&format=json';
-
-            console.log(url);
-            let xmlHttp2 = new XMLHttpRequest();
-            xmlHttp2.onreadystatechange = processWaterLevelRequest;
-            xmlHttp2.open("GET", url);
-            xmlHttp2.send();
-          }
-        }
-        const url = 'nearestWaterLevelStation/' + coord[1] + '/' + coord[0];
-        xmlHttp.open("GET", url);
+        xmlHttp.open("GET", 'nearestWaterLevelStation/' + coord[1] + '/' + coord[0]);
         xmlHttp.send();
       }
 
