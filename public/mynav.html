@@ -463,7 +463,8 @@
             const useMockData = 0;
             const url = useMockData ? ('mockWaterLevelData/' + now.getTime())
               : 'https://tidesandcurrents.noaa.gov/api/datagetter?product=predictions' 
-              + '&begin_date=' + begin + '&end_date=' + end + '&interval=h&datum=MLLW&station=' 
+              //+ '&begin_date=' + begin + '&end_date=' + end + '&interval=h&datum=MLLW&station=' 
+              + '&begin_date=' + begin + '&end_date=' + end + '&datum=MLLW&station=' 
               + waterLevelStation.Id + '&time_zone=GMT&units=english&interval=&format=json';
 
             console.log(url);
@@ -493,7 +494,14 @@
 
             const predictions = JSON.parse(ajaxRequest.responseText).predictions;
 
-            for (i = 0; i < predictions.length; ++i) {
+            // Grid lines color and thickness
+            let lineColors = []
+            let lineWidths = []
+
+            let thresh = 0;
+            const step = 3;
+
+            for (i = 0; i < predictions.length; i += step) {
               const t = predictions[i].t;
               const arr = t.split(/[- :]/);
               const date = new Date(arr[0], arr[1]-1, arr[2], arr[3], arr[4]);
@@ -509,6 +517,12 @@
               }
               else {
                 datasets[0].backgroundColor.push('blue');
+                if (thresh == 0) {
+                  thresh = i;
+                  const j = Math.floor(i/step) + 1;
+                  lineColors[j] = '#606060';
+                  lineWidths[j] = 2;
+                }
               }
             }
 
@@ -534,13 +548,17 @@
                   },
                   title: {
                     display: true,
-                    fontSize: 10,
+                    fontSize: 12,
                     padding: 0,
                     position: 'bottom',
                     text: stationInfo
                   },
                   scales: {
                     xAxes: [ {
+                        gridLines: {
+                          color: lineColors,
+                          lineWidth: lineWidths
+                        },
                         ticks: {
                           fontSize: 10,
                           maxTicksLimit: 4,
@@ -552,6 +570,7 @@
                   }
                 }
               });
+              //console.log(tideChart);
             }
           }
         }
@@ -585,16 +604,14 @@
 
         function error(error) {
 
-          console.log(error, error.message);
-          if (error.code == error.TIMEOUT) {
-            // trackLocation();
+          if (confirm(error.message + ' Retry?')) {
+            trackLocation();
           }
           else {
-            alert(error.message);
-            currentLocation = [-122.4049, 47.6810] // Shilshole Bay
-            updateMap(currentLocation, 'images/view.png');
             navigator.geolocation.clearWatch(geoLocationWatchId);
             geoLocationWatchId = null;
+            currentLocation = [-122.4049, 47.6810] // Shilshole Bay
+            updateMap(currentLocation, 'images/view.png');
           }
         }
 
