@@ -6,7 +6,9 @@ const path = require('path');
 const tmp = require('tmp');
 const urlJoin = require('url-join');
 
+const currentsStations = require ('./Currents_Active_Stations.json');
 const waterLevelStations = require ('./Waterlevel_Active_Stations.json');
+
 const router = express.Router();
 
 /* GET home page. */
@@ -17,7 +19,9 @@ router.get('/', function(req, res, next) {
 
 let tilesets = {}
 
-/* return tilesets for a given service, longitude and latitude */
+/******************************************************************
+ * Return tilesets for a given service, longitude and latitude 
+ */
 router.get('/tilesets/:srv/:lon/:lat', function(req, res, next) {
   const srv = req.params.srv;
   if (!tilesets[srv]) {
@@ -71,7 +75,10 @@ var tileService = {
     }
 };
 
-/* Tiles service proxy */
+
+/******************************************************************
+ * Tiles service proxy
+ */
 router.get('/tiles/:srv/:set/:z/:x/:y.png', function(req, res, next) {
 
   const service = tileService[req.params.srv];
@@ -178,36 +185,43 @@ router.get('/tiles/:srv/:set/:z/:x/:y.png', function(req, res, next) {
 });
 
 
-/******************************************************************
- * Get the nearest NOAA waterlevel station
- */
-router.get('/nearestWaterLevelStation/:lat/:lon', function(req, res, next) {
 //
 // https://stackoverflow.com/questions/21279559/geolocation-closest-locationlat-long-from-my-position
 //
-  function getDistanceFromLatLonInKm(lat1,lon1,lat2,lon2) {
-    const R = 6371; // Radius of the earth in km
-    const dLat = deg2rad(lat2-lat1);  // deg2rad below
-    const dLon = deg2rad(lon2-lon1); 
-    const a = 
-      Math.sin(dLat/2) * Math.sin(dLat/2) +
-      Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) * 
-      Math.sin(dLon/2) * Math.sin(dLon/2); 
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); 
-    const d = R * c; // Distance in km
-    return d;
-  }
-
+function getDistanceFromLatLonInKm(lat1,lon1,lat2,lon2) {
   function deg2rad(deg) {
     return deg * (Math.PI/180)
   }
 
+  const R = 6371; // Radius of the earth in km
+  const dLat = deg2rad(lat2-lat1);  // deg2rad below
+  const dLon = deg2rad(lon2-lon1); 
+  const a = 
+    Math.sin(dLat/2) * Math.sin(dLat/2) +
+    Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) * 
+    Math.sin(dLon/2) * Math.sin(dLon/2); 
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); 
+  const d = R * c; // Distance in km
+  return d;
+}
+
+function getDistance(req, st) {
+  const params = req.params;
+  return getDistanceFromLatLonInKm(
+    req.params.lat, req.params.lon,
+    st.Latitude, st.Longitude);
+}
+
+/******************************************************************
+ * Get the nearest NOAA waterlevel station
+ */
+router.get('/nearestWaterLevelStation/:lat/:lon', function(req, res, next) {
   let minDist = 999999;
   let closest = null;
   
   for (i = 0; i < waterLevelStations.length; ++i) {
     const st = waterLevelStations[i];
-    var dist = getDistanceFromLatLonInKm(req.params.lat, req.params.lon, st.Latitude, st.Longitude);
+    var dist = getDistance(req, st);
     if (dist < minDist) {
       closest = st;
       minDist = dist;
@@ -225,6 +239,35 @@ router.get('/nearestWaterLevelStation/:lat/:lon', function(req, res, next) {
 });
 
 
+/******************************************************************
+ * Get the nearest NOAA currents station
+ */
+router.get('/nearestCurrentsStation/:lat/:lon', function(req, res, next) {
+  let minDist = 999999;
+  let closest = null;
+  
+  for (i = 0; i < currentsStations.length; ++i) {
+    const st = currentsStations[i];
+    var dist = getDistance(req, st);
+    if (dist < minDist) {
+      closest = st;
+      minDist = dist;
+    }
+  }
+
+  const result = {
+    Id: closest.Id,
+    Name: closest.Name,
+    Latitude: closest.Latitude,
+    Longitude: closest.Longitude
+  }
+  res.send(JSON.stringify(result));
+});
+
+
+/******************************************************************
+ * Test utilities
+  */
 function formatDateTime(date) {
   const month = date.getUTCMonth() + 1;
   const day = date.getUTCDate();
@@ -242,7 +285,7 @@ router.get('/mockWaterLevelData/:end', function(req, res, next) {
   const begin = req.params.end - 24 * 3600 * 1000;
   const end = req.params.end;
 
-  for (t = begin; t < end; t += 3600000) {
+  for (t = begin; t <= end; t += 6 * 60 * 1000) {
     result.predictions.push({
       t: formatDateTime(new Date(t)),
       v: Math.cos(t/(3 * 3600 * 1000)) * 10 + 10

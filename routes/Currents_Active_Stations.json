@@ -1,0 +1,1182 @@
+[
+    {
+        "OBJECTID": "1",
+        "Id": "cb0102",
+        "Name": "Cape Henry LB 2CH",
+        "Affil": "PORTS",
+        "Latitude": "36.959400000000002",
+        "Longitude": "-76.012799999999999",
+        "Data": "http://tidesandcurrents.noaa.gov/cdata/DataPlot?id=cb0102",
+        "MetaAPI": "http://tidesandcurrents.noaa.gov/mdapi/latest/webapi/stations/cb0102.xml?expand=deployments,bins",
+        "DataAPI": "http://tidesandcurrents.noaa.gov/api/",
+        "Shape": {
+            "gml:Point": [
+                {
+                    "gml:pos": [
+                        "36.959400000010874 -76.012800000319089"
+                    ]
+                }
+            ]
+        }
+    },
+    {
+        "OBJECTID": "2",
+        "Id": "cb0201",
+        "Name": "York Spit LBB 22",
+        "Affil": "PORTS",
+        "Latitude": "37.139830000000003",
+        "Longitude": "-76.143500000000003",
+        "Data": "http://tidesandcurrents.noaa.gov/cdata/DataPlot?id=cb0201",
+        "MetaAPI": "http://tidesandcurrents.noaa.gov/mdapi/latest/webapi/stations/cb0201.xml?expand=deployments,bins",
+        "DataAPI": "http://tidesandcurrents.noaa.gov/api/",
+        "Shape": {
+            "gml:Point": [
+                {
+                    "gml:pos": [
+                        "37.139830000055326 -76.143500000324082"
+                    ]
+                }
+            ]
+        }
+    },
+    {
+        "OBJECTID": "3",
+        "Id": "cb0301",
+        "Name": "Thimble Shoal LB 18",
+        "Affil": "PORTS",
+        "Latitude": "37.01108",
+        "Longitude": "-76.249030000000005",
+        "Data": "http://tidesandcurrents.noaa.gov/cdata/DataPlot?id=cb0301",
+        "MetaAPI": "http://tidesandcurrents.noaa.gov/mdapi/latest/webapi/stations/cb0301.xml?expand=deployments,bins",
+        "DataAPI": "http://tidesandcurrents.noaa.gov/api/",
+        "Shape": {
+            "gml:Point": [
+                {
+                    "gml:pos": [
+                        "37.011080000042853 -76.249029999734034"
+                    ]
+                }
+            ]
+        }
+    },
+    {
+        "OBJECTID": "4",
+        "Id": "cb0402",
+        "Name": "Naval Station Norfolk LB 7",
+        "Affil": "PORTS",
+        "Latitude": "36.962380000000003",
+        "Longitude": "-76.333870000000005",
+        "Data": "http://tidesandcurrents.noaa.gov/cdata/DataPlot?id=cb0402",
+        "MetaAPI": "http://tidesandcurrents.noaa.gov/mdapi/latest/webapi/stations/cb0402.xml?expand=deployments,bins",
+        "DataAPI": "http://tidesandcurrents.noaa.gov/api/",
+        "Shape": {
+            "gml:Point": [
+                {
+                    "gml:pos": [
+                        "36.962379999837992 -76.333870000099751"
+                    ]
+                }
+            ]
+        }
+    },
+    {
+        "OBJECTID": "5",
+        "Id": "cb0601",
+        "Name": "Newport News Channel LB 14",
+        "Affil": "PORTS",
+        "Latitude": "36.956020000000002",
+        "Longitude": "-76.414479999999998",
+        "Data": "http://tidesandcurrents.noaa.gov/cdata/DataPlot?id=cb0601",
+        "MetaAPI": "http://tidesandcurrents.noaa.gov/mdapi/latest/webapi/stations/cb0601.xml?expand=deployments,bins",
+        "DataAPI": "http://tidesandcurrents.noaa.gov/api/",
+        "Shape": {
+            "gml:Point": [
+                {
+                    "gml:pos": [
+                        "36.956019999724106 -76.414479999651576"
+                    ]
+                }
+            ]
+        }
+    },
+    {
+        "OBJECTID": "6",
+        "Id": "cb0701",
+        "Name": "Dominion Terminal",
+        "Affil": "PORTS",
+        "Latitude": "36.962330000000001",
+        "Longitude": "-76.424170000000004",
+        "Data": "http://tidesandcurrents.noaa.gov/cdata/DataPlot?id=cb0701",
+        "MetaAPI": "http://tidesandcurrents.noaa.gov/mdapi/latest/webapi/stations/cb0701.xml?expand=deployments,bins",
+        "DataAPI": "http://tidesandcurrents.noaa.gov/api/",
+        "Shape": {
+            "gml:Point": [
+                {
+                    "gml:pos": [
+                        "36.962330000230224 -76.424170000444519"
+                    ]
+                }
+            ]
+        }
+    },
+    {
+        "OBJECTID": "7",
+        "Id": "cb0801",
+        "Name": "Rappahannock Shoal Channel LBB 60",
+        "Affil": "PORTS",
+        "Latitude": "37.674419999999998",
+        "Longitude": "-76.154619999999994",
+        "Data": "http://tidesandcurrents.noaa.gov/cdata/DataPlot?id=cb0801",
+        "MetaAPI": "http://tidesandcurrents.noaa.gov/mdapi/latest/webapi/stations/cb0801.xml?expand=deployments,bins",
+        "DataAPI": "http://tidesandcurrents.noaa.gov/api/",
+        "Shape": {
+            "gml:Point": [
+                {
+                    "gml:pos": [
+                        "37.674419999684119 -76.154619999612635"
+                    ]
+                }
+            ]
+        }
+    },
+    {
+        "OBJECTID": "8",
+        "Id": "cb0901",
+        "Name": "Potomac River MidChannel LWB B",
+        "Affil": "PORTS",
+        "Latitude": "38.090980000000002",
+        "Longitude": "-76.529750000000007",
+        "Data": "http://tidesandcurrents.noaa.gov/cdata/DataPlot?id=cb0901",
+        "MetaAPI": "http://tidesandcurrents.noaa.gov/mdapi/latest/webapi/stations/cb0901.xml?expand=deployments,bins",
+        "DataAPI": "http://tidesandcurrents.noaa.gov/api/",
+        "Shape": {
+            "gml:Point": [
+                {
+                    "gml:pos": [
+                        "38.090979999927924 -76.52975000036156"
+                    ]
+                }
+            ]
+        }
+    },
+    {
+        "OBJECTID": "9",
+        "Id": "cb1001",
+        "Name": "Cove Point LNG Pier",
+        "Affil": "PORTS",
+        "Latitude": "38.402830000000002",
+        "Longitude": "-76.384169999999997",
+        "Data": "http://tidesandcurrents.noaa.gov/cdata/DataPlot?id=cb1001",
+        "MetaAPI": "http://tidesandcurrents.noaa.gov/mdapi/latest/webapi/stations/cb1001.xml?expand=deployments,bins",
+        "DataAPI": "http://tidesandcurrents.noaa.gov/api/",
+        "Shape": {
+            "gml:Point": [
+                {
+                    "gml:pos": [
+                        "38.402829999905464 -76.384170000344568"
+                    ]
+                }
+            ]
+        }
+    },
+    {
+        "OBJECTID": "10",
+        "Id": "cb1101",
+        "Name": "Chesapeake Channel LBB 92",
+        "Affil": "PORTS",
+        "Latitude": "38.982149999999997",
+        "Longitude": "-76.38467",
+        "Data": "http://tidesandcurrents.noaa.gov/cdata/DataPlot?id=cb1101",
+        "MetaAPI": "http://tidesandcurrents.noaa.gov/mdapi/latest/webapi/stations/cb1101.xml?expand=deployments,bins",
+        "DataAPI": "http://tidesandcurrents.noaa.gov/api/",
+        "Shape": {
+            "gml:Point": [
+                {
+                    "gml:pos": [
+                        "38.982150000123283 -76.38467000001981"
+                    ]
+                }
+            ]
+        }
+    },
+    {
+        "OBJECTID": "11",
+        "Id": "cb1201",
+        "Name": "Tolchester Front Range",
+        "Affil": "PORTS",
+        "Latitude": "39.139969999999998",
+        "Longitude": "-76.330719999999999",
+        "Data": "http://tidesandcurrents.noaa.gov/cdata/DataPlot?id=cb1201",
+        "MetaAPI": "http://tidesandcurrents.noaa.gov/mdapi/latest/webapi/stations/cb1201.xml?expand=deployments,bins",
+        "DataAPI": "http://tidesandcurrents.noaa.gov/api/",
+        "Shape": {
+            "gml:Point": [
+                {
+                    "gml:pos": [
+                        "39.139969999816515 -76.330719999627604"
+                    ]
+                }
+            ]
+        }
+    },
+    {
+        "OBJECTID": "12",
+        "Id": "cb1301",
+        "Name": "Chesapeake City",
+        "Affil": "PORTS",
+        "Latitude": "39.530529999999999",
+        "Longitude": "-75.827619999999996",
+        "Data": "http://tidesandcurrents.noaa.gov/cdata/DataPlot?id=cb1301",
+        "MetaAPI": "http://tidesandcurrents.noaa.gov/mdapi/latest/webapi/stations/cb1301.xml?expand=deployments,bins",
+        "DataAPI": "http://tidesandcurrents.noaa.gov/api/",
+        "Shape": {
+            "gml:Point": [
+                {
+                    "gml:pos": [
+                        "39.530529999860505 -75.827619999762533"
+                    ]
+                }
+            ]
+        }
+    },
+    {
+        "OBJECTID": "13",
+        "Id": "cp0101",
+        "Name": "Cherry Point",
+        "Affil": "PORTS",
+        "Latitude": "48.8628",
+        "Longitude": "-122.761",
+        "Data": "http://tidesandcurrents.noaa.gov/cdata/DataPlot?id=cp0101",
+        "MetaAPI": "http://tidesandcurrents.noaa.gov/mdapi/latest/webapi/stations/cp0101.xml?expand=deployments,bins",
+        "DataAPI": "http://tidesandcurrents.noaa.gov/api/",
+        "Shape": {
+            "gml:Point": [
+                {
+                    "gml:pos": [
+                        "48.862799999920981 -122.76100000014929"
+                    ]
+                }
+            ]
+        }
+    },
+    {
+        "OBJECTID": "14",
+        "Id": "db0301",
+        "Name": "Philadelphia",
+        "Affil": "PORTS",
+        "Latitude": "39.94623",
+        "Longitude": "-75.139600000000002",
+        "Data": "http://tidesandcurrents.noaa.gov/cdata/DataPlot?id=db0301",
+        "MetaAPI": "http://tidesandcurrents.noaa.gov/mdapi/latest/webapi/stations/db0301.xml?expand=deployments,bins",
+        "DataAPI": "http://tidesandcurrents.noaa.gov/api/",
+        "Shape": {
+            "gml:Point": [
+                {
+                    "gml:pos": [
+                        "39.946230000015419 -75.139599999639586"
+                    ]
+                }
+            ]
+        }
+    },
+    {
+        "OBJECTID": "15",
+        "Id": "db0501",
+        "Name": "Brown Shoal Light",
+        "Affil": "PORTS",
+        "Latitude": "38.922440000000002",
+        "Longitude": "-75.100750000000005",
+        "Data": "http://tidesandcurrents.noaa.gov/cdata/DataPlot?id=db0501",
+        "MetaAPI": "http://tidesandcurrents.noaa.gov/mdapi/latest/webapi/stations/db0501.xml?expand=deployments,bins",
+        "DataAPI": "http://tidesandcurrents.noaa.gov/api/",
+        "Shape": {
+            "gml:Point": [
+                {
+                    "gml:pos": [
+                        "38.922440000306665 -75.100750000411551"
+                    ]
+                }
+            ]
+        }
+    },
+    {
+        "OBJECTID": "16",
+        "Id": "g06010",
+        "Name": "Galveston Bay Entr Channel LB 11",
+        "Affil": "PORTS",
+        "Latitude": "29.342220000000001",
+        "Longitude": "-94.740830000000003",
+        "Data": "http://tidesandcurrents.noaa.gov/cdata/DataPlot?id=g06010",
+        "MetaAPI": "http://tidesandcurrents.noaa.gov/mdapi/latest/webapi/stations/g06010.xml?expand=deployments,bins",
+        "DataAPI": "http://tidesandcurrents.noaa.gov/api/",
+        "Shape": {
+            "gml:Point": [
+                {
+                    "gml:pos": [
+                        "29.342219999953898 -94.740830000103813"
+                    ]
+                }
+            ]
+        }
+    },
+    {
+        "OBJECTID": "17",
+        "Id": "g08010",
+        "Name": "Fred Hartman Br., Houston Ship Channel",
+        "Affil": "PORTS",
+        "Latitude": "29.703499999999998",
+        "Longitude": "-95.018919999999994",
+        "Data": "http://tidesandcurrents.noaa.gov/cdata/DataPlot?id=g08010",
+        "MetaAPI": "http://tidesandcurrents.noaa.gov/mdapi/latest/webapi/stations/g08010.xml?expand=deployments,bins",
+        "DataAPI": "http://tidesandcurrents.noaa.gov/api/",
+        "Shape": {
+            "gml:Point": [
+                {
+                    "gml:pos": [
+                        "29.70349999962616 -95.018919999957404"
+                    ]
+                }
+            ]
+        }
+    },
+    {
+        "OBJECTID": "18",
+        "Id": "gl0101",
+        "Name": "Cuyahoga River",
+        "Affil": "PORTS",
+        "Latitude": "41.494480000000003",
+        "Longitude": "-81.702920000000006",
+        "Data": "http://tidesandcurrents.noaa.gov/cdata/DataPlot?id=gl0101",
+        "MetaAPI": "http://tidesandcurrents.noaa.gov/mdapi/latest/webapi/stations/gl0101.xml?expand=deployments,bins",
+        "DataAPI": "http://tidesandcurrents.noaa.gov/api/",
+        "Shape": {
+            "gml:Point": [
+                {
+                    "gml:pos": [
+                        "41.494479999853013 -81.702920000057304"
+                    ]
+                }
+            ]
+        }
+    },
+    {
+        "OBJECTID": "19",
+        "Id": "gl0201",
+        "Name": "Maumee River",
+        "Affil": "PORTS",
+        "Latitude": "41.629130000000004",
+        "Longitude": "-83.53022",
+        "Data": "http://tidesandcurrents.noaa.gov/cdata/DataPlot?id=gl0201",
+        "MetaAPI": "http://tidesandcurrents.noaa.gov/mdapi/latest/webapi/stations/gl0201.xml?expand=deployments,bins",
+        "DataAPI": "http://tidesandcurrents.noaa.gov/api/",
+        "Shape": {
+            "gml:Point": [
+                {
+                    "gml:pos": [
+                        "41.629130000350131 -83.530219999952408"
+                    ]
+                }
+            ]
+        }
+    },
+    {
+        "OBJECTID": "20",
+        "Id": "gl0301",
+        "Name": "St Clair River",
+        "Affil": "PORTS",
+        "Latitude": "42.998730000000002",
+        "Longitude": "-82.425269999999998",
+        "Data": "http://tidesandcurrents.noaa.gov/cdata/DataPlot?id=gl0301",
+        "MetaAPI": "http://tidesandcurrents.noaa.gov/mdapi/latest/webapi/stations/gl0301.xml?expand=deployments,bins",
+        "DataAPI": "http://tidesandcurrents.noaa.gov/api/",
+        "Shape": {
+            "gml:Point": [
+                {
+                    "gml:pos": [
+                        "42.99873000039014 -82.425269999610123"
+                    ]
+                }
+            ]
+        }
+    },
+    {
+        "OBJECTID": "21",
+        "Id": "hb0201",
+        "Name": "Humboldt Bay Entrance Channel LB 9",
+        "Affil": "PORTS",
+        "Latitude": "40.756959999999999",
+        "Longitude": "-124.2234",
+        "Data": "http://tidesandcurrents.noaa.gov/cdata/DataPlot?id=hb0201",
+        "MetaAPI": "http://tidesandcurrents.noaa.gov/mdapi/latest/webapi/stations/hb0201.xml?expand=deployments,bins",
+        "DataAPI": "http://tidesandcurrents.noaa.gov/api/",
+        "Shape": {
+            "gml:Point": [
+                {
+                    "gml:pos": [
+                        "40.756960000404604 -124.2233999998096"
+                    ]
+                }
+            ]
+        }
+    },
+    {
+        "OBJECTID": "22",
+        "Id": "hb0301",
+        "Name": "Hookton Channel Day Marker 5",
+        "Affil": "PORTS",
+        "Latitude": "40.742330000000003",
+        "Longitude": "-124.22506",
+        "Data": "http://tidesandcurrents.noaa.gov/cdata/DataPlot?id=hb0301",
+        "MetaAPI": "http://tidesandcurrents.noaa.gov/mdapi/latest/webapi/stations/hb0301.xml?expand=deployments,bins",
+        "DataAPI": "http://tidesandcurrents.noaa.gov/api/",
+        "Shape": {
+            "gml:Point": [
+                {
+                    "gml:pos": [
+                        "40.742330000230254 -124.22505999991847"
+                    ]
+                }
+            ]
+        }
+    },
+    {
+        "OBJECTID": "23",
+        "Id": "hb0401",
+        "Name": "Chevron Pier",
+        "Affil": "PORTS",
+        "Latitude": "40.777500000000003",
+        "Longitude": "-124.19661000000001",
+        "Data": "http://tidesandcurrents.noaa.gov/cdata/DataPlot?id=hb0401",
+        "MetaAPI": "http://tidesandcurrents.noaa.gov/mdapi/latest/webapi/stations/hb0401.xml?expand=deployments,bins",
+        "DataAPI": "http://tidesandcurrents.noaa.gov/api/",
+        "Shape": {
+            "gml:Point": [
+                {
+                    "gml:pos": [
+                        "40.777499999726103 -124.1966100000509"
+                    ]
+                }
+            ]
+        }
+    },
+    {
+        "OBJECTID": "24",
+        "Id": "jx0101",
+        "Name": "St Johns River LBB 6",
+        "Affil": "PORTS",
+        "Latitude": "30.399940000000001",
+        "Longitude": "-81.373670000000004",
+        "Data": "http://tidesandcurrents.noaa.gov/cdata/DataPlot?id=jx0101",
+        "MetaAPI": "http://tidesandcurrents.noaa.gov/mdapi/latest/webapi/stations/jx0101.xml?expand=deployments,bins",
+        "DataAPI": "http://tidesandcurrents.noaa.gov/api/",
+        "Shape": {
+            "gml:Point": [
+                {
+                    "gml:pos": [
+                        "30.39994000043157 -81.373669999869946"
+                    ]
+                }
+            ]
+        }
+    },
+    {
+        "OBJECTID": "25",
+        "Id": "jx0201",
+        "Name": "Mayport Basin PC LBB",
+        "Affil": "PORTS",
+        "Latitude": "30.398890000000002",
+        "Longitude": "-81.394689999999997",
+        "Data": "http://tidesandcurrents.noaa.gov/cdata/DataPlot?id=jx0201",
+        "MetaAPI": "http://tidesandcurrents.noaa.gov/mdapi/latest/webapi/stations/jx0201.xml?expand=deployments,bins",
+        "DataAPI": "http://tidesandcurrents.noaa.gov/api/",
+        "Shape": {
+            "gml:Point": [
+                {
+                    "gml:pos": [
+                        "30.398889999674623 -81.394689999743036"
+                    ]
+                }
+            ]
+        }
+    },
+    {
+        "OBJECTID": "26",
+        "Id": "jx0301",
+        "Name": "Mile Point LB 24",
+        "Affil": "PORTS",
+        "Latitude": "30.382750000000001",
+        "Longitude": "-81.455560000000006",
+        "Data": "http://tidesandcurrents.noaa.gov/cdata/DataPlot?id=jx0301",
+        "MetaAPI": "http://tidesandcurrents.noaa.gov/mdapi/latest/webapi/stations/jx0301.xml?expand=deployments,bins",
+        "DataAPI": "http://tidesandcurrents.noaa.gov/api/",
+        "Shape": {
+            "gml:Point": [
+                {
+                    "gml:pos": [
+                        "30.382750000013345 -81.455559999993341"
+                    ]
+                }
+            ]
+        }
+    },
+    {
+        "OBJECTID": "27",
+        "Id": "jx0401",
+        "Name": "Fulton Cutoff LB 34",
+        "Affil": "PORTS",
+        "Latitude": "30.390969999999999",
+        "Longitude": "-81.496780000000001",
+        "Data": "http://tidesandcurrents.noaa.gov/cdata/DataPlot?id=jx0401",
+        "MetaAPI": "http://tidesandcurrents.noaa.gov/mdapi/latest/webapi/stations/jx0401.xml?expand=deployments,bins",
+        "DataAPI": "http://tidesandcurrents.noaa.gov/api/",
+        "Shape": {
+            "gml:Point": [
+                {
+                    "gml:pos": [
+                        "30.390969999566721 -81.496779999696571"
+                    ]
+                }
+            ]
+        }
+    },
+    {
+        "OBJECTID": "28",
+        "Id": "jx0501",
+        "Name": "Dames Point Bridge",
+        "Affil": "PORTS",
+        "Latitude": "30.38599",
+        "Longitude": "-81.557860000000005",
+        "Data": "http://tidesandcurrents.noaa.gov/cdata/DataPlot?id=jx0501",
+        "MetaAPI": "http://tidesandcurrents.noaa.gov/mdapi/latest/webapi/stations/jx0501.xml?expand=deployments,bins",
+        "DataAPI": "http://tidesandcurrents.noaa.gov/api/",
+        "Shape": {
+            "gml:Point": [
+                {
+                    "gml:pos": [
+                        "30.385990000139259 -81.557859999738525"
+                    ]
+                }
+            ]
+        }
+    },
+    {
+        "OBJECTID": "29",
+        "Id": "jx0601",
+        "Name": "Trout River Cut LB 64",
+        "Affil": "PORTS",
+        "Latitude": "30.391030000000001",
+        "Longitude": "-81.62594",
+        "Data": "http://tidesandcurrents.noaa.gov/cdata/DataPlot?id=jx0601",
+        "MetaAPI": "http://tidesandcurrents.noaa.gov/mdapi/latest/webapi/stations/jx0601.xml?expand=deployments,bins",
+        "DataAPI": "http://tidesandcurrents.noaa.gov/api/",
+        "Shape": {
+            "gml:Point": [
+                {
+                    "gml:pos": [
+                        "30.391029999635634 -81.625939999730576"
+                    ]
+                }
+            ]
+        }
+    },
+    {
+        "OBJECTID": "30",
+        "Id": "jx0701",
+        "Name": "Acosta Bridge",
+        "Affil": "PORTS",
+        "Latitude": "30.322659999999999",
+        "Longitude": "-81.664619999999999",
+        "Data": "http://tidesandcurrents.noaa.gov/cdata/DataPlot?id=jx0701",
+        "MetaAPI": "http://tidesandcurrents.noaa.gov/mdapi/latest/webapi/stations/jx0701.xml?expand=deployments,bins",
+        "DataAPI": "http://tidesandcurrents.noaa.gov/api/",
+        "Shape": {
+            "gml:Point": [
+                {
+                    "gml:pos": [
+                        "30.322659999760049 -81.664620000112279"
+                    ]
+                }
+            ]
+        }
+    },
+    {
+        "OBJECTID": "31",
+        "Id": "lc0101",
+        "Name": "Calcasieu Channel LB 36",
+        "Affil": "PORTS",
+        "Latitude": "29.693470000000001",
+        "Longitude": "-93.331180000000003",
+        "Data": "http://tidesandcurrents.noaa.gov/cdata/DataPlot?id=lc0101",
+        "MetaAPI": "http://tidesandcurrents.noaa.gov/mdapi/latest/webapi/stations/lc0101.xml?expand=deployments,bins",
+        "DataAPI": "http://tidesandcurrents.noaa.gov/api/",
+        "Shape": {
+            "gml:Point": [
+                {
+                    "gml:pos": [
+                        "29.693470000241177 -93.331180000356085"
+                    ]
+                }
+            ]
+        }
+    },
+    {
+        "OBJECTID": "32",
+        "Id": "lc0201",
+        "Name": "Cameron Fishing Pier",
+        "Affil": "PORTS",
+        "Latitude": "29.764140000000001",
+        "Longitude": "-93.342920000000007",
+        "Data": "http://tidesandcurrents.noaa.gov/cdata/DataPlot?id=lc0201",
+        "MetaAPI": "http://tidesandcurrents.noaa.gov/mdapi/latest/webapi/stations/lc0201.xml?expand=deployments,bins",
+        "DataAPI": "http://tidesandcurrents.noaa.gov/api/",
+        "Shape": {
+            "gml:Point": [
+                {
+                    "gml:pos": [
+                        "29.764140000061843 -93.342920000357083"
+                    ]
+                }
+            ]
+        }
+    },
+    {
+        "OBJECTID": "33",
+        "Id": "lc0301",
+        "Name": "Lake Charles City Docks",
+        "Affil": "PORTS",
+        "Latitude": "30.21782",
+        "Longitude": "-93.249549999999999",
+        "Data": "http://tidesandcurrents.noaa.gov/cdata/DataPlot?id=lc0301",
+        "MetaAPI": "http://tidesandcurrents.noaa.gov/mdapi/latest/webapi/stations/lc0301.xml?expand=deployments,bins",
+        "DataAPI": "http://tidesandcurrents.noaa.gov/api/",
+        "Shape": {
+            "gml:Point": [
+                {
+                    "gml:pos": [
+                        "30.217819999794017 -93.249549999632166"
+                    ]
+                }
+            ]
+        }
+    },
+    {
+        "OBJECTID": "34",
+        "Id": "lm0101",
+        "Name": "First Street Wharf",
+        "Affil": "PORTS",
+        "Latitude": "29.922440000000002",
+        "Longitude": "-90.07114",
+        "Data": "http://tidesandcurrents.noaa.gov/cdata/DataPlot?id=lm0101",
+        "MetaAPI": "http://tidesandcurrents.noaa.gov/mdapi/latest/webapi/stations/lm0101.xml?expand=deployments,bins",
+        "DataAPI": "http://tidesandcurrents.noaa.gov/api/",
+        "Shape": {
+            "gml:Point": [
+                {
+                    "gml:pos": [
+                        "29.922440000306665 -90.071139999810498"
+                    ]
+                }
+            ]
+        }
+    },
+    {
+        "OBJECTID": "35",
+        "Id": "lm0201",
+        "Name": "Port Allen",
+        "Affil": "PORTS",
+        "Latitude": "30.435469999999999",
+        "Longitude": "-91.200559999999996",
+        "Data": "http://tidesandcurrents.noaa.gov/cdata/DataPlot?id=lm0201",
+        "MetaAPI": "http://tidesandcurrents.noaa.gov/mdapi/latest/webapi/stations/lm0201.xml?expand=deployments,bins",
+        "DataAPI": "http://tidesandcurrents.noaa.gov/api/",
+        "Shape": {
+            "gml:Point": [
+                {
+                    "gml:pos": [
+                        "30.435470000341127 -91.200559999943437"
+                    ]
+                }
+            ]
+        }
+    },
+    {
+        "OBJECTID": "36",
+        "Id": "mb0301",
+        "Name": "Mobile State Dock Pier E",
+        "Affil": "PORTS",
+        "Latitude": "30.721440000000001",
+        "Longitude": "-88.042779999999993",
+        "Data": "http://tidesandcurrents.noaa.gov/cdata/DataPlot?id=mb0301",
+        "MetaAPI": "http://tidesandcurrents.noaa.gov/mdapi/latest/webapi/stations/mb0301.xml?expand=deployments,bins",
+        "DataAPI": "http://tidesandcurrents.noaa.gov/api/",
+        "Shape": {
+            "gml:Point": [
+                {
+                    "gml:pos": [
+                        "30.721440000256678 -88.042779999996355"
+                    ]
+                }
+            ]
+        }
+    },
+    {
+        "OBJECTID": "37",
+        "Id": "mb0401",
+        "Name": "Mobile Container Terminal",
+        "Affil": "PORTS",
+        "Latitude": "30.664349999999999",
+        "Longitude": "-88.032349999999994",
+        "Data": "http://tidesandcurrents.noaa.gov/cdata/DataPlot?id=mb0401",
+        "MetaAPI": "http://tidesandcurrents.noaa.gov/mdapi/latest/webapi/stations/mb0401.xml?expand=deployments,bins",
+        "DataAPI": "http://tidesandcurrents.noaa.gov/api/",
+        "Shape": {
+            "gml:Point": [
+                {
+                    "gml:pos": [
+                        "30.664349999853471 -88.032350000151723"
+                    ]
+                }
+            ]
+        }
+    },
+    {
+        "OBJECTID": "38",
+        "Id": "mc0101",
+        "Name": "Atchafalaya Bar Channel",
+        "Affil": "PORTS",
+        "Latitude": "29.318000000000001",
+        "Longitude": "-91.429670000000002",
+        "Data": "http://tidesandcurrents.noaa.gov/cdata/DataPlot?id=mc0101",
+        "MetaAPI": "http://tidesandcurrents.noaa.gov/mdapi/latest/webapi/stations/mc0101.xml?expand=deployments,bins",
+        "DataAPI": "http://tidesandcurrents.noaa.gov/api/",
+        "Shape": {
+            "gml:Point": [
+                {
+                    "gml:pos": [
+                        "29.318000000000893 -91.429670000169722"
+                    ]
+                }
+            ]
+        }
+    },
+    {
+        "OBJECTID": "39",
+        "Id": "n03020",
+        "Name": "The Narrows",
+        "Affil": "PORTS",
+        "Latitude": "40.605980000000002",
+        "Longitude": "-74.038150000000002",
+        "Data": "http://tidesandcurrents.noaa.gov/cdata/DataPlot?id=n03020",
+        "MetaAPI": "http://tidesandcurrents.noaa.gov/mdapi/latest/webapi/stations/n03020.xml?expand=deployments,bins",
+        "DataAPI": "http://tidesandcurrents.noaa.gov/api/",
+        "Shape": {
+            "gml:Point": [
+                {
+                    "gml:pos": [
+                        "40.60597999957821 -74.038149999722066"
+                    ]
+                }
+            ]
+        }
+    },
+    {
+        "OBJECTID": "40",
+        "Id": "nb0201",
+        "Name": "Fall River",
+        "Affil": "PORTS",
+        "Latitude": "41.6999",
+        "Longitude": "-71.178420000000003",
+        "Data": "http://tidesandcurrents.noaa.gov/cdata/DataPlot?id=nb0201",
+        "MetaAPI": "http://tidesandcurrents.noaa.gov/mdapi/latest/webapi/stations/nb0201.xml?expand=deployments,bins",
+        "DataAPI": "http://tidesandcurrents.noaa.gov/api/",
+        "Shape": {
+            "gml:Point": [
+                {
+                    "gml:pos": [
+                        "41.699900000285709 -71.178420000082269"
+                    ]
+                }
+            ]
+        }
+    },
+    {
+        "OBJECTID": "41",
+        "Id": "nb0301",
+        "Name": "Quonset Point",
+        "Affil": "PORTS",
+        "Latitude": "41.583629999999999",
+        "Longitude": "-71.397329999999997",
+        "Data": "http://tidesandcurrents.noaa.gov/cdata/DataPlot?id=nb0301",
+        "MetaAPI": "http://tidesandcurrents.noaa.gov/mdapi/latest/webapi/stations/nb0301.xml?expand=deployments,bins",
+        "DataAPI": "http://tidesandcurrents.noaa.gov/api/",
+        "Shape": {
+            "gml:Point": [
+                {
+                    "gml:pos": [
+                        "41.583630000225241 -71.3973300002786"
+                    ]
+                }
+            ]
+        }
+    },
+    {
+        "OBJECTID": "42",
+        "Id": "nl0101",
+        "Name": "Groton, Thames River, Pier 6",
+        "Affil": "PORTS",
+        "Latitude": "41.391750000000002",
+        "Longitude": "-72.092330000000004",
+        "Data": "http://tidesandcurrents.noaa.gov/cdata/DataPlot?id=nl0101",
+        "MetaAPI": "http://tidesandcurrents.noaa.gov/mdapi/latest/webapi/stations/nl0101.xml?expand=deployments,bins",
+        "DataAPI": "http://tidesandcurrents.noaa.gov/api/",
+        "Shape": {
+            "gml:Point": [
+                {
+                    "gml:pos": [
+                        "41.391750000063382 -72.092330000328559"
+                    ]
+                }
+            ]
+        }
+    },
+    {
+        "OBJECTID": "43",
+        "Id": "ps0201",
+        "Name": "Pascagoula Harbor LB 17",
+        "Affil": "PORTS",
+        "Latitude": "30.215029999999999",
+        "Longitude": "-88.510890000000003",
+        "Data": "http://tidesandcurrents.noaa.gov/cdata/DataPlot?id=ps0201",
+        "MetaAPI": "http://tidesandcurrents.noaa.gov/mdapi/latest/webapi/stations/ps0201.xml?expand=deployments,bins",
+        "DataAPI": "http://tidesandcurrents.noaa.gov/api/",
+        "Shape": {
+            "gml:Point": [
+                {
+                    "gml:pos": [
+                        "30.215029999735577 -88.510889999673111"
+                    ]
+                }
+            ]
+        }
+    },
+    {
+        "OBJECTID": "44",
+        "Id": "ps0301",
+        "Name": "Northrop Grumman Pier",
+        "Affil": "PORTS",
+        "Latitude": "30.359780000000001",
+        "Longitude": "-88.564059999999998",
+        "Data": "http://tidesandcurrents.noaa.gov/cdata/DataPlot?id=ps0301",
+        "MetaAPI": "http://tidesandcurrents.noaa.gov/mdapi/latest/webapi/stations/ps0301.xml?expand=deployments,bins",
+        "DataAPI": "http://tidesandcurrents.noaa.gov/api/",
+        "Shape": {
+            "gml:Point": [
+                {
+                    "gml:pos": [
+                        "30.359780000147794 -88.564060000068309"
+                    ]
+                }
+            ]
+        }
+    },
+    {
+        "OBJECTID": "45",
+        "Id": "ps0401",
+        "Name": "Pascagoula Harbor LB 10",
+        "Affil": "PORTS",
+        "Latitude": "30.195830000000001",
+        "Longitude": "-88.522530000000003",
+        "Data": "http://tidesandcurrents.noaa.gov/cdata/DataPlot?id=ps0401",
+        "MetaAPI": "http://tidesandcurrents.noaa.gov/mdapi/latest/webapi/stations/ps0401.xml?expand=deployments,bins",
+        "DataAPI": "http://tidesandcurrents.noaa.gov/api/",
+        "Shape": {
+            "gml:Point": [
+                {
+                    "gml:pos": [
+                        "30.19583000015524 -88.522529999559197"
+                    ]
+                }
+            ]
+        }
+    },
+    {
+        "OBJECTID": "46",
+        "Id": "s06010",
+        "Name": "Martinez-AMORCO Pier",
+        "Affil": "PORTS",
+        "Latitude": "38.03463",
+        "Longitude": "-122.12524999999999",
+        "Data": "http://tidesandcurrents.noaa.gov/cdata/DataPlot?id=s06010",
+        "MetaAPI": "http://tidesandcurrents.noaa.gov/mdapi/latest/webapi/stations/s06010.xml?expand=deployments,bins",
+        "DataAPI": "http://tidesandcurrents.noaa.gov/api/",
+        "Shape": {
+            "gml:Point": [
+                {
+                    "gml:pos": [
+                        "38.034630000375103 -122.12525000028671"
+                    ]
+                }
+            ]
+        }
+    },
+    {
+        "OBJECTID": "47",
+        "Id": "s08010",
+        "Name": "Southampton Shoal Channel LB 6",
+        "Affil": "PORTS",
+        "Latitude": "37.916249999999998",
+        "Longitude": "-122.42233",
+        "Data": "http://tidesandcurrents.noaa.gov/cdata/DataPlot?id=s08010",
+        "MetaAPI": "http://tidesandcurrents.noaa.gov/mdapi/latest/webapi/stations/s08010.xml?expand=deployments,bins",
+        "DataAPI": "http://tidesandcurrents.noaa.gov/api/",
+        "Shape": {
+            "gml:Point": [
+                {
+                    "gml:pos": [
+                        "37.916250000138291 -122.42232999992899"
+                    ]
+                }
+            ]
+        }
+    },
+    {
+        "OBJECTID": "48",
+        "Id": "s09010",
+        "Name": "Oakland Outer Harbor LB3",
+        "Affil": "PORTS",
+        "Latitude": "37.808199999999999",
+        "Longitude": "-122.34434",
+        "Data": "http://tidesandcurrents.noaa.gov/cdata/DataPlot?id=s09010",
+        "MetaAPI": "http://tidesandcurrents.noaa.gov/mdapi/latest/webapi/stations/s09010.xml?expand=deployments,bins",
+        "DataAPI": "http://tidesandcurrents.noaa.gov/api/",
+        "Shape": {
+            "gml:Point": [
+                {
+                    "gml:pos": [
+                        "37.808199999631199 -122.34433999979058"
+                    ]
+                }
+            ]
+        }
+    },
+    {
+        "OBJECTID": "49",
+        "Id": "s10010",
+        "Name": "Oakland Inner Harbor LB4",
+        "Affil": "PORTS",
+        "Latitude": "37.800968169999997",
+        "Longitude": "-122.34774779999999",
+        "Data": "http://tidesandcurrents.noaa.gov/cdata/DataPlot?id=s10010",
+        "MetaAPI": "http://tidesandcurrents.noaa.gov/mdapi/latest/webapi/stations/s10010.xml?expand=deployments,bins",
+        "DataAPI": "http://tidesandcurrents.noaa.gov/api/",
+        "Shape": {
+            "gml:Point": [
+                {
+                    "gml:pos": [
+                        "37.800968169746113 -122.34774780261841"
+                    ]
+                }
+            ]
+        }
+    },
+    {
+        "OBJECTID": "50",
+        "Id": "sn0101",
+        "Name": "Sabine Bank Channel LBB 34",
+        "Affil": "PORTS",
+        "Latitude": "29.628730000000001",
+        "Longitude": "-93.81617",
+        "Data": "http://tidesandcurrents.noaa.gov/cdata/DataPlot?id=sn0101",
+        "MetaAPI": "http://tidesandcurrents.noaa.gov/mdapi/latest/webapi/stations/sn0101.xml?expand=deployments,bins",
+        "DataAPI": "http://tidesandcurrents.noaa.gov/api/",
+        "Shape": {
+            "gml:Point": [
+                {
+                    "gml:pos": [
+                        "29.628729999590689 -93.816169999645126"
+                    ]
+                }
+            ]
+        }
+    },
+    {
+        "OBJECTID": "51",
+        "Id": "sn0201",
+        "Name": "USCG Sabine",
+        "Affil": "PORTS",
+        "Latitude": "29.72861",
+        "Longitude": "-93.870009999999994",
+        "Data": "http://tidesandcurrents.noaa.gov/cdata/DataPlot?id=sn0201",
+        "MetaAPI": "http://tidesandcurrents.noaa.gov/mdapi/latest/webapi/stations/sn0201.xml?expand=deployments,bins",
+        "DataAPI": "http://tidesandcurrents.noaa.gov/api/",
+        "Shape": {
+            "gml:Point": [
+                {
+                    "gml:pos": [
+                        "29.728610000152287 -93.870010000360594"
+                    ]
+                }
+            ]
+        }
+    },
+    {
+        "OBJECTID": "52",
+        "Id": "sn0301",
+        "Name": "Sabine Front Range",
+        "Affil": "PORTS",
+        "Latitude": "29.757999999999999",
+        "Longitude": "-93.890199999999993",
+        "Data": "http://tidesandcurrents.noaa.gov/cdata/DataPlot?id=sn0301",
+        "MetaAPI": "http://tidesandcurrents.noaa.gov/mdapi/latest/webapi/stations/sn0301.xml?expand=deployments,bins",
+        "DataAPI": "http://tidesandcurrents.noaa.gov/api/",
+        "Shape": {
+            "gml:Point": [
+                {
+                    "gml:pos": [
+                        "29.758000000200752 -93.890199999729589"
+                    ]
+                }
+            ]
+        }
+    },
+    {
+        "OBJECTID": "53",
+        "Id": "sn0401",
+        "Name": "West Port Arthur Bridge",
+        "Affil": "PORTS",
+        "Latitude": "29.823609999999999",
+        "Longitude": "-93.96472",
+        "Data": "http://tidesandcurrents.noaa.gov/cdata/DataPlot?id=sn0401",
+        "MetaAPI": "http://tidesandcurrents.noaa.gov/mdapi/latest/webapi/stations/sn0401.xml?expand=deployments,bins",
+        "DataAPI": "http://tidesandcurrents.noaa.gov/api/",
+        "Shape": {
+            "gml:Point": [
+                {
+                    "gml:pos": [
+                        "29.823609999602695 -93.964719999927411"
+                    ]
+                }
+            ]
+        }
+    },
+    {
+        "OBJECTID": "54",
+        "Id": "sn0501",
+        "Name": "Rainbow Bridge",
+        "Affil": "PORTS",
+        "Latitude": "29.981110000000001",
+        "Longitude": "-93.871110000000002",
+        "Data": "http://tidesandcurrents.noaa.gov/cdata/DataPlot?id=sn0501",
+        "MetaAPI": "http://tidesandcurrents.noaa.gov/mdapi/latest/webapi/stations/sn0501.xml?expand=deployments,bins",
+        "DataAPI": "http://tidesandcurrents.noaa.gov/api/",
+        "Shape": {
+            "gml:Point": [
+                {
+                    "gml:pos": [
+                        "29.981109999827538 -93.87110999982599"
+                    ]
+                }
+            ]
+        }
+    },
+    {
+        "OBJECTID": "55",
+        "Id": "sn0601",
+        "Name": "Port of Beaumont",
+        "Affil": "PORTS",
+        "Latitude": "30.079699999999999",
+        "Longitude": "-94.086250000000007",
+        "Data": "http://tidesandcurrents.noaa.gov/cdata/DataPlot?id=sn0601",
+        "MetaAPI": "http://tidesandcurrents.noaa.gov/mdapi/latest/webapi/stations/sn0601.xml?expand=deployments,bins",
+        "DataAPI": "http://tidesandcurrents.noaa.gov/api/",
+        "Shape": {
+            "gml:Point": [
+                {
+                    "gml:pos": [
+                        "30.079700000255684 -94.086249999737049"
+                    ]
+                }
+            ]
+        }
+    },
+    {
+        "OBJECTID": "56",
+        "Id": "sn0701",
+        "Name": "Port Arthur",
+        "Affil": "PORTS",
+        "Latitude": "29.867080000000001",
+        "Longitude": "-93.931110000000004",
+        "Data": "http://tidesandcurrents.noaa.gov/cdata/DataPlot?id=sn0701",
+        "MetaAPI": "http://tidesandcurrents.noaa.gov/mdapi/latest/webapi/stations/sn0701.xml?expand=deployments,bins",
+        "DataAPI": "http://tidesandcurrents.noaa.gov/api/",
+        "Shape": {
+            "gml:Point": [
+                {
+                    "gml:pos": [
+                        "29.867079999643124 -93.931110000425576"
+                    ]
+                }
+            ]
+        }
+    },
+    {
+        "OBJECTID": "57",
+        "Id": "t01010",
+        "Name": "Sunshine Skyway Bridge",
+        "Affil": "PORTS",
+        "Latitude": "27.625",
+        "Longitude": "-82.655000000000001",
+        "Data": "http://tidesandcurrents.noaa.gov/cdata/DataPlot?id=t01010",
+        "MetaAPI": "http://tidesandcurrents.noaa.gov/mdapi/latest/webapi/stations/t01010.xml?expand=deployments,bins",
+        "DataAPI": "http://tidesandcurrents.noaa.gov/api/",
+        "Shape": {
+            "gml:Point": [
+                {
+                    "gml:pos": [
+                        "27.624999999751083 -82.65499999964959"
+                    ]
+                }
+            ]
+        }
+    },
+    {
+        "OBJECTID": "58",
+        "Id": "t02010",
+        "Name": "Old Port Tampa",
+        "Affil": "PORTS",
+        "Latitude": "27.862870000000001",
+        "Longitude": "-82.553730000000002",
+        "Data": "http://tidesandcurrents.noaa.gov/cdata/DataPlot?id=t02010",
+        "MetaAPI": "http://tidesandcurrents.noaa.gov/mdapi/latest/webapi/stations/t02010.xml?expand=deployments,bins",
+        "DataAPI": "http://tidesandcurrents.noaa.gov/api/",
+        "Shape": {
+            "gml:Point": [
+                {
+                    "gml:pos": [
+                        "27.862870000151247 -82.553729999739062"
+                    ]
+                }
+            ]
+        }
+    },
+    {
+        "OBJECTID": "59",
+        "Id": "t03010",
+        "Name": "Port Manatee",
+        "Affil": "PORTS",
+        "Latitude": "27.664529999999999",
+        "Longitude": "-82.599180000000004",
+        "Data": "http://tidesandcurrents.noaa.gov/cdata/DataPlot?id=t03010",
+        "MetaAPI": "http://tidesandcurrents.noaa.gov/mdapi/latest/webapi/stations/t03010.xml?expand=deployments,bins",
+        "DataAPI": "http://tidesandcurrents.noaa.gov/api/",
+        "Shape": {
+            "gml:Point": [
+                {
+                    "gml:pos": [
+                        "27.664529999760532 -82.599180000256183"
+                    ]
+                }
+            ]
+        }
+    }
+]
