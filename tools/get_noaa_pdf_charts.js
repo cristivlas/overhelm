@@ -1,4 +1,4 @@
-//
+/
 // Download all available NOAA PDF charts
 //
 const async = require('async');
@@ -23,53 +23,53 @@ catch (error) {
 }
 
 const pdf_download = function(chart, callback) {
-    download(chart.url, chart.file, function(err, result) {
-        callback(err, result);
-        if (!err) {
-            console.log(chart.file, ':', chart.title);
-        }
-    });
+  download(chart.url, chart.file, function(err, result) {
+    callback(err, result);
+    if (!err) {
+        console.log(chart.file, ':', chart.title);
+    }
+  });
 }
 
 // Download table of PDF files
 download(pdf_list_url, pdf_list_file, function(err, result) {
-	if (err) {
-		console.log(err);
-		return;
-	}
-	// Scrape with Cheerio and download each PDF
-	const htmlText = fs.readFileSync(result).toString();
-	const parsedHtml = cheerio.load(htmlText);
+  if (err) {
+    console.log(err);
+    return;
+  }
+  // Scrape with Cheerio and download each PDF
+  const htmlText = fs.readFileSync(result).toString();
+  const parsedHtml = cheerio.load(htmlText);
 
-	parsedHtml('a').map(function(i, elem) {
-		//console.log(elem);
-		const href = cheerio(elem).attr('href');
-		if (!href.match('.pdf')) {
+  parsedHtml('a').map(function(i, elem) {
+    //console.log(elem);
+    const href = cheerio(elem).attr('href');
+    if (!href.match('.pdf')) {
        return;
     }
 
-		const filename = pdf_folder + '/' + elem.children[0].data + '.pdf';
+    const filename = pdf_folder + '/' + elem.children[0].data + '.pdf';
 
-        // TODO: add some PDF validation
-        if (fs.existsSync(filename)) {
-            //console.log(filename, 'exits.');
-            return;
-        }
+    // TODO: add some PDF validation
+    if (fs.existsSync(filename)) {
+        //console.log(filename, 'exits.');
+        return;
+    }
 
-        // next column in the table is the scale
-        const scale = elem.parent.next.children[0].data;
-        // expect next column to be the title
-        const title = elem.parent.next.next.children[0].data;
+    // next column in the table is the scale
+    const scale = elem.parent.next.children[0].data;
+    // expect next column to be the title
+    const title = elem.parent.next.next.children[0].data;
 
-        tasks.push(pdf_download.bind(null, {
-            title: title, scale: scale, url: href, file: filename}));
-        console.log('Queued:', href);
-	});
+    tasks.push(pdf_download.bind(null, {
+        title: title, scale: scale, url: href, file: filename}));
+    console.log('Queued:', href);
+});
 
-	async.parallelLimit(tasks, parallel_dowload_limit, function(err, results) {
-		if (err) {
-			console.log(err);
-		}
-	});
+async.parallelLimit(tasks, parallel_dowload_limit, function(err, results) {
+    if (err) {
+      console.log(err);
+    }
+  });
 });
 
