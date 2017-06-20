@@ -20,6 +20,16 @@
       }
     </style>
     <style>
+      .show-tide {
+        top: .5em;
+        right: 40px;
+        background-color: rgb(255,255,235);
+      }
+      .ol-touch .show-tide {
+        right: 0px;
+      }
+    </style>
+    <style>
       .re-center {
         top: 85px;
         left: .5em;
@@ -71,7 +81,11 @@
       var waterLevelStation = null;
       var tideChart = null;
       var tideChartTime = new Date();
+      var tideChartVisible = true;
 
+      //
+      // track heading on iOS devices
+      //
       window.addEventListener('deviceorientation', function(e) {
         heading = e.webkitCompassHeading;
       });
@@ -93,7 +107,7 @@
           trackLocation();
         }
         button.addEventListener('click', handler, false);
-        button.addEventListener('touchstart', handler, false);
+        //button.addEventListener('touchstart', handler, false);
 
         var element = document.createElement('div');
         element.className = 're-center ol-unselectable ol-control';
@@ -127,6 +141,41 @@
       ol.inherits(tideChartControl, ol.control.Control);
 
 
+      showTideControl = function(opt_options) {
+        const options = opt_options || {};
+
+        const button = document.createElement('button');
+        const icon = document.createElement('img');
+        icon.src = 'images/right-arrow.png';
+        button.appendChild(icon);
+
+        var handler = function() {
+          var elem = document.getElementById('tideChart').parentElement;
+          if (!tideChartVisible) {
+            elem.style.visibility = 'visible';
+            icon.src = 'images/right-arrow.png';
+          }
+          else {
+            elem.style.visibility = 'hidden';
+            icon.src = 'images/left-arrow.png';
+          }
+          tideChartVisible ^= true;
+        }
+        button.addEventListener('click', handler, false);
+        //button.addEventListener('touchstart', handler, false);
+
+        var element = document.createElement('div');
+        element.className = 'show-tide ol-unselectable ol-control';
+        element.appendChild(button);
+
+        ol.control.Control.call(this, {
+          element: element,
+          target: options.target
+        });
+      }
+      ol.inherits(showTideControl, ol.control.Control);
+
+
 		  /**
 			 * Custom control for displaying current location
 			 */
@@ -135,7 +184,6 @@
 				var element = document.createElement('div');
 			  element.className = 'location ol-unselectable ol-control';
 				element.id = 'location';
-				console.log('locationControl:', options.coords);
 				element.innerHTML = convertDMS(options.coords);
 				ol.control.Control.call(this, {
 					element: element,
@@ -308,6 +356,7 @@
                 {attribution: false}
               ).extend([
                 tideChartCtrl,
+                new showTideControl(),
 								new locationControl({coords: coord}),
                 new recenterControl(),
                 new ol.control.FullScreen(),
@@ -354,6 +403,9 @@
        * Update tide chart
        */
       function updateWaterLevel(coord) {
+        if (!tideChartVisible) {
+          return;
+        }
 
         var label; // for water station info
 
@@ -441,25 +493,6 @@
                   }
                 }
               });
-
-              // console.log(tideChart);
-            /*
-              tideChart.handleEvent = function(event) {
-                if (event.type == 'click') {
-                  console.log(waterLevelStation);
-                  const loc = JSON.parse('[' +
-                    waterLevelStation.Longitude + ',' +
-                    waterLevelStation.Latitude + ']');
-                  console.log(loc);
-                  updateMap(loc, 'images/view.png');
-                }
-                else if (event.type == 'mouseout') {
-                  const marker = geoLocationWatchId
-                    ? 'images/marker.png' : 'images/view.png';
-                  updateMap(currentLocation, marker);
-                }
-              };
-            */
             }
           }
         }
@@ -529,6 +562,9 @@
 
         function update(position) {
           console.log(position);
+          if (position.coords.heading) {
+            heading = position.coords.heading;
+          }
           currentLocation = [position.coords.longitude, position.coords.latitude];
           updateMap(currentLocation);
         }
