@@ -1,4 +1,4 @@
-#! /bin/sh
+#!/bin/bash
 ### BEGIN INIT INFO
 # Provides:          Ragnar Backend
 # Required-Start:    $all
@@ -31,7 +31,7 @@ case "$1" in
     exit 0
     ;;
   *)
-    echo "Usage: /etc/init.d/<your script> {start|stop}"
+    echo "Usage: /etc/init.d/ragnar.sh {start|stop}"
     exit 1
     ;;
 esac
