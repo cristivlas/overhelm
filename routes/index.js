@@ -1,3 +1,4 @@
+'use strict';
 const express = require('express');
 const fs = require('fs');
 const http = require('http');
@@ -219,7 +220,7 @@ router.get('/nearestWaterLevelStation/:lat/:lon', function(req, res, next) {
   let minDist = 999999;
   let closest = null;
   
-  for (i = 0; i < waterLevelStations.length; ++i) {
+  for (let i = 0; i < waterLevelStations.length; ++i) {
     const st = waterLevelStations[i];
     var dist = getDistance(req, st);
     if (dist < minDist) {
@@ -246,7 +247,7 @@ router.get('/nearestCurrentsStation/:lat/:lon', function(req, res, next) {
   let minDist = 999999;
   let closest = null;
   
-  for (i = 0; i < currentsStations.length; ++i) {
+  for (let i = 0; i < currentsStations.length; ++i) {
     const st = currentsStations[i];
     var dist = getDistance(req, st);
     if (dist < minDist) {
@@ -296,3 +297,4 @@ router.get('/mockWaterLevelData/:end', function(req, res, next) {
 
 
 module.exports = router;
+
