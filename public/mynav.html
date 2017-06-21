@@ -84,14 +84,6 @@
       var tideChartTime = new Date();
       var tideChartVisible = true;
 
-      //
-      // track heading on iOS devices
-      //
-      window.addEventListener('deviceorientation', function(e) {
-        heading = e.webkitCompassHeading;
-      });
-
-
       /**
        * Custom control for re-centering the map to the current geolocation
        */
@@ -397,7 +389,38 @@
         	elem.innerHTML = convertDMS(coord);
 				}
         updateWaterLevel(coord);
+
+        //todo:
+        // updateCurrents(coord);
 			}
+
+
+      function dateHelper(val) {
+        return Math.floor(val / 10).toString() + (val % 10);
+      }
+
+      /**
+       * Helper for formatting begin_date and end_date for water level requests
+       */
+      function formatDateTimeUTC(date) {
+        const month = date.getUTCMonth() + 1;
+        const day = date.getUTCDate();
+        const hour = date.getUTCHours();
+        const minute = date.getUTCMinutes()
+        return date.getUTCFullYear().toString() + Math.floor(month / 10) + month % 10 + 
+          + Math.floor(day / 10) + day % 10 + ' ' + Math.floor(hour / 10)
+          + Math.floor(hour % 10) + ':' + Math.floor(minute / 10) + minute % 10;
+      }
+
+
+      function formatRequestRange(now, id) {
+        now.setTime(now.getTime() - 12 * 3600 * 1000);
+        const begin = formatDateTimeUTC(now);
+        now.setTime(now.getTime() + 24 * 3600 * 1000);
+        const end = formatDateTimeUTC(now);
+        return '&begin_date=' + begin + '&end_date=' + end
+          + '&time_zone=GMT&station=' + id + '&units=english&format=json';
+      }
 
 
       /**
@@ -409,23 +432,6 @@
        */
       function updateWaterLevel(coord) {
 
-        function dateHelper(val) {
-          return Math.floor(val / 10).toString() + (val % 10);
-        }
-
-        /**
-         * Helper for formatting begin_date and end_date for water level requests
-         */
-        function formatDateTimeUTC(date) {
-          const month = date.getUTCMonth() + 1;
-          const day = date.getUTCDate();
-          const hour = date.getUTCHours();
-          const minute = date.getUTCMinutes()
-          return date.getUTCFullYear().toString() + Math.floor(month / 10) + month % 10 + 
-            + Math.floor(day / 10) + day % 10 + ' ' + Math.floor(hour / 10)
-            + Math.floor(hour % 10) + ':' + Math.floor(minute / 10) + minute % 10;
-        }
-
         /**
          * Process response from backend.
          */
@@ -436,44 +442,34 @@
 
             let s = JSON.parse(xmlHttp.responseText);
 
+            const now = new Date();
             if (waterLevelStation && s.Id == waterLevelStation.Id) {
               //
               // same station? update every 30 minutes
               //
-              const now = new Date();
               if (now.getTime() - tideChartTime.getTime() < 30 * 60 * 1000) {
                 return;
               }
               tideChartTime = now;
             }
-        
             waterLevelStation = s;
 
-           const stationInfo = 'Station: ' + s.Id + ' ' + s.Name + ' ' + s.State;
+            const stationInfo = 'Station: ' + s.Id + ' ' + s.Name + ' ' + s.State;
 
             if (tideChart) {
               tideChart.options.title.text = stationInfo;
             }
 
-            const now = new Date();
-            now.setTime(now.getTime() - 12 * 3600 * 1000);
-            const begin = formatDateTimeUTC(now);
-            now.setTime(now.getTime() + 24 * 3600 * 1000);
-            const end = formatDateTimeUTC(now);
-
             const useMockData = location.search == '?mock';
             const url = useMockData ? ('mockWaterLevelData/' + now.getTime())
-              : 'https://tidesandcurrents.noaa.gov/api/datagetter?product=predictions' 
-              //+ '&begin_date=' + begin + '&end_date=' + end + '&interval=h&datum=MLLW&station=' 
-              + '&begin_date=' + begin + '&end_date=' + end + '&datum=MLLW&station=' 
-              + waterLevelStation.Id + '&time_zone=GMT&units=english&interval=&format=json';
+              : 'https://tidesandcurrents.noaa.gov/api/datagetter?product=predictions&datum=MLLW' 
+              + formatRequestRange(now, waterLevelStation.Id);
 
             console.log(url);
             
-            let xmlHttp2 = new XMLHttpRequest();
-            xmlHttp2.onreadystatechange = processWaterLevelRequest.bind(null, stationInfo);
-            xmlHttp2.open("GET", url);
-            xmlHttp2.send();
+            xmlHttp.onreadystatechange = processWaterLevelRequest.bind(null, stationInfo);
+            xmlHttp.open("GET", url);
+            xmlHttp.send();
           }
         }
 
@@ -482,9 +478,9 @@
          * Process response from NOAA
          */
         function processWaterLevelRequest(stationInfo, event) {
-          const ajaxRequest = event.target;
+          const xmlHttp = event.currentTarget;
 
-          if (ajaxRequest.readyState == 4 && ajaxRequest.status == 200) {
+          if (xmlHttp.readyState == 4 && xmlHttp.status == 200) {
             let labels = []
             let datasets = [ {
               label: '',
@@ -493,7 +489,7 @@
             } ]
             const now = new Date();
 
-            const predictions = JSON.parse(ajaxRequest.responseText).predictions;
+            const predictions = JSON.parse(xmlHttp.responseText).predictions;
 
             // Grid lines color and thickness
             let lineColors = []
@@ -571,16 +567,46 @@
                   }
                 }
               });
-              //console.log(tideChart);
+
             }
           }
         }
-
         const xmlHttp = new XMLHttpRequest();
         xmlHttp.onreadystatechange = processWaterLevelStation;
-
         xmlHttp.open("GET", 'nearestWaterLevelStation/' + coord[1] + '/' + coord[0]);
         xmlHttp.send();
+      }
+
+
+      function updateCurrents(coord) {
+        const xmlHttp = new XMLHttpRequest();
+        xmlHttp.onreadystatechange = processCurrentsStation;
+        xmlHttp.open('GET', 'nearestCurrentsStation/' + coord[1] + '/' + coord[0]);
+        xmlHttp.send();
+      }
+
+
+      function processCurrentsStation(event) {
+        const xmlHttp = event.currentTarget;
+        if (xmlHttp.readyState == 4 && xmlHttp.status == 200) {
+          console.log(xmlHttp.responseText);
+          const station = JSON.parse(xmlHttp.responseText);
+          const now = new Date();            
+          const url = 
+              'https://tidesandcurrents.noaa.gov/api/datagetter?product=currents'
+              + formatRequestRange(now, station.Id);
+          xmlHttp.onreadystatechange = processCurrents;
+          xmlHttp.open('GET', url);
+          xmlHttp.send();
+        }
+      }
+
+
+      function processCurrents(event) {
+        const xmlHttp = event.currentTarget;
+        if (xmlHttp.readyState == 4 && xmlHttp.status == 200) {
+          console.log(xmlHttp.responseText);
+        }
       }
 
 
@@ -629,6 +655,13 @@
         geoLocationWatchId = navigator.geolocation.watchPosition(update, error, options);
         console.log('geoLocationWatchId', geoLocationWatchId);
       }
+
+      //
+      // track heading on iOS devices
+      //
+      window.addEventListener('deviceorientation', function(e) {
+        heading = e.webkitCompassHeading;
+      });
 
       trackLocation();
 
