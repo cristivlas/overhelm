@@ -18,6 +18,9 @@
         width: 75%;
         right: 0px;
       }
+      .armv7 .tide-chart {
+        width: 35%;
+      }
     </style>
     <style>
       .show-tide {
@@ -27,6 +30,9 @@
       }
       .ol-touch .show-tide {
         right: 0px;
+      }
+      .armv7 .show-tide {
+        right: 45px;
       }
     </style>
     <style>
@@ -83,6 +89,12 @@
       var tideChart = null;
       var tideChartTime = new Date();
       var tideChartVisible = true;
+
+      // Hack for Raspberry Pi with 7' touch screen
+      console.log (navigator.userAgent);
+      if (navigator.userAgent.match(/armv7/)) {
+        document.getElementById('map').className += ' armv7';
+      }
 
       /**
        * Custom control for re-centering the map to the current geolocation
