@@ -7,6 +7,10 @@
     <script src="lib/OpenLayers/4.2.0/ol.js"></script>
     <script src="lib/Chart.js"></script>
     <style>
+      .ol-full-screen {
+        left: 65px;
+        top: .5em;
+      }
       .tide-chart {
         top: .5em;
         right: .5em;
@@ -18,24 +22,20 @@
         width: 75%;
         right: 0px;
       }
-      .armv7 .tide-chart {
+      .tablet .tide-chart {
         width: 35%;
       }
-    </style>
-    <style>
       .show-tide {
         top: .5em;
-        right: 40px;
+        right: .5em;
         background-color: rgb(255,255,235);
       }
       .ol-touch .show-tide {
         right: 0px;
       }
-      .armv7 .show-tide {
-        right: 45px;
+      .tablet .show-tide {
+        right: 0px;
       }
-    </style>
-    <style>
       .re-center {
         top: 85px;
         left: .5em;
@@ -60,8 +60,6 @@
 				left: .5em;
         opacity: .7;
       }
-    </style>
-    <style>
       .chart {
         background-color: white;
         opacity: 0.7;
@@ -92,8 +90,9 @@
 
       // Hack for Raspberry Pi with 7' touch screen
       console.log (navigator.userAgent);
-      if (navigator.userAgent.match(/armv7/)) {
-        document.getElementById('map').className += ' armv7';
+      if (navigator.userAgent.match(/armv7/) ||
+          navigator.userAgent.match(/ipad/i)) {
+        document.getElementById('map').className += ' tablet';
       }
 
       /**
@@ -374,6 +373,9 @@
               view: view
             });
 
+            //
+            // USe double click to switch from location tracking to viewing mode
+            //
             map.on('dblclick', function(e) {
               e.preventDefault();
               if (geoLocationWatchId) {
@@ -387,6 +389,7 @@
               currentLocation = latLon;
               updateMap(latLon, 'images/view.png');
             });
+
           }
 
           if (marker) {
