@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Geolocation Test Page</title>
+    <script src="javascripts/geolocation.js"></script>
+  </head>
+  <body>
+    <div id="location"></div>
+    <button type="button" onClick="geolocation.start()">Start</button>
+    <button type="button" onClick="geolocation.stop()">Stop</button>
+    <script>
+      var geolocation = new Geolocation({
+        onSuccess: function(coord) {
+          document.getElementById('location').innerHTML = JSON.stringify(coord);
+        },
+        onError: function(error) {
+          alert(error);
+        }
+      })
+    </script>
+  </body>
+</html>
+
