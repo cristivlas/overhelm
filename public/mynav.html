@@ -72,6 +72,8 @@
     <div id="map" class="map"></div>
     <script>
       const defaultZoom = 12;
+      const locationTimeout = 3000;
+
       var savedZoom = defaultZoom;
 
       var chartTilesets = null; // current tilesets, stringified
@@ -108,6 +110,7 @@
 
         var handler = function() {
           map.getView().setZoom(savedZoom);
+          stopTrackingLocation();
           trackLocation();
         }
         button.addEventListener('click', handler, false);
@@ -235,7 +238,7 @@
        */ 
       function getChartTilesets(coord, callback) {
         const tilesetsUrl = 'tilesets/noaa/' + coord[0] + '/' + coord[1];
-        var xmlHttp = new XMLHttpRequest();
+        const xmlHttp = new XMLHttpRequest();
         xmlHttp.onreadystatechange = function() {
           if (xmlHttp.readyState == 4 && xmlHttp.status == 200) {
             callback(xmlHttp.responseText);
@@ -378,9 +381,8 @@
             //
             map.on('dblclick', function(e) {
               e.preventDefault();
-              if (geoLocationWatchId) {
-                navigator.geolocation.clearWatch(geoLocationWatchId);
-                geoLocationWatchId = null;
+              if (geoLocationWatchId || backendLocationTimeout) {
+                stopTrackingLocation();
                 savedZoom = map.getView().getZoom();
                 alert('Location tracking paused. Click the location button to resume.');
               }
@@ -629,11 +631,55 @@
         return ol.coordinate.toStringHDMS(coords);
       }
 
+  /**************************************************************
+   * Location tracking stuff
+   **************************************************************/
+      var backendLocationTimeout = null;
+
+      function trackLocation() {
+        if (geoLocationWatchId) {
+          return;
+        }
+        if (!backendLocationTimeout) {
+          backendLocationTimeout = setInterval(trackLocation, locationTimeout);
+        }
+
+        const xmlHttp = new XMLHttpRequest();
+        xmlHttp.onreadystatechange = function() {
+          if (xmlHttp.readyState == 4 && xmlHttp.status == 200) {
+            const loc = JSON.parse(xmlHttp.responseText);
+            if (loc) {
+              console.log(backendLocationTimeout, loc);
+              heading = loc.heading;
+              currentLocation = [loc.lon, loc.lat];
+              updateMap(currentLocation);
+            }
+            else {
+              clearInterval(backendLocationTimeout);
+              backendLocationTimeout = null;
+              trackGeolocation();
+            }
+          }
+        }
+        xmlHttp.open("GET", '/location');
+        xmlHttp.send();
+      }
+
+
+      function stopTrackingLocation() {
+        console.log(backendLocationTimeout, geoLocationWatchId);
+        clearInterval(backendLocationTimeout);
+        backendLocationTimeout = null;
+        navigator.geolocation.clearWatch(geoLocationWatchId);
+        geoLocationWatchId = null;
+      }
+
 
       /** 
-       * Track geolocation
+       * Use HTML5 geolocation
        */
-      function trackLocation() {
+      function trackGeolocation() {
+        console.assert(!geoLocationWatchId);
 
         function update(position) {
           console.log(position);
@@ -645,13 +691,11 @@
         }
 
         function error(error) {
-
+          stopTrackingLocation();
           if (confirm(error.message + ' Retry?')) {
             trackLocation();
           }
           else {
-            navigator.geolocation.clearWatch(geoLocationWatchId);
-            geoLocationWatchId = null;
             currentLocation = [-122.4049, 47.6810] // Shilshole Bay
             updateMap(currentLocation, 'images/view.png');
           }
@@ -659,17 +703,14 @@
 
         const options = {
           enableHighAccuracy: true,
-          timeout: 3000,
+          timeout: locationTimeout,
           maximumAge: 0
         };
 
-        if (geoLocationWatchId) {
-            navigator.geolocation.clearWatch(geoLocationWatchId);
-            geoLocationWatchId = null;
-        }
         geoLocationWatchId = navigator.geolocation.watchPosition(update, error, options);
         console.log('geoLocationWatchId', geoLocationWatchId);
       }
+
 
       //
       // track heading on iOS devices

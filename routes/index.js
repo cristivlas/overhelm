@@ -7,6 +7,8 @@ const path = require('path');
 const tmp = require('tmp');
 const urlJoin = require('url-join');
 
+const getLocation = require('../tools/serial_gps');
+
 const currentsStations = require ('./Currents_Active_Stations.json');
 const waterLevelStations = require ('./Waterlevel_Active_Stations.json');
 
@@ -264,6 +266,16 @@ router.get('/nearestCurrentsStation/:lat/:lon', function(req, res, next) {
   }
   res.send(JSON.stringify(result));
 });
+
+
+/******************************************************************
+ *
+ */
+router.get('/location', function(req, res, next) {
+  const loc = getLocation();
+  res.send(JSON.stringify(loc));
+});
+
 
 
 /******************************************************************
