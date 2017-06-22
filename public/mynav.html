@@ -109,7 +109,9 @@
         button.appendChild(icon);
 
         var handler = function() {
-          map.getView().setZoom(savedZoom);
+          if (!geoLocationWatchId && !backendLocationTimeout) {
+            map.getView().setZoom(savedZoom);
+          }
           stopTrackingLocation();
           trackLocation();
         }
@@ -714,7 +716,8 @@
 
       trackLocation();
       
-      if (geoLocationWatchId) {
+      if (navigator.userAgent.match(/ipad/i)
+       || navigator.userAgent.match(/iphone/i)) {
         //
         // track heading on iOS devices
         //
