@@ -1,3 +1,4 @@
+'use strict';
 const myports = [ '/dev/ttyUSB0', 'COM5', 'COM7' ];
 
 const SerialPort = require('serialport');
