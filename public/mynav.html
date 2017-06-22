@@ -209,7 +209,7 @@
           name: 'Current position',
         });
 
-        const rotation = (heading && geoLocationWatchId) ? heading * (Math.PI / 180) : 0;
+        const rotation = heading ? heading * (Math.PI / 180) : 0;
 
         var iconStyle = new ol.style.Style({
           image: new ol.style.Icon(/** @type {olx.style.IconOptions} */ ({
@@ -667,11 +667,12 @@
 
 
       function stopTrackingLocation() {
-        console.log(backendLocationTimeout, geoLocationWatchId);
+        //console.log(backendLocationTimeout, geoLocationWatchId);
         clearInterval(backendLocationTimeout);
         backendLocationTimeout = null;
         navigator.geolocation.clearWatch(geoLocationWatchId);
         geoLocationWatchId = null;
+        heading = 0;
       }
 
 
@@ -711,15 +712,16 @@
         console.log('geoLocationWatchId', geoLocationWatchId);
       }
 
-
-      //
-      // track heading on iOS devices
-      //
-      window.addEventListener('deviceorientation', function(e) {
-        heading = e.webkitCompassHeading;
-      });
-
       trackLocation();
+      
+      if (geoLocationWatchId) {
+        //
+        // track heading on iOS devices
+        //
+        window.addEventListener('deviceorientation', function(e) {
+          heading = e.webkitCompassHeading;
+        });
+      }
 
     </script>
   </body>
