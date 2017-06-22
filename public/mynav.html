@@ -6,11 +6,8 @@
     <meta name="viewport" content="initial-scale=1.0, user-scalable=no, width=device-width">
     <script src="lib/OpenLayers/4.2.0/ol.js"></script>
     <script src="lib/Chart.js"></script>
+    <script src="javascripts/geolocation.js"></script>
     <style>
-      //.ol-full-screen {
-      //  left: 65px;
-      //  top: .5em;
-      //}
       .tide-chart {
         top: .5em;
         right: .5em;
@@ -82,16 +79,15 @@
       var map = null;           // the map object
 
       var currentLocation = null;
-      var geoLocationWatchId = null;
-      var heading = 0;
 
+      /*****************************************************************
+       * Tides information
+       *****************************************************************/
       var waterLevelStation = null;
       var tideChart = null;
       var tideChartTime = new Date();
       var tideChartVisible = true;
 
-      // Hack for Raspberry Pi with 7' touch screen
-      console.log (navigator.userAgent);
       if (navigator.userAgent.match(/armv7/) ||
           navigator.userAgent.match(/ipad/i)) {
         document.getElementById('map').className += ' tablet';
@@ -109,14 +105,13 @@
         button.appendChild(icon);
 
         var handler = function() {
-          if (!geoLocationWatchId && !backendLocationTimeout) {
+          if (!geolocation.isTracking()) {
             map.getView().setZoom(savedZoom);
           }
-          stopTrackingLocation();
-          trackLocation();
+          geolocation.stop();
+          geolocation.start();
         }
         button.addEventListener('click', handler, false);
-        //button.addEventListener('touchstart', handler, false);
 
         var element = document.createElement('div');
         element.className = 're-center ol-unselectable ol-control';
@@ -171,7 +166,6 @@
           tideChartVisible ^= true;
         }
         button.addEventListener('click', handler, false);
-        //button.addEventListener('touchstart', handler, false);
 
         var element = document.createElement('div');
         element.className = 'show-tide ol-unselectable ol-control';
@@ -202,6 +196,8 @@
 			ol.inherits(locationControl, ol.control.Control);
 				
 
+      var headingRotation = 0;
+
       /**
        * Construct position marker layer
        */
@@ -211,8 +207,6 @@
           name: 'Current position',
         });
 
-        const rotation = heading ? heading * (Math.PI / 180) : 0;
-
         var iconStyle = new ol.style.Style({
           image: new ol.style.Icon(/** @type {olx.style.IconOptions} */ ({
             anchor: [0.5, 0.5],
@@ -220,7 +214,7 @@
             anchorYUnits: 'fraction',
             src: iconUrl,
             rotateWithView: true,
-            rotation: rotation
+            rotation: geolocation.isTracking() ? headingRotation : 0
           }))
         });
         iconFeature.setStyle(iconStyle);
@@ -368,7 +362,6 @@
                 new showTideControl(),
 								new locationControl({coords: coord}),
                 new recenterControl(),
-                //new ol.control.FullScreen(),
                 new ol.control.ScaleLine({units: 'nautical'}),
               ]),
               target: 'map',
@@ -383,8 +376,8 @@
             //
             map.on('dblclick', function(e) {
               e.preventDefault();
-              if (geoLocationWatchId || backendLocationTimeout) {
-                stopTrackingLocation();
+              if (geolocation.isTracking()) {
+                geolocation.stop();
                 savedZoom = map.getView().getZoom();
                 alert('Location tracking paused. Click the location button to resume.');
               }
@@ -633,99 +626,25 @@
         return ol.coordinate.toStringHDMS(coords);
       }
 
-  /**************************************************************
-   * Location tracking stuff
-   **************************************************************/
-      var backendLocationTimeout = null;
 
-      function trackLocation() {
-        if (geoLocationWatchId) {
-          return;
-        }
-        if (!backendLocationTimeout) {
-          backendLocationTimeout = setInterval(trackLocation, locationTimeout);
-        }
-
-        const xmlHttp = new XMLHttpRequest();
-        xmlHttp.onreadystatechange = function() {
-          if (xmlHttp.readyState == 4 && xmlHttp.status == 200) {
-            const loc = JSON.parse(xmlHttp.responseText);
-            if (loc) {
-              console.log(backendLocationTimeout, loc);
-              heading = loc.heading;
-              currentLocation = [loc.lon, loc.lat];
-              updateMap(currentLocation);
-            }
-            else {
-              clearInterval(backendLocationTimeout);
-              backendLocationTimeout = null;
-              trackGeolocation();
-            }
+      var geolocation = new Geolocation({
+        onSuccess: function(coord) {
+          currentLocation = [ coord.lon, coord.lat ];
+          if (coord.heading) {
+            headingRotation = coord.heading * (Math.PI / 180);
           }
-        }
-        xmlHttp.open("GET", '/location');
-        xmlHttp.send();
-      }
-
-
-      function stopTrackingLocation() {
-        //console.log(backendLocationTimeout, geoLocationWatchId);
-        clearInterval(backendLocationTimeout);
-        backendLocationTimeout = null;
-        navigator.geolocation.clearWatch(geoLocationWatchId);
-        geoLocationWatchId = null;
-        heading = 0;
-      }
-
-
-      /** 
-       * Use HTML5 geolocation
-       */
-      function trackGeolocation() {
-        console.assert(!geoLocationWatchId);
-
-        function update(position) {
-          console.log(position);
-          if (position.coords.heading) {
-            heading = position.coords.heading;
-          }
-          currentLocation = [position.coords.longitude, position.coords.latitude];
           updateMap(currentLocation);
-        }
-
-        function error(error) {
-          stopTrackingLocation();
-          if (confirm(error.message + ' Retry?')) {
-            trackLocation();
-          }
-          else {
+        },
+        onError: function(err) {
+          if (!currentLocation) {
             currentLocation = [-122.4049, 47.6810] // Shilshole Bay
-            updateMap(currentLocation, 'images/view.png');
           }
+          updateMap(currentLocation, 'images/view.png');
         }
+      });
 
-        const options = {
-          enableHighAccuracy: true,
-          timeout: locationTimeout,
-          maximumAge: 0
-        };
-
-        geoLocationWatchId = navigator.geolocation.watchPosition(update, error, options);
-        console.log('geoLocationWatchId', geoLocationWatchId);
-      }
-
-      trackLocation();
+      geolocation.start();
       
-      if (navigator.userAgent.match(/ipad/i)
-       || navigator.userAgent.match(/iphone/i)) {
-        //
-        // track heading on iOS devices
-        //
-        window.addEventListener('deviceorientation', function(e) {
-          heading = e.webkitCompassHeading;
-        });
-      }
-
     </script>
   </body>
 </html>
