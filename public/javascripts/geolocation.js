@@ -48,7 +48,12 @@ class Geolocation {
           this._intervalId = 
             setInterval(this._sendLocationRequest.bind(this), this._timeout);
         }
-        this._update(loc);
+        if (loc.lon && loc.lat) {
+          // don't call _update when GPS signal is lost and there's no 
+          // valid lon/lat -- perhaps a better way of handling this is in
+          // the serial_gps.js module
+          this._update(loc);
+        }
       }
       else {
         if (this._intervalId) {
