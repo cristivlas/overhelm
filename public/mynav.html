@@ -279,7 +279,7 @@
               }
               maxRes = Math.ceil((tileset.height * viewMaxRes) / hMax);
 
-              const url = 'tiles/noaa/' + tileset.ident + '/{z}/{x}/{y}.png';
+              const url = 'tiles/noaa/' + tileset.ident + '/{z}/{x}/{y}';
               const layer = new ol.layer.Tile({
                 source: new ol.source.XYZ({url: url}),
                 maxResolution: maxRes,
@@ -342,7 +342,7 @@
          */
         function baseLayer() {
           return new ol.layer.Tile({
-            source: new ol.source.XYZ({url:'tiles/wikimedia/osm-intl/{z}/{x}/{y}.png'})
+            source: new ol.source.XYZ({url:'tiles/wikimedia/osm-intl/{z}/{x}/{y}'})
             //source: new ol.source.XYZ({url:'tiles/osm/{a-c}/{z}/{x}/{y}.png'})
           });
         }
@@ -629,7 +629,9 @@
 
       var geolocation = new Geolocation({
         onSuccess: function(coord) {
-          currentLocation = [ coord.lon, coord.lat ];
+          if (coord.lon && coord.lat) {
+            currentLocation = [ coord.lon, coord.lat ];
+          }
           if (coord.heading) {
             headingRotation = coord.heading * (Math.PI / 180);
           }

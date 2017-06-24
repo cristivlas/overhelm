@@ -21,6 +21,7 @@ module.exports = function(url, dest, cb) {
         cb(err);
       }
     });
+    request.end();
   }
   catch(err) {
     cb(err);

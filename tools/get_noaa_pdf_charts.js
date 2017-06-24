@@ -1,4 +1,4 @@
-/
+//
 // Download all available NOAA PDF charts
 //
 const async = require('async');

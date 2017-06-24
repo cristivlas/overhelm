@@ -82,7 +82,7 @@ var tileService = {
 /******************************************************************
  * Tiles service proxy
  */
-router.get('/tiles/:srv/:set/:z/:x/:y.png', function(req, res, next) {
+router.get('/tiles/:srv/:set/:z/:x/:y', function(req, res, next) {
 
   const service = tileService[req.params.srv];
   if (!service) {
@@ -167,6 +167,8 @@ router.get('/tiles/:srv/:set/:z/:x/:y.png', function(req, res, next) {
         fs.unlink(tmpFileName);
         next(err);
       });
+
+      request.end();
     }
     catch (err) {
       file.close();
