@@ -1,4 +1,5 @@
 'use strict';
+const bs = require('binarysearch');
 const express = require('express');
 const fs = require('fs');
 const http = require('http');
@@ -279,36 +280,47 @@ router.get('/location', function(req, res, next) {
 });
 
 
-
 /******************************************************************
- * Test utilities
-  */
-function formatDateTime(date) {
-  const month = date.getUTCMonth() + 1;
-  const day = date.getUTCDate();
-  const hour = date.getUTCHours();
-  const minute = date.getUTCMinutes()
-  return date.getUTCFullYear() + '-' + Math.floor(month / 10) + month % 10 + '-'
-    + Math.floor(day / 10) + day % 10 + ' ' + Math.floor(hour / 10)
-    + Math.floor(hour % 10) + ':' + Math.floor(minute / 10) + minute % 10;
-}
+ * 
+ */
+var tides = {}
 
-
-router.get('/mockWaterLevelData/:end', function(req, res, next) {
-  let result = { predictions: [] }
-
-  const begin = req.params.end - 24 * 3600 * 1000;
-  const end = req.params.end;
-
-  for (t = begin; t <= end; t += 6 * 60 * 1000) {
-    result.predictions.push({
-      t: formatDateTime(new Date(t)),
-      v: Math.cos(t/(3 * 3600 * 1000)) * 10 + 10
-    });
+router.get('/tides/:station/:time', function(req, res, next) {
+  const date = new Date(req.params.time);
+  const year = date.getUTCFullYear();
+  const station = req.params.station;
+  if (!tides[station]) {
+    tides[station] = require(
+      '../tools/tides/' 
+      + req.params.station + '/' + year + '/mllw.json');
   }
-  res.send(JSON.stringify(result));
+  if (tides[station].error) {
+    var error = new Error(tides[station].error.message);
+    error.status = 500;
+    return next(error);
+  }
+  date.setTime(date.getTime() - 12 * 3600 * 1000);
+  date.setTime(date.getTime() + date.getTimezoneOffset() * 60000);
+
+  const tidePredictions = tides[station].predictions;
+  const start = bs.closest(tidePredictions, date, function(value, find) {
+    const dt = new Date(value.t);
+    if (dt.getTime() > find.getTime()) {
+      return 1;
+    }
+    else if (dt.getTime() < find.getTime()) {
+      return -1;
+    }
+    return 0;
+  });
+
+  var result = new Array(240);
+
+  for (var i = 0; i < 240; ++i) {
+    result[i] = tidePredictions[start + i];
+  }
+  res.send(JSON.stringify({ predictions: result }));
 });
 
 
 module.exports = router;
-

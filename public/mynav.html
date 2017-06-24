@@ -462,9 +462,9 @@
               if (now.getTime() - tideChartTime.getTime() < 30 * 60 * 1000) {
                 return;
               }
-              tideChartTime = now;
             }
             waterLevelStation = s;
+            tideChartTime = now;
 
             const stationInfo = 'Station: ' + s.Id + ' ' + s.Name + ' ' + s.State;
 
@@ -472,13 +472,19 @@
               tideChart.options.title.text = stationInfo;
             }
 
-            const useMockData = location.search == '?mock';
-            const url = useMockData ? ('mockWaterLevelData/' + now.getTime())
-              : 'https://tidesandcurrents.noaa.gov/api/datagetter?product=predictions&datum=MLLW' 
+            const currentTime = now.toISOString();
+            console.log(currentTime);
+            const useNOAAData = location.search == '?noaa';
+            var url;
+            if (useNOAAData) {
+              url = 'https://tidesandcurrents.noaa.gov/api/datagetter?product=predictions&datum=MLLW' 
               + formatRequestRange(now, waterLevelStation.Id);
-
+            } 
+            else {
+              url = 'tides/' + waterLevelStation.Id + '/' + currentTime;
+            }
             console.log(url);
-            
+
             xmlHttp.onreadystatechange = processWaterLevelRequest.bind(null, stationInfo);
             xmlHttp.open("GET", url);
             xmlHttp.send();
