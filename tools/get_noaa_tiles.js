@@ -2,8 +2,6 @@ const async = require('async');
 const https = require('https');
 const charts = require('../routes/noaa-layers.json');
 
-const maxBatchSize = 8;
-
 // http://wiki.openstreetmap.org/wiki/Slippy_map_tilenames
 function long2tile(lon,zoom) {
   return Math.floor((lon+180)/360*Math.pow(2,zoom));
@@ -58,9 +56,9 @@ function nextChart(tile) {
 
 function nextTile(tile) {
   ++tile.x;
-  if (tile.x >= tile.xMax) {
+  if (tile.x > tile.xMax) {
     ++tile.y;
-    if (tile.y >= tile.yMax) {
+    if (tile.y > tile.yMax) {
       if (!nextChart(tile)) {
         return false;
       }
@@ -85,6 +83,7 @@ function nextTile(tile) {
     resp.on('data', function(chunk) {
     });
   }).end();
+  return true;
 }
 
 nextTile(currentTile);

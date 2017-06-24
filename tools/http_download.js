@@ -11,6 +11,7 @@ module.exports = function(url, dest, cb) {
       response.pipe(file);
       file.on('finish', function() {
         if (response.statusCode != 200) {
+          console.log(response.statusCode);
           cb(new Error(response.statusMessage));
         }
         file.close(cb.bind(null, null, dest));
