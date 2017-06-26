@@ -99,13 +99,11 @@ router.get('/tiles/:srv/:set/:z/:x/:y', function(req, res, next) {
   }
 
   function uploadTile(filePath, req, res, next) {
-    //console.log('Uploading: ' + filePath);
     let file = fs.createReadStream(filePath);
     res.setHeader('content-type', 'image/png');
     file.pipe(res);
 
     file.on('close', function() {
-      //console.log('Finished uploading: ' + filePath);
       res.end();
     });
 
@@ -127,14 +125,13 @@ router.get('/tiles/:srv/:set/:z/:x/:y', function(req, res, next) {
 
     ensureDirectoryExists(filePath);
     const tmpFileName = tmp.tmpNameSync();
-    //console.log(tmpFileName);
 
     let file = fs.createWriteStream(tmpFileName);
     let options = {
       host: service.host(req.params.set),
       path: service.url(req.params.set, req.params.x, req.params.y, req.params.z),
     };
-    //console.log(options.host, options.path);
+
     try {
       var protocol = service.ssl ? https : http;
       let request = protocol.get(options, function(response) {
@@ -179,11 +176,12 @@ router.get('/tiles/:srv/:set/:z/:x/:y', function(req, res, next) {
   }
 
   const cachedFilePath = formatTileCacheFileName(req, res, next);
-  //console.log(cachedFilePath);
 
   if (fs.existsSync(cachedFilePath)) {
-    //console.log('File exists: ' + cachedFilePath);
     uploadTile(cachedFilePath, req, res, next);
+  }
+  else if (req.query.source === 'local') {
+    res.end();
   }
   else {
     downloadAndUploadTile(cachedFilePath, req, res, next)

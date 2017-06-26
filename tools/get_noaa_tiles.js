@@ -89,6 +89,11 @@ function nextTile(tile) {
     req.on('error', function(err) {
       console.log(err);
     });
+    req.on('socket', function(socket) {
+      socket.on('error', function(err) {
+        console.log(err);
+      });
+    });
     req.end();
   }
   catch (err) {

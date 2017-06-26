@@ -279,7 +279,10 @@
               }
               maxRes = Math.ceil((tileset.height * viewMaxRes) / hMax);
 
-              const url = 'tiles/noaa/' + tileset.ident + '/{z}/{x}/{y}';
+              let url = 'tiles/noaa/' + tileset.ident + '/{z}/{x}/{y}';
+              if (location.search !== '?noaa' && location.search !== '?noaa-tiles') {
+                url += '?source=local';
+              }
               const layer = new ol.layer.Tile({
                 source: new ol.source.XYZ({url: url}),
                 maxResolution: maxRes,
