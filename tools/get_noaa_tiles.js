@@ -1,4 +1,3 @@
-const async = require('async');
 const https = require('https');
 const charts = require('../routes/noaa-layers.json');
 
@@ -75,14 +74,26 @@ function nextTile(tile) {
     port: 3443,
     rejectUnauthorized: false
   }
-  https.get(options, function(resp) {
-    resp.on('end', function() {
-      console.log(path);
-      nextTile(tile);
+  try {
+    var req = https.get(options, function(resp) {
+      resp.on('end', function(err) {
+        console.log(path);
+        if (err) {
+          console.log(err);
+        }
+        nextTile(tile);
+      });
+      resp.on('data', function(chunk) {
+      });
     });
-    resp.on('data', function(chunk) {
+    req.on('error', function(err) {
+      console.log(err);
     });
-  }).end();
+    req.end();
+  }
+  catch (err) {
+    console.log (err);
+  }
   return true;
 }
 
