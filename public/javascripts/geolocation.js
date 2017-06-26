@@ -5,12 +5,18 @@ class Geolocation {
     this._timeout = options.timeout ? options.timeout : 3000;
     this._errorCallback = options.onError;
     this._successCallback = options.onSuccess;
+    this._ios = (navigator.platform == 'iPad' || navigator.platform == 'iPhone');
   }
 
   start() {
     if (!this.isTracking()) {
       console.log(this);
-      this._sendLocationRequest();
+      if (this._ios) {
+        _useHTML5Geolocation();
+      }
+      else {
+        this._sendLocationRequest();
+      }
     }
   }
 
@@ -55,26 +61,29 @@ class Geolocation {
           clearInterval(this._intervalId);
           this._intervalId = null;
         }
-        //
-        // Fail over to HTML5 geolocation
-        //
-        this._watchId = navigator.geolocation.watchPosition(
-          this._onSuccess.bind(this),
-          this._onError.bind(this),
-          {
-            enableHighAccuracy: true,
-            timeout: this._timeout,
-            maximumAge: 0
-          });
-
-        if (1 && !this._once 
-            && (navigator.platform == 'iPad' || navigator.platform == 'iPhone')) {
-          this._once = true;
-          window.addEventListener('deviceorientation', function(e) {
-            this._heading = e.webkitCompassHeading;
-          }.bind(this));
-        }
+        this._useHTML5Geolocation();
       }
+    }
+  }
+
+  _useHTML5Geolocation() {
+    //
+    // Fail over to HTML5 geolocation
+    //
+    this._watchId = navigator.geolocation.watchPosition(
+      this._onSuccess.bind(this),
+      this._onError.bind(this),
+      {
+        enableHighAccuracy: true,
+        timeout: this._timeout,
+        maximumAge: 0
+      });
+
+    if (this._ios && !this._once) {
+      this._once = true;
+      window.addEventListener('deviceorientation', function(e) {
+        this._heading = e.webkitCompassHeading;
+      }.bind(this));
     }
   }
 

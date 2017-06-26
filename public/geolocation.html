@@ -11,7 +11,8 @@
     <script>
       var geolocation = new Geolocation({
         onSuccess: function(coord) {
-          document.getElementById('location').innerHTML = JSON.stringify(coord);
+          document.getElementById('location').innerHTML = 
+            JSON.stringify(coord) + ' (iOS:' + geolocation._ios +')';
         },
         onError: function(error) {
           alert(error);
