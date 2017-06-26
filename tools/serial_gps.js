@@ -1,5 +1,5 @@
 'use strict';
-const myports = [ '/dev/ttyUSB0', 'COM5', 'COM7' ];
+const myports = [ '/dev/ttyACM0', '/dev/ttyUSB0', 'COM5', 'COM7' ];
 
 const SerialPort = require('serialport');
 const keys = ['time', 'lon', 'lat', 'speed', 'heading' ];
