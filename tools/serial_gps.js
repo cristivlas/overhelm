@@ -1,10 +1,14 @@
 'use strict';
-const myports = [ '/dev/ttyACM0', '/dev/ttyUSB0', 'COM5', 'COM7' ];
+
+const myports = [ 
+  '/dev/ttyACM0', '/dev/ttyUSB0',
+  'COM3', 'COM4', 'COM5', 'COM6', 'COM7' 
+];
 
 const SerialPort = require('serialport');
 const keys = ['time', 'lon', 'lat', 'speed', 'heading' ];
 const protocol = 'RMC';
-var location = null;
+let location = null;
 
 for (var i = 0; i != myports.length; ++i) {
   const port = new SerialPort(myports[i], {
