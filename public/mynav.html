@@ -632,7 +632,11 @@
 
 
       function convertDMS(coords) {
-        return ol.coordinate.toStringHDMS(coords);
+        let result = ol.coordinate.toStringHDMS(coords);
+        if (geolocation.speed > 0.25) {
+          result += '  [' + Math.floor(geolocation.speed * 100) / 100 + ' kts]';
+        }
+        return result;
       }
 
 

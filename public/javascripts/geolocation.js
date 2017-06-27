@@ -6,6 +6,7 @@ class Geolocation {
     this._errorCallback = options.onError;
     this._successCallback = options.onSuccess;
     this._ios = (navigator.platform == 'iPad' || navigator.platform == 'iPhone');
+    this.speed = 0;
   }
 
   start() {
@@ -91,7 +92,7 @@ class Geolocation {
     var coord = {
       lon: pos.coords.longitude,
       lat: pos.coords.latitude,
-      speed: pos.coords.speed,
+      speed: pos.coords.speed * 1.943844, // meters per second -> knots
       heading: pos.coords.heading
     }
     this._update(coord);
@@ -111,6 +112,7 @@ class Geolocation {
     if (!coord.heading && this._heading) {
       coord.heading = this._heading;
     }
+    this.speed = coord.speed;
     if (this._successCallback) {
       this._successCallback(coord);
     }
