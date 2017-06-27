@@ -12,7 +12,7 @@ class Geolocation {
     if (!this.isTracking()) {
       console.log(this);
       if (this._ios) {
-        _useHTML5Geolocation();
+        this._useHTML5Geolocation();
       }
       else {
         this._sendLocationRequest();
