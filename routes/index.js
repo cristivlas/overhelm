@@ -8,7 +8,7 @@ const path = require('path');
 const tmp = require('tmp');
 const urlJoin = require('url-join');
 
-const getLocation = require('../tools/serial_gps');
+const getLocation = require('./serial_gps');
 
 const currentsStations = require ('./Currents_Active_Stations.json');
 const waterLevelStations = require ('./Waterlevel_Active_Stations.json');
