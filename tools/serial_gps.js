@@ -32,6 +32,7 @@ for (var i = 0; i != myports.length; ++i) {
             const k = keys[j];
             location[k] = data[k];
           }
+          location.speed *= 0.539957; // km/h to knots
         }
       });
     

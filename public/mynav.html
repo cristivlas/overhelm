@@ -639,27 +639,31 @@
         return result;
       }
 
+      function updateDefault() {
+        if (!currentLocation) {
+          currentLocation = [-122.4049, 47.6810] // Shilshole Bay
+        }
+        updateMap(currentLocation, 'images/view.png');
+      }
 
       var geolocation = new Geolocation({
         onSuccess: function(coord) {
-          if (coord.lon && coord.lat) {
-            currentLocation = [ coord.lon, coord.lat ];
-          }
           if (coord.heading) {
             headingRotation = coord.heading * (Math.PI / 180);
           }
-          updateMap(currentLocation);
+          if (coord.lon && coord.lat) {
+            currentLocation = [ coord.lon, coord.lat ];
+            updateMap(currentLocation);
+          }
         },
         onError: function(err) {
-          if (!currentLocation) {
-            currentLocation = [-122.4049, 47.6810] // Shilshole Bay
-          }
-          updateMap(currentLocation, 'images/view.png');
+          updateDefault();
         }
       });
 
       geolocation.start();
-      
+      updateDefault();
+
     </script>
   </body>
 </html>
