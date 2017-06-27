@@ -1,3 +1,4 @@
+const devnull = require('dev-null');
 const https = require('https');
 const charts = require('../routes/noaa-layers.json');
 
@@ -76,6 +77,7 @@ function nextTile(tile) {
   }
   try {
     var req = https.get(options, function(resp) {
+      resp.pipe(devnull());
       resp.on('end', function(err) {
         console.log(path);
         if (err) {
@@ -89,11 +91,7 @@ function nextTile(tile) {
     req.on('error', function(err) {
       console.log(err);
     });
-    req.on('socket', function(socket) {
-      socket.on('error', function(err) {
-        console.log(err);
-      });
-    });
+
     req.end();
   }
   catch (err) {

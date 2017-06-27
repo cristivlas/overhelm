@@ -11,6 +11,7 @@
   "dependencies": {
     "async": "^2.4.1",
     "cheerio": "^1.0.0-rc.1",
+    "dev-null": "^0.1.1",
     "https": "^1.0.0",
     "pngjs": "^3.2.0",
     "url": "^0.11.0"
