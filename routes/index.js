@@ -152,6 +152,7 @@ router.get('/tiles/:srv/:set/:z/:x/:y', function(req, res, next) {
           }
           else {
             fs.unlinkSync(tmpFileName);
+            console.log(filePath + ': ' + response.statusMessage);
             res.statusCode = response.statusCode;
             res.send(response.statusMessage);
           }

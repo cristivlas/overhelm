@@ -40,6 +40,33 @@
       .ol-touch .re-center {
         top: 95px;
       }
+      .chart {
+        background-color: white;
+        opacity: 0.7;
+        visibility: hidden;
+      }
+      .location {
+        background-color: yellow;
+        font-weight: bold;
+        font-size: 120%;
+        font-family: monospace;
+				bottom: 2em;
+				left: .5em;
+        opacity: .7;
+      }
+      .speed {
+        bottom: 4em;
+        left: .5em;
+        width: 120px;
+        height: 25px;
+        text-align: center;
+        font-size: 120%;
+        font-weight: bold;
+        font-family: monospace;
+        color: white;
+        background-color: navy;
+        opacity: 0.7;
+      }
     </style>
     <style type="text/css">
       html, body, .map {
@@ -47,20 +74,6 @@
         padding: 0;
         width: 100%;
         height: 100%;
-      }
-    </style>
-    <style>
-      .location {
-        background-color: white;
-        font-weight: bold;
-				bottom: 2em;
-				left: .5em;
-        opacity: .7;
-      }
-      .chart {
-        background-color: white;
-        opacity: 0.7;
-        visibility: hidden;
       }
     </style>
 
@@ -96,14 +109,14 @@
       /**
        * Custom control for re-centering the map to the current geolocation
        */
-      recenterControl = function(opt_options) {
+      const recenterControl = function(opt_options) {
         const options = opt_options || {};
 
         const button = document.createElement('button');
         const icon = document.createElement('img');
         icon.src = 'images/pointer-icon.png';
         button.appendChild(icon);
-
+        button.title = 'Track current location';
         var handler = function() {
           if (!geolocation.isTracking()) {
             map.getView().setZoom(savedZoom);
@@ -128,7 +141,7 @@
       /**
        * Custom control for drawing water levels
        */
-      tideChartControl = function(opt_options) {
+      const tideChartControl = function(opt_options) {
         const options = opt_options || {};
 
         const canvas = document.createElement('canvas');
@@ -145,23 +158,28 @@
       ol.inherits(tideChartControl, ol.control.Control);
 
 
-      showTideControl = function(opt_options) {
+      /**
+       * Button for showing / hiding water levels (tide charts)
+       */
+      const showTideControl = function(opt_options) {
         const options = opt_options || {};
 
         const button = document.createElement('button');
         const icon = document.createElement('img');
         icon.src = 'images/right-arrow.png';
         button.appendChild(icon);
-
+        button.title = 'Hide tide chart';
         var handler = function() {
           var elem = document.getElementById('tideChart').parentElement;
           if (!tideChartVisible) {
             elem.style.visibility = 'visible';
             icon.src = 'images/right-arrow.png';
+            button.title = 'Hide tide chart';
           }
           else {
             elem.style.visibility = 'hidden';
             icon.src = 'images/left-arrow.png';
+            button.title = 'Show tide chart';
           }
           tideChartVisible ^= true;
         }
@@ -182,7 +200,7 @@
 		  /**
 			 * Custom control for displaying current location
 			 */
-			locationControl = function(opt_options) {
+			const locationControl = function(opt_options) {
 				const options = opt_options || {};
 				var element = document.createElement('div');
 			  element.className = 'location ol-unselectable ol-control';
@@ -194,6 +212,23 @@
 				});
 			}
 			ol.inherits(locationControl, ol.control.Control);
+
+
+      /**
+			 * Custom control for displaying speed in knots
+			 */
+			const speedControl = function(opt_options) {
+				const options = opt_options || {};
+				var element = document.createElement('div');
+			  element.className = 'speed ol-unselectable ol-control';
+				element.id = 'speed';
+        element.innerHTML = '0 kts';
+				ol.control.Control.call(this, {
+					element: element,
+					target: options.target
+				});
+			}
+			ol.inherits(speedControl, ol.control.Control);
 				
 
       var headingRotation = 0;
@@ -365,6 +400,7 @@
                 new showTideControl(),
 								new locationControl({coords: coord}),
                 new recenterControl(),
+                new speedControl(),
                 new ol.control.ScaleLine({units: 'nautical'}),
               ]),
               target: 'map',
@@ -453,7 +489,11 @@
         function processWaterLevelStation(event) {
           const xmlHttp = event.currentTarget;
           
-          if (xmlHttp.readyState == 4 && xmlHttp.status == 200) {
+          if (xmlHttp.readyState == 4) {
+            if (xmlHttp.status != 200) {
+              console.log(xmlHttp.response.text);
+              return;
+            }
 
             let s = JSON.parse(xmlHttp.responseText);
 
@@ -632,11 +672,7 @@
 
 
       function convertDMS(coords) {
-        let result = ol.coordinate.toStringHDMS(coords);
-        if (geolocation.speed > 0.25) {
-          result += '  [' + Math.floor(geolocation.speed * 100) / 100 + ' kts]';
-        }
-        return result;
+        return ol.coordinate.toStringHDMS(coords);
       }
 
       function updateDefault() {
@@ -652,6 +688,12 @@
             headingRotation = coord.heading * (Math.PI / 180);
           }
           if (coord.lon && coord.lat) {
+            if (geolocation.speed) {
+              let elem = document.getElementById('speed');
+              if (elem) {
+                elem.innerHTML = Math.floor(geolocation.speed * 100) / 100 + ' kts';
+              }
+            }
             currentLocation = [ coord.lon, coord.lat ];
             updateMap(currentLocation);
           }
