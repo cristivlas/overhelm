@@ -14,7 +14,7 @@ module.exports = {
     if (!this.online && location.time) {
       exec('date -s "' + location.time.toString() + '"', function(err, stdout, stderr) {
         if (err) {
-          console.log(err);
+          console.log(err.message);
         }
         else {
           console.log('time set:', location.time.toString());
