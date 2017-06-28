@@ -8,11 +8,13 @@
   "dependencies": {
     "binarysearch": "^1.0.0",
     "body-parser": "~1.17.1",
+    "child_process": "^1.0.2",
     "cookie-parser": "~1.4.3",
     "debug": "~2.6.3",
     "express": "~4.15.2",
     "gps": "^0.3.0",
     "https": "^1.0.0",
+    "is-online": "^7.0.0",
     "jade": "~1.11.0",
     "morgan": "^1.8.2",
     "serialport": "^4.0.7",

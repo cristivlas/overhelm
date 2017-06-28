@@ -1,14 +1,33 @@
 'use strict';
 
+const exec = require('child_process').exec;
+const isOnline = require('is-online');
+const SerialPort = require('serialport');
+
+let location = null;
+
+module.exports = {
+  getLocation: function () {
+    return location;
+  },
+  online: false
+}
+
+isOnline({timeout:5000}).then(function(online) {
+  console.log('online', online);
+  module.exports.online = online;
+});
+
+
+const keys = ['time', 'lon', 'lat', 'speed', 'heading' ];
+const protocol = 'RMC';
+
 const myports = [ 
   '/dev/ttyACM0', '/dev/ttyUSB0',
   'COM3', 'COM4', 'COM5', 'COM6', 'COM7' 
 ];
 
-const SerialPort = require('serialport');
-const keys = ['time', 'lon', 'lat', 'speed', 'heading' ];
-const protocol = 'RMC';
-let location = null;
+let timeSet = null;
 
 for (var i = 0; i != myports.length; ++i) {
   const port = new SerialPort(myports[i], {
@@ -33,6 +52,18 @@ for (var i = 0; i != myports.length; ++i) {
             location[k] = data[k];
           }
           location.speed *= 0.539957; // km/h to knots
+
+          if (!timeSet && location.time && !module.exports.online) {
+            exec('date -s "' + location.time.toString() + '"', function(err, stdout, stderr) {
+              if (err) {
+                console.log(err);
+              }
+              else {
+                timeSet = location.time;
+                console.log('time set:', location.time.toString());
+              }
+            });
+          }
         }
       });
     
@@ -54,9 +85,5 @@ for (var i = 0; i != myports.length; ++i) {
       port.on('disconnect', stopGPS);
     }
   });
-}
-
-module.exports = function() {
-  return location;
 }
 

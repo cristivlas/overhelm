@@ -2,16 +2,15 @@
 const bs = require('binarysearch');
 const express = require('express');
 const fs = require('fs');
+const gps = require('./serial_gps');
 const http = require('http');
 const https = require('https');
 const path = require('path');
 const tmp = require('tmp');
 const urlJoin = require('url-join');
 
-const getLocation = require('./serial_gps');
-
-const currentsStations = require ('./Currents_Active_Stations.json');
-const waterLevelStations = require ('./Waterlevel_Active_Stations.json');
+const currentsStations = require('./Currents_Active_Stations.json');
+const waterLevelStations = require('./Waterlevel_Active_Stations.json');
 
 const router = express.Router();
 
@@ -19,7 +18,6 @@ const router = express.Router();
 router.get('/', function(req, res, next) {
   res.render('index', { title: 'Express' });
 });
-
 
 let tilesets = {}
 
@@ -144,7 +142,7 @@ router.get('/tiles/:srv/:set/:z/:x/:y', function(req, res, next) {
             console.log('Finished downloading: ' + filePath);
             fs.rename(tmpFileName, filePath, function(err) {
               if (err) {
-                fs.unlink(tmpFileName);
+                fs.unlinkSync(tmpFileName);
                 next(err);
               }
               else {
@@ -153,7 +151,7 @@ router.get('/tiles/:srv/:set/:z/:x/:y', function(req, res, next) {
             });
           }
           else {
-            fs.unlink(tmpFileName);
+            fs.unlinkSync(tmpFileName);
             res.statusCode = response.statusCode;
             res.send(response.statusMessage);
           }
@@ -162,7 +160,7 @@ router.get('/tiles/:srv/:set/:z/:x/:y', function(req, res, next) {
 
       request.on('error', function(err) {
         file.close();
-        fs.unlink(tmpFileName);
+        fs.unlinkSync(tmpFileName);
         next(err);
       });
 
@@ -170,7 +168,7 @@ router.get('/tiles/:srv/:set/:z/:x/:y', function(req, res, next) {
     }
     catch (err) {
       file.close();
-      fs.unlink(tmpFileName);
+      fs.unlinkSync(tmpFileName);
       next(err);
     }
   }
@@ -180,8 +178,8 @@ router.get('/tiles/:srv/:set/:z/:x/:y', function(req, res, next) {
   if (fs.existsSync(cachedFilePath)) {
     uploadTile(cachedFilePath, req, res, next);
   }
-  else if (req.query.source === 'local') {
-    res.end();
+  else if (!gps.online || req.query.source === 'local') {
+    res.send();
   }
   else {
     downloadAndUploadTile(cachedFilePath, req, res, next)
@@ -273,7 +271,7 @@ router.get('/nearestCurrentsStation/:lat/:lon', function(req, res, next) {
  *
  */
 router.get('/location', function(req, res, next) {
-  const loc = getLocation();
+  const loc = gps.getLocation();
   res.send(JSON.stringify(loc));
 });
 
