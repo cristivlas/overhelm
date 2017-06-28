@@ -4,6 +4,7 @@ chromium-browser \
     --allow-insecure-localhost \
     --noerrdialogs \
     --start-fullscreen \
+    --disable-pinch \
     --kiosk \
     https://localhost:3443/mynav.html
 
