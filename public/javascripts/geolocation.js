@@ -22,6 +22,8 @@ class Geolocation {
   }
 
   stop() {
+    this.speed = 0;
+
     if (this._watchId) {
       navigator.geolocation.clearWatch(this._watchId);
       this._watchId = null;

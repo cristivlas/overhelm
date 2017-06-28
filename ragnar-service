@@ -18,6 +18,7 @@ case "$1" in
   start)
     log_begin_msg "Starting Ragnar service"
     pushd /usr/local/ragnar
+    mv log.txt log.txt.old 2>/dev/null
     npm start > log.txt 2>&1 & 
     popd
     log_end_msg $?

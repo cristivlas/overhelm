@@ -359,7 +359,11 @@
        * Construct / update the map object
        */
       function updateMap(coord, iconUrl = 'images/marker.png') {
-    
+   
+        let elem = document.getElementById('speed');
+        if (elem) {
+          elem.innerHTML = Math.floor(geolocation.speed * 100) / 100 + ' kts';
+        }
         const pos = ol.proj.fromLonLat(coord);
 
         const view = map ? map.getView() : new ol.View({
@@ -435,7 +439,7 @@
           map.addLayer(marker);
         });
        
-        var elem = document.getElementById('location');
+        elem = document.getElementById('location');
 				if (elem) {
         	elem.innerHTML = convertDMS(coord);
 				}
@@ -688,10 +692,6 @@
             headingRotation = coord.heading * (Math.PI / 180);
           }
           if (coord.lon && coord.lat) {
-            let elem = document.getElementById('speed');
-            if (elem) {
-              elem.innerHTML = Math.floor(geolocation.speed * 100) / 100 + ' kts';
-            }
             currentLocation = [ coord.lon, coord.lat ];
             updateMap(currentLocation);
           }
