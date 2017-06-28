@@ -1,36 +1,12 @@
 'use strict';
 
-const exec = require('child_process').exec;
-const isOnline = require('is-online');
 const SerialPort = require('serialport');
 
 let location = null;
 
-module.exports = {
-  online: false,
-
-  getLocation: function () {
-
-    if (!this.online && location.time) {
-      exec('date -s "' + location.time.toString() + '"', function(err, stdout, stderr) {
-        if (err) {
-          console.log(err.message);
-        }
-        else {
-          console.log('time set:', location.time.toString());
-        }
-      });
-    }
-
-    return location;
-  }
+module.exports = function () {
+  return location;
 }
-
-isOnline({timeout:5000}).then(function(online) {
-  console.log('online:', online);
-  module.exports.online = online;
-});
-
 
 const keys = ['time', 'lon', 'lat', 'speed', 'heading' ];
 const protocol = 'RMC';

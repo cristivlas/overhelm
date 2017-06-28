@@ -1,10 +1,12 @@
 'use strict';
 const bs = require('binarysearch');
 const express = require('express');
+const exec = require('child_process').exec;
 const fs = require('fs');
-const gps = require('./serial_gps');
+const getLocation = require('./serial_gps');
 const http = require('http');
 const https = require('https');
+const isOnline = require('is-online');
 const path = require('path');
 const tmp = require('tmp');
 const urlJoin = require('url-join');
@@ -13,6 +15,14 @@ const currentsStations = require('./Currents_Active_Stations.json');
 const waterLevelStations = require('./Waterlevel_Active_Stations.json');
 
 const router = express.Router();
+
+/* are we connected to the internets? */
+let __online = false;
+
+isOnline({timeout:5000}).then(function(online) {
+  console.log('online:', online);
+  __online = online;
+});
 
 /* GET home page. */
 router.get('/', function(req, res, next) {
@@ -179,7 +189,7 @@ router.get('/tiles/:srv/:set/:z/:x/:y', function(req, res, next) {
   if (fs.existsSync(cachedFilePath)) {
     uploadTile(cachedFilePath, req, res, next);
   }
-  else if (!gps.online || req.query.source === 'local') {
+  else if (!__online || req.query.source === 'local') {
     res.send();
   }
   else {
@@ -272,7 +282,20 @@ router.get('/nearestCurrentsStation/:lat/:lon', function(req, res, next) {
  *
  */
 router.get('/location', function(req, res, next) {
-  const loc = gps.getLocation();
+  const loc = getLocation();
+
+  if (!__online && loc.time) {
+    exec('date -s "' + loc.time.toString() + '"', function(err, stdout, stderr) {
+      if (err) {
+        console.log(err.message);
+      }
+      else {
+        console.log('time set:', loc.time.toString());
+      }
+    });
+  }
+
+  console.log(loc);
   res.send(JSON.stringify(loc));
 });
 

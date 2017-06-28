@@ -316,10 +316,8 @@
               }
               maxRes = Math.ceil((tileset.height * viewMaxRes) / hMax);
 
-              let url = 'tiles/noaa/' + tileset.ident + '/{z}/{x}/{y}';
-              if (location.search !== '?noaa' && location.search !== '?noaa-tiles') {
-                url += '?source=local';
-              }
+              const url = 'tiles/noaa/' + tileset.ident + '/{z}/{x}/{y}';
+
               const layer = new ol.layer.Tile({
                 source: new ol.source.XYZ({url: url}),
                 maxResolution: maxRes,
@@ -690,11 +688,9 @@
             headingRotation = coord.heading * (Math.PI / 180);
           }
           if (coord.lon && coord.lat) {
-            if (geolocation.speed) {
-              let elem = document.getElementById('speed');
-              if (elem) {
-                elem.innerHTML = Math.floor(geolocation.speed * 100) / 100 + ' kts';
-              }
+            let elem = document.getElementById('speed');
+            if (elem) {
+              elem.innerHTML = Math.floor(geolocation.speed * 100) / 100 + ' kts';
             }
             currentLocation = [ coord.lon, coord.lat ];
             updateMap(currentLocation);

@@ -3,7 +3,8 @@ chromium-browser \
     --incognito \
     --allow-insecure-localhost \
     --noerrdialogs \
-    --kiosk \
+    --start-fullscreen \
     https://localhost:3443/mynav.html
+
 
 

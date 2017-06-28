@@ -58,6 +58,9 @@ class Geolocation {
         if (loc.time) {
           this._update(loc);
         }
+        else {
+          this.speed = 0;
+        }
       }
       else {
         if (this._intervalId) {
