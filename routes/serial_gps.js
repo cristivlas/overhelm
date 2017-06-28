@@ -34,6 +34,7 @@ for (var i = 0; i != myports.length; ++i) {
      
       gps.on(protocol, function(data) {
         if (data) {
+          //console.log(data);
           location = {}
           for (var j = 0; j != keys.length; ++j) {
             const k = keys[j];

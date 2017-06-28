@@ -295,7 +295,8 @@ router.get('/location', function(req, res, next) {
     });
   }
 
-  console.log(loc);
+  //console.log(loc);
+
   res.send(JSON.stringify(loc));
 });
 
