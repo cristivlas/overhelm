@@ -47,7 +47,7 @@ class Geolocation {
     var xmlHttp = e.currentTarget;
     if (xmlHttp.readyState == 4 && xmlHttp.status == 200) {
       var loc = JSON.parse(xmlHttp.responseText);
-      if (loc && loc.time) {
+      if (loc) {
         if (!this._intervalId) {
           //
           // First successful call? Repeat at given interval/timeout
@@ -55,7 +55,9 @@ class Geolocation {
           this._intervalId = 
             setInterval(this._sendLocationRequest.bind(this), this._timeout);
         }
-        this._update(loc);
+        if (loc.time) {
+          this._update(loc);
+        }
       }
       else {
         if (this._intervalId) {

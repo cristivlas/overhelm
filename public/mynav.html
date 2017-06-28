@@ -103,7 +103,9 @@
 
       if (navigator.userAgent.match(/armv7/) ||
           navigator.userAgent.match(/ipad/i)) {
-        document.getElementById('map').className += ' tablet';
+        var elem = document.getElementById('map');
+        elem.className += ' tablet';
+        elem.style.cursor = 'none'; 
       }
 
       /**
