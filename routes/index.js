@@ -193,7 +193,21 @@ router.get('/tiles/:srv/:set/:z/:x/:y', function(req, res, next) {
     res.send();
   }
   else {
-    downloadAndUploadTile(cachedFilePath, req, res, next)
+    const emptyList = path.normalize(
+      __dirname + '/../' + path.dirname(cachedFilePath) + '/emptyTiles.txt');
+    let cmd = 'grep "' 
+      + req.params.z + ' ' + req.params.x + ' ' + req.params.y + '" '
+      + emptyList;
+    // console.log(cmd);
+    exec (cmd, function(err, stdout, stderr) {
+      if (err) {
+        downloadAndUploadTile(cachedFilePath, req, res, next)
+      }
+      else {
+        console.log(cmd, ':', stdout);
+        res.send();
+      }
+    });
   }
 });
 

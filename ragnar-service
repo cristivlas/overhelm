@@ -18,7 +18,7 @@ case "$1" in
   start)
     log_begin_msg "Starting Ragnar service"
     pushd /usr/local/ragnar
-    mv log.txt log.txt.old 2>/dev/null
+    mv log.txt log.`date +%Y%m%d%H%M`.txt 2>/dev/null
     npm start > log.txt 2>&1 & 
     popd
     log_end_msg $?
@@ -27,7 +27,7 @@ case "$1" in
   stop)
     log_begin_msg "Stopping Ragnar"
     # do something to kill the service or cleanup or nothing
-    killall -9 node
+    killall -SIGSTOP node
     log_end_msg $?
     exit 0
     ;;
