@@ -1,5 +1,7 @@
-const devnull = require('dev-null');
+//const devnull = require('dev-null');
 const https = require('https');
+
+// Load all chart metadata
 const charts = require('../routes/noaa-layers.json');
 
 // http://wiki.openstreetmap.org/wiki/Slippy_map_tilenames
@@ -77,7 +79,7 @@ function nextTile(tile) {
   }
   try {
     var req = https.get(options, function(resp) {
-      resp.pipe(devnull());
+      //resp.pipe(devnull());
       resp.on('end', function(err) {
         console.log(path);
         if (err) {

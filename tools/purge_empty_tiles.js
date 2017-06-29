@@ -45,15 +45,21 @@ crawl(start, function(err, filePath, emptyList) {
   if (ext !== '.png') {
     return;
   }
-  const data = fs.readFileSync(filePath);
-  const png = PNG.sync.read(data);
   let isEmpty = true;
-  for (let i = 0; i < png.data.length; ++i) {
-    if (png.data[i] != 0) {
-      isEmpty = false;
-      break;
+  const data = fs.readFileSync(filePath);
+  try {
+    const png = PNG.sync.read(data);
+    for (let i = 0; i < png.data.length; ++i) {
+      if (png.data[i] != 0) {
+        isEmpty = false;
+        break;
+      }
     }
   }
+  catch (err) {
+    console.log(err.message);
+  }
+
   if (isEmpty) {
     const parts = path.basename(filePath).split('.');
     const entry = parts[1] + ' ' + parts[2] + ' ' + parts[3] + '\n';

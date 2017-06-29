@@ -1,5 +1,6 @@
 node_modules
 tools/tides
-*.png
+tiles/
+**/*.png
 *.tgz
 log.*

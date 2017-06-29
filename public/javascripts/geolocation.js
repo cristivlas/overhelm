@@ -114,14 +114,14 @@ class Geolocation {
       }
     }
     else {
-      alertify.confirm(err.message + '. Retry?', function(val) {
+      alertify.confirm(err.message + ' Retry?', function(val) {
         if (val) {
           this.start();
         }
         else if (this._errorCallback) {
           this._errorCallback(err);
         }
-      });
+      }.bind(this));
     }
   }
 
