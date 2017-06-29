@@ -1,11 +1,11 @@
 const fs = require('fs');
-const exec = require('child_process').exec;
+const execSync = require('child_process').execSync;
 const path = require('path');
 const PNG = require('pngjs').PNG;
 
 
 function crawl(dir, action) {
-  console.log(dir);
+  // console.log(dir);
   const emptyList = dir + '/emptyTiles.txt';
   if (0) try {
     fs.unlinkSync(emptyList);
@@ -17,6 +17,7 @@ function crawl(dir, action) {
     if (err) {
       return action(err);
     }
+    console.log(dir);
     for (let i = 0; i < list.length; ++i) {
       file = list[i];
       const path = dir + '/' + file;
@@ -25,18 +26,17 @@ function crawl(dir, action) {
         crawl(path, action);
       }
       else {
+        process.stdout.write(dir + ': ' + Math.floor(i * 100 / list.length) + '%  \r');
         action(null, path, emptyList);
       }
     }
     const cmd = 'sort -n -u ' + emptyList + ' > tmp && mv tmp ' + emptyList;
-    exec(cmd, function(err) {
-      if (err) {
-        console.log(err.message);
-      }
-      else {
-        console.log('Sorted:', emptyList);
-      }
-    });
+    try {
+      var out = execSync(cmd);
+      console.log('Sorted:', emptyList);
+    }
+    catch (err) {
+    };
   });
 }
 
