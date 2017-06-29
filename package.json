@@ -6,6 +6,7 @@
     "start": "node ./bin/www"
   },
   "dependencies": {
+    "alertify": "^0.3.0",
     "binarysearch": "^1.0.0",
     "body-parser": "~1.17.1",
     "child_process": "^1.0.2",

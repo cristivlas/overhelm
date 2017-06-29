@@ -107,11 +107,21 @@ class Geolocation {
 
   _onError(err) {
     this.stop();
-    if (confirm(err.message + ' Retry?')) {
-      this.start();
+    if (err.code === err.PERMISSION_DENIED) {
+      alertify.alert(err.message);
+      if (this._errorCallback) {
+        this._errorCallback(err);
+      }
     }
-    else if (this._errorCallback) {
-      this._errorCallback(err);
+    else {
+      alertify.confirm(err.message + '. Retry?', function(val) {
+        if (val) {
+          this.start();
+        }
+        else if (this._errorCallback) {
+          this._errorCallback(err);
+        }
+      });
     }
   }
 
