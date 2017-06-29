@@ -18,8 +18,9 @@ case "$1" in
   start)
     log_begin_msg "Starting Ragnar service"
     pushd /usr/local/ragnar
+    user=`ls -l app.js | cut -d' ' -f3`
     mv log.txt log.`date +%Y%m%d%H%M`.txt 2>/dev/null
-    npm start > log.txt 2>&1 & 
+    sudo -u $user npm start > log.txt 2>&1 & 
     popd
     log_end_msg $?
     exit 0
