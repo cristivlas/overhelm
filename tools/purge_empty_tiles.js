@@ -30,6 +30,9 @@ function crawl(dir, action) {
     }
     const cmd = 'sort -n -u ' + emptyList + ' > tmp && mv tmp ' + emptyList;
     exec(cmd, function(err) {
+      if (!err) {
+        console.log('Sorted:', emptyList);
+      }
     });
   });
 }
