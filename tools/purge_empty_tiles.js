@@ -30,7 +30,10 @@ function crawl(dir, action) {
     }
     const cmd = 'sort -n -u ' + emptyList + ' > tmp && mv tmp ' + emptyList;
     exec(cmd, function(err) {
-      if (!err) {
+      if (err) {
+        console.log(err.message);
+      }
+      else {
         console.log('Sorted:', emptyList);
       }
     });
