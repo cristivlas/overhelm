@@ -27,7 +27,7 @@ case "$1" in
   stop)
     log_begin_msg "Stopping Ragnar"
     # do something to kill the service or cleanup or nothing
-    killall -SIGSTOP node
+    killall -SIGTERM node
     log_end_msg $?
     exit 0
     ;;
