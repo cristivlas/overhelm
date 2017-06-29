@@ -1,3 +1,5 @@
 node_modules
 tools/tides
 *.png
+*.tgz
+log.*
