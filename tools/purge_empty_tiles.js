@@ -28,13 +28,8 @@ function crawl(dir, action) {
         action(null, path, emptyList);
       }
     }
-    const cmd = 'sort -u ' + emptyList + ' > tmp && mv tmp ' + emptyList;
-
+    const cmd = 'sort -n -u ' + emptyList + ' > tmp && mv tmp ' + emptyList;
     exec(cmd, function(err) {
-      if (err) {
-        console.log(dir, cmd);
-        return console.log(err);
-      }
     });
   });
 }
