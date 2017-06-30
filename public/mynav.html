@@ -284,6 +284,21 @@
         xmlHttp.send();
       }
 
+      function overlap(c1, c2, margin = 0.25) {
+        if (c1.lower[1] + margin > c2.upper[1]) {
+          return false;
+        }
+        if (c1.upper[1] < c2.lower[1] + margin) {
+          return false;
+        }
+        if (c1.lower[0] > c2.upper[0]) {
+          return false;
+        }
+        if (c1.upper[0] < c2.lower[0]) {
+          return false;
+        }
+        return true;
+      }
 
       /**
        * Ask the backend for the best chart tilesets for the given coordinates
@@ -327,6 +342,9 @@
                 opacity: 0.95
               });
               layer.ident = tileset.ident;
+              layer.upper = tileset.upper;
+              layer.lower = tileset.lower;
+
               chartLayers.push(layer);
             })
 
