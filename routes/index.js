@@ -44,7 +44,12 @@ router.get('/tilesets/:srv/:lon/:lat', function(req, res, next) {
   const lat = req.params.lat;
   tilesets[srv].map(function(t) {
     if (t.lower[0] < lon && t.lower[1] < lat && t.upper[0] > lon && t.upper[1] > lat) {
-      sets.push({ident: t.ident, height: t.upper[1] - t.lower[1]});
+      sets.push({
+        ident: t.ident,
+        height: t.upper[1] - t.lower[1],
+        lower: t.lower,
+        upper: t.upper
+      });
     }
   });
   sets.sort(function(a, b) {
