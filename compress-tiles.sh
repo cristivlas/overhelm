@@ -1,2 +1,2 @@
 #!/usr/bin/env bash
-tar zvcf tiles.`date +%Y%m%d%H%M`.tgz tiles
+tar zvcf tiles.`hostname`.`date +%Y%m%d%H%M`.tgz tiles
