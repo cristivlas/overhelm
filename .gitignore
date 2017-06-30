@@ -2,5 +2,7 @@ node_modules
 tools/tides
 tiles/
 **/*.png
-*.tgz
 log.*
+*.tgz
+*.zip
+
