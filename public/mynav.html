@@ -334,7 +334,7 @@
             for (i = chartLayers.length - 1; i >= 0; --i) {
               let layer = chartLayers[i];
               if (prev) {
-                if (layer.getMaxResolution() / prev.getMaxResolution() > 3) {
+                if (layer.getMaxResolution() / prev.getMaxResolution() > 1) {
                   layer.setMinResolution(prev.getMaxResolution());
                 }
                 else {
@@ -373,7 +373,7 @@
           center: pos,
           zoom: defaultZoom,
           minZoom: 3,
-          maxZoom: 17,
+          maxZoom: 16,
           enableRotation: false,
         });
         
