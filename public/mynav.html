@@ -43,6 +43,13 @@
       .ol-touch .re-center {
         top: 95px;
       }
+      .search {
+        top: 135px;
+        left: .5em;
+      }
+      .ol-touch .search {
+        top: 145px;
+      }
       .chart {
         background-color: white;
         opacity: 0.7;
@@ -119,7 +126,7 @@
 
         const button = document.createElement('button');
         const icon = document.createElement('img');
-        icon.src = 'images/pointer-icon.png';
+        icon.src = 'images/location-arrow.png';
         button.appendChild(icon);
         button.title = 'Track current location';
         var handler = function() {
@@ -141,6 +148,32 @@
         });
       }
       ol.inherits(recenterControl, ol.control.Control);
+      
+      
+      const searchControl = function(opt_options) {
+        const options = opt_options || {};
+
+        const button = document.createElement('button');
+        const icon = document.createElement('img');
+        icon.src = 'images/magnifier.png';
+        button.appendChild(icon);
+        button.title = 'Search';
+        var handler = function() {
+          alertify.prompt('', function(valid, value) {
+          });
+        }
+        button.addEventListener('click', handler, false);
+
+        var element = document.createElement('div');
+        element.className = 'search ol-unselectable ol-control';
+        element.appendChild(button);
+
+        ol.control.Control.call(this, {
+          element: element,
+          target: options.target
+        });
+      }
+      ol.inherits(searchControl, ol.control.Control);
 
      
       /**
@@ -426,6 +459,7 @@
                 new showTideControl(),
 								new locationControl({coords: coord}),
                 new recenterControl(),
+                new searchControl(),
                 new speedControl(),
                 new ol.control.ScaleLine({units: 'nautical'}),
               ]),

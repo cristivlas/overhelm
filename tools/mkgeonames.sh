@@ -1,11 +1,17 @@
 #!/usr/bin/bash
 
-split -l 10000 US.txt geonames
+prefix=geonames-
+
+rm -f ${prefix}*
+
+split --lines=100000 --suffix-length=1 US.txt $prefix
+
+rm -rf US
 mkdir -p US
 
-for i in geonames*; do
+for i in ${prefix}*; do
   echo $i
-  node mkgeonames.js $i > US/$i.json
+  node --max_old_space_size=8192 mkgeonames.js $i > US/$i.json
 done
 
-rm geonames*
+rm ${prefix}*
