@@ -793,7 +793,7 @@
             const matches = JSON.parse(xmlHttp.responseText);
             if (matches && matches.length) {
               let candidates = '<b>Nearest Matches</b><br>';
-              for (let i = 0; i < 20 && i < matches.length; ++i) {
+              for (let i = 0; i < 10 && i < matches.length; ++i) {
                 if (i==0) {
                   candidates += '<u>';
                 }
