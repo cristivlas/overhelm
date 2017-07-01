@@ -2,14 +2,27 @@
 <html>
   <head>
     <title>Chart Navigator [Alpha]</title>
+    <meta name="viewport" content="initial-scale=1.0, user-scalable=no, width=device-width">
     <link rel="stylesheet" href="lib/OpenLayers/4.2.0/ol.css" type="text/css">
     <link rel="stylesheet" href="stylesheets/alertify.core.css" type="text/css">
     <link rel="stylesheet" href="stylesheets/alertify.bootstrap.css" type="text/css">
-    <meta name="viewport" content="initial-scale=1.0, user-scalable=no, width=device-width">
+    <link rel="stylesheet" href="stylesheets/keyboard.min.css" type="text/css">
+
+    <script src="javascripts/geolocation.js"></script>
+
     <script src="lib/alertify.min.js"></script>
     <script src="lib/OpenLayers/4.2.0/ol.js"></script>
     <script src="lib/Chart.js"></script>
-    <script src="javascripts/geolocation.js"></script>
+
+    <script src="lib/jquery.min.js"></script>
+    <script src="lib/jquery.keyboard.min.js"></script>
+    <!-- initialize virtual keyboard -->
+    <script>
+      $(function() {
+        $('#keyboard').keyboard();
+      });
+    </script>
+
     <style>
       .tide-chart {
         top: .5em;
@@ -44,11 +57,11 @@
         top: 95px;
       }
       .search {
-        top: 135px;
+        top: 112px;
         left: .5em;
       }
       .ol-touch .search {
-        top: 145px;
+        top: 130px;
       }
       .chart {
         background-color: white;
@@ -89,7 +102,18 @@
 
   </head>
   <body>
+
     <div id="map" class="map"></div>
+
+    <!-- wrapper only needed to center the input -->
+    <div id="wrap">
+
+    <!-- keyboard input -->
+    <input id="keyboard" type="text">
+
+    </div>
+
+
     <script>
       const defaultZoom = 12;
       const locationTimeout = 3000;

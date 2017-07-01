@@ -5,4 +5,10 @@ tiles/
 log.*
 *.tgz
 *.zip
-
+alertify.min.js
+jquery.min.js
+alertify.bootstrap.css
+alertify.core.css
+alertify.default.css
+keyboard.min.css
+jquery.keyboard.min.js

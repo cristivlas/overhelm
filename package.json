@@ -17,10 +17,12 @@
     "https": "^1.0.0",
     "is-online": "^7.0.0",
     "jade": "~1.11.0",
+    "jquery": "^3.2.1",
     "morgan": "^1.8.2",
     "serialport": "^4.0.7",
     "serve-favicon": "~2.4.2",
     "tmp": "0.0.31",
-    "url-join": "^2.0.2"
+    "url-join": "^2.0.2",
+    "virtual-keyboard": "^1.26.23"
   }
 }
