@@ -13,7 +13,7 @@ const urlJoin = require('url-join');
 
 const currentsStations = require('./Currents_Active_Stations.json');
 const waterLevelStations = require('./Waterlevel_Active_Stations.json');
-const geonames = require('./geonames.json');
+let geonames = null;
 
 const router = express.Router();
 
@@ -369,7 +369,9 @@ router.get('/tides/:station/:time', function(req, res, next) {
  *
  */
 router.get('/search/:name/:lon/:lat', function(req, res, next) {
-
+  if (!geonames) {
+    geonames = require('./geonames.json');
+  }
   let name = req.params.name.toLowerCase();
 
   let matches = [];

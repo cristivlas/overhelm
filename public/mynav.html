@@ -797,7 +797,7 @@
                 if (i==0) {
                   candidates += '<u>';
                 }
-                candidates += matches[i].name;
+                candidates += (i + 1).toString() + '. ' + matches[i].name;
                 if (matches[i].state) {
                   candidates += ', ' + matches[i].state;
                 }
