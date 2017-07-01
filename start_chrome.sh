@@ -6,7 +6,5 @@ chromium-browser \
     --start-fullscreen \
     --disable-pinch \
     --kiosk \
-    https://localhost:3443/mynav.html
-
-
+    https://localhost:3443/mynav.html?touch
 

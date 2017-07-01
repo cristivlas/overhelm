@@ -193,16 +193,26 @@
         button.title = 'Search';
         var handler = function() {
           alertify.prompt('', function(valid, value) {
-          });
-          $('#alertify-text').keyboard({
-            layout: 'custom',
-            customLayout: kbdLayout,
-            usePreview: false,
-            visible: function(e, keyboard, el) {
-              const kbdElem = document.getElementById('alertify-text_keyboard');
-              document.getElementById('alertify-form').appendChild(kbdElem);
+            if (valid) {
+              console.log(value);
+              searchLocation(value, currentLocation);
             }
           });
+
+          let form = document.getElementById('alertify-form');
+
+          if (location.search === '?touch') {
+            $('#alertify-text').keyboard({
+              autoAccept: true,
+              layout: 'custom',
+              customLayout: kbdLayout,
+              usePreview: false,
+              visible: function(e, keyboard, el) {
+                const kbdElem = document.getElementById('alertify-text_keyboard');
+                form.appendChild(kbdElem);
+              }
+            });
+          }
         }
         button.addEventListener('click', handler, false);
 
@@ -359,6 +369,7 @@
         xmlHttp.send();
       }
 
+
       function overlap(c1, c2, margin = 0.25) {
         if (c1.lower[1] + margin > c2.upper[1]) {
           return false;
@@ -374,6 +385,7 @@
         }
         return true;
       }
+
 
       /**
        * Ask the backend for the best chart tilesets for the given coordinates
@@ -523,9 +535,9 @@
                 alertify.alert('Location tracking paused. Click the location button to resume.');
               }
               const coord = e.coordinate;
-              const latLon = ol.proj.transform(coord, 'EPSG:3857', 'EPSG:4326');
-              currentLocation = latLon;
-              updateMap(latLon, 'images/view.png');
+              const lonLat = ol.proj.transform(coord, 'EPSG:3857', 'EPSG:4326');
+              currentLocation = lonLat;
+              updateMap(lonLat, 'images/view.png');
             });
 
           }
@@ -773,9 +785,50 @@
       }
 
 
+      function searchLocation(name, coord) {
+        const url = 'search/' + name + '/' + coord[0] + '/' + coord[1];
+        const xmlHttp = new XMLHttpRequest();
+        xmlHttp.onreadystatechange = function() {
+          if (xmlHttp.readyState == 4 && xmlHttp.status == 200) {
+            const matches = JSON.parse(xmlHttp.responseText);
+            if (matches && matches.length) {
+              let candidates = '<b>Nearest Matches</b><br>';
+              for (let i = 0; i < 20 && i < matches.length; ++i) {
+                if (i==0) {
+                  candidates += '<u>';
+                }
+                candidates += matches[i].name;
+                if (matches[i].state) {
+                  candidates += ', ' + matches[i].state;
+                }
+                if (i==0) {
+                  candidates += '</u>';
+                }
+                candidates += '<br>';
+              }
+              alertify.alert(candidates);
+
+              const result = matches[0]; 
+              currentLocation = [ parseFloat(result.lon), parseFloat(result.lat) ];
+              if (geolocation.isTracking()) {
+                geolocation.stop();
+              } 
+              updateMap(currentLocation, 'images/view.png');
+            }
+            else {
+              alertify.alert('No matches');
+            }
+          }
+        }
+        xmlHttp.open('GET', url);
+        xmlHttp.send();
+      }
+      
+      
       function convertDMS(coords) {
         return ol.coordinate.toStringHDMS(coords);
       }
+
 
       function updateDefault() {
         if (!currentLocation) {
@@ -783,6 +836,7 @@
         }
         updateMap(currentLocation, 'images/view.png');
       }
+
 
       var geolocation = new Geolocation({
         onSuccess: function(coord) {
@@ -798,6 +852,7 @@
           updateDefault();
         }
       });
+
 
       geolocation.start();
       updateDefault();

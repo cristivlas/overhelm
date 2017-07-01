@@ -13,6 +13,7 @@ const urlJoin = require('url-join');
 
 const currentsStations = require('./Currents_Active_Stations.json');
 const waterLevelStations = require('./Waterlevel_Active_Stations.json');
+const geonames = require('./geonames.json');
 
 const router = express.Router();
 
@@ -245,6 +246,7 @@ function getDistance(req, st) {
 
 /******************************************************************
  * Get the nearest NOAA waterlevel station
+ * FIXME: pass parameters :lon/:lat -- for consistency
  */
 router.get('/nearestWaterLevelStation/:lat/:lon', function(req, res, next) {
   let minDist = 999999;
@@ -272,6 +274,7 @@ router.get('/nearestWaterLevelStation/:lat/:lon', function(req, res, next) {
 
 /******************************************************************
  * Get the nearest NOAA currents station
+ * FIXME: pass parameters :lon/:lat -- for consistency
  */
 router.get('/nearestCurrentsStation/:lat/:lon', function(req, res, next) {
   let minDist = 999999;
@@ -359,6 +362,38 @@ router.get('/tides/:station/:time', function(req, res, next) {
     result[i] = tidePredictions[start + i];
   }
   res.send(JSON.stringify({ predictions: result }));
+});
+
+
+/******************************************************************
+ *
+ */
+router.get('/search/:name/:lon/:lat', function(req, res, next) {
+
+  let name = req.params.name.toLowerCase();
+
+  let matches = [];
+
+  for (let i = 0; i != geonames.length; ++i) {
+    const c = geonames[i];
+    if (c.name.toLowerCase().includes(name)) {
+      matches.push(c);
+    }
+  }
+
+  matches.sort(function(a,b) {
+    let dist1 = getDistanceFromLatLonInKm(a.lat, a.lon, req.params.lat, req.params.lon);
+    let dist2 = getDistanceFromLatLonInKm(b.lat, b.lon, req.params.lat, req.params.lon);
+    if (dist1 < dist2) {
+      return -1;
+    }
+    if (dist1 > dist2) {
+      return 1;
+    }
+    return 0;
+  });
+
+  res.send(JSON.stringify(matches, 0, 4));
 });
 
 
