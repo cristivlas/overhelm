@@ -16,14 +16,12 @@
 
     <script src="lib/jquery.min.js"></script>
     <script src="lib/jquery.keyboard.min.js"></script>
-    <!-- initialize virtual keyboard -->
-    <script>
-      $(function() {
-        $('#keyboard').keyboard();
-      });
-    </script>
 
     <style>
+      .ui-keyboard {
+        width: 100%;
+        top: 200px; 
+      }
       .tide-chart {
         top: .5em;
         right: .5em;
@@ -105,15 +103,6 @@
 
     <div id="map" class="map"></div>
 
-    <!-- wrapper only needed to center the input -->
-    <div id="wrap">
-
-    <!-- keyboard input -->
-    <input id="keyboard" type="text">
-
-    </div>
-
-
     <script>
       const defaultZoom = 12;
       const locationTimeout = 3000;
@@ -184,6 +173,9 @@
         button.title = 'Search';
         var handler = function() {
           alertify.prompt('', function(valid, value) {
+          });
+          $('#alertify-text').keyboard({
+            usePreview: false,
           });
         }
         button.addEventListener('click', handler, false);
