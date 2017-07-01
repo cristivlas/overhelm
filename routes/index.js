@@ -395,7 +395,7 @@ router.get('/search/:name/:lon/:lat', function(req, res, next) {
     return 0;
   });
 
-  res.send(JSON.stringify(matches, 0, 4));
+  res.send(JSON.stringify(matches.slice(0, 100), 0, 4));
 });
 
 
