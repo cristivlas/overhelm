@@ -6,6 +6,7 @@
     <link rel="stylesheet" href="lib/OpenLayers/4.2.0/ol.css" type="text/css">
     <link rel="stylesheet" href="stylesheets/alertify.core.css" type="text/css">
     <link rel="stylesheet" href="stylesheets/alertify.bootstrap.css" type="text/css">
+    <link rel="stylesheet" href="stylesheets/bootstrap.min.css" type="text/css">
     <link rel="stylesheet" href="stylesheets/keyboard.min.css" type="text/css">
 
     <script src="javascripts/geolocation.js"></script>
@@ -16,8 +17,12 @@
 
     <script src="lib/jquery.min.js"></script>
     <script src="lib/jquery.keyboard.min.js"></script>
+    <script src="lib/bootstrap.min.js"></script>
 
     <style>
+      .popover-content {
+        min-width: 240px;
+      }
       .ui-keyboard {
         background-color: white;
         left: -20%;
@@ -26,6 +31,10 @@
       .ui-keyboard-button {
         font-size: 1.35em;
       }
+      .search-results {
+        width: 100%;
+      }
+      .search-result
       .tide-chart {
         top: .5em;
         right: .5em;
@@ -106,9 +115,12 @@
   <body>
 
     <div id="map" class="map"></div>
+    <div style="display: none;">
+      <div id="popup" class="popup"</div>
+    </div>
 
     <script>
-      const defaultZoom = 12;
+      const defaultZoom = 13;
       const locationTimeout = 3000;
 
       var savedZoom = defaultZoom;
@@ -117,7 +129,7 @@
       var chartLayers = [];     // current layers
       var marker = null;        // layer that marks current position
       var map = null;           // the map object
-
+      var popup = null;
       var currentLocation = null;
 
       /*****************************************************************
@@ -166,7 +178,13 @@
       }
       ol.inherits(recenterControl, ol.control.Control);
       
+      /**
+       * Custom control for searching for a specific location on the charts
+       */
       const searchControl = function(opt_options) {
+        //
+        // Virtual keyboard layout
+        //
         const kbdLayout = {
           "name" : "ms-US English (Latin)",
           "lang" : ["en"],
@@ -195,7 +213,6 @@
         var handler = function() {
           alertify.prompt('', function(valid, value) {
             if (valid) {
-              console.log(value);
               searchLocation(value, currentLocation);
             }
           });
@@ -441,7 +458,7 @@
               let layer = chartLayers[i];
               if (prev) {
                 if (overlap(layer, prev)
-                    && layer.getMaxResolution() / prev.getMaxResolution() > 2) {
+                    && layer.getMaxResolution() / prev.getMaxResolution() > 1) {
                   layer.setMinResolution(prev.getMaxResolution());
                 }
                 else {
@@ -469,7 +486,10 @@
        * Construct / update the map object
        */
       function updateMap(coord, iconUrl = 'images/marker.png') {
-   
+        if (popup && popup.visible) {
+          $(popup.getElement()).popover('destroy');
+          popup.visible = false;
+        }
         let elem = document.getElementById('speed');
         if (elem) {
           elem.innerHTML = Math.floor(geolocation.speed * 100) / 100 + ' kts';
@@ -480,10 +500,10 @@
           center: pos,
           zoom: defaultZoom,
           minZoom: 3,
-          maxZoom: 17,
+          maxZoom: 16,
           enableRotation: false,
         });
-        
+
         if (!ol.extent.containsXY(view.calculateExtent(), pos[0], pos[1])) {
           view.setCenter(pos);
         }
@@ -495,6 +515,8 @@
         function baseLayer() {
           return new ol.layer.Tile({
             source: new ol.source.XYZ({url:'tiles/wikimedia/osm-intl/{z}/{x}/{y}'})
+            
+            //could use OpenStreetMaps too
             //source: new ol.source.XYZ({url:'tiles/osm/{a-c}/{z}/{x}/{y}.png'})
           });
         }
@@ -525,6 +547,17 @@
               view: view
             });
 
+            popup = new ol.Overlay({
+              element: document.getElementById('popup')
+            });
+            map.addOverlay(popup);
+
+            map.on('postrender', function() {
+              if (popup.visible) {
+                $(popup.getElement()).popover('show');
+              }
+            });
+
             //
             // USe double click to switch from location tracking to viewing mode
             //
@@ -540,7 +573,6 @@
               currentLocation = lonLat;
               updateMap(lonLat, 'images/view.png');
             });
-
           }
 
           if (marker) {
@@ -558,6 +590,8 @@
 
         //todo:
         // updateCurrents(coord);
+
+        return pos;
 			}
 
 
@@ -787,41 +821,69 @@
 
 
       function searchLocation(name, coord) {
+
+        function buildSelection(matches) {
+          let selectHtml = '<b>Nearest Matches</b><br>';
+          selectHtml += '<select id="searchResults" class="search-results">';
+          for (let i = 0; i < matches.length; ++i) {
+            const m = matches[i];
+            selectHtml += '<option value="[' + m.lon + ',' + m.lat + ']">';
+            selectHtml += m.name;
+            if (m.state) {
+              selectHtml += ', ' + m.state;
+            }
+            selectHtml += '</option>';
+          }
+          selectHtml += '</select>';
+          return selectHtml;
+        }
+
+        function updatePopup(pos, place, coord) {
+          const e = popup.getElement();
+
+          const elevation = place.elevation < 0 ? 0 : place.elevation;
+          //contrary to docs from geonames.org, elevation seems to be in feet, not meters
+          //otherwise we should multiply by 3.28084 -- I just checked a few data points
+          //against Wikipedia
+
+          $(e).popover({
+            'animation': false,
+            'html': true,
+            'placement': 'top',
+            'content': convertDMS(coord) + '<br>Elevation: ' + elevation + "'</br>",
+            'title': '<b>' + place.name + '</b>'
+          });
+          popup.setPosition(pos);
+          popup.visible = true; // popover on map postrender
+        }
+
         const url = 'search/' + name + '/' + coord[0] + '/' + coord[1];
         const xmlHttp = new XMLHttpRequest();
         xmlHttp.onreadystatechange = function() {
           if (xmlHttp.readyState == 4 && xmlHttp.status == 200) {
             const matches = JSON.parse(xmlHttp.responseText);
             if (matches && matches.length) {
-              let candidates = '<b>Nearest Matches</b><br>';
-              for (let i = 0; i < 9 && i < matches.length; ++i) {
-                if (i==0) {
-                  candidates += '<mark>';
+              const selectHtml = buildSelection(matches);
+              
+              alertify.confirm(selectHtml, function(accept) {
+                if (!accept) {
+                  return;
                 }
-                candidates += (i + 1).toString() + '. ' + matches[i].name;
-                if (matches[i].state) {
-                  candidates += ', ' + matches[i].state;
+                const elem = document.getElementById('searchResults');
+                const coord = JSON.parse(elem.options[elem.selectedIndex].value);
+                if (geolocation.isTracking()) {
+                  geolocation.stop();
                 }
-                if (i==0) {
-                  candidates += '</mark>';
+                if (map && map.getView().getZoom() < defaultZoom) {
+                    map.getView().setZoom(defaultZoom);
                 }
-                candidates += '<br>';
-              }
-              const result = matches[0]; 
-
-              currentLocation = [ parseFloat(result.lon), parseFloat(result.lat) ];
-              if (geolocation.isTracking()) {
-                geolocation.stop();
-              }
-
-              if (map && map.getView().getZoom() < 15) {
-                map.getView().setZoom(15);
-              }
-              updateMap(currentLocation, 'images/view.png');
-              alertify.alert(candidates);
+                const pos = updateMap(coord, 'images/view.png');
+                updatePopup(pos, matches[elem.selectedIndex], coord);
+                currentLocation = coord;
+              });
             }
             else {
-              alertify.alert('No matches');
+              alertify.alert('<b>No matches</b>');
             }
           }
         }

@@ -2,7 +2,7 @@ const fs = require('fs');
 const https = require('https');
 const parse = require('csv-parse');
 
-const maxElevation = 50; // meters
+const maxElevation = 50;
 const filename = process.argv[2];
 
 const parseOpt = {
@@ -14,21 +14,6 @@ let httpsOpt = {
   host: 'localhost',
   port: 3443,
   rejectUnauthorized: false
-}
-
-
-function processNextRecordAsync(data, i, callback) {
-  new Promise(function(resolve) {
-    try {
-      processRecord(data, i);
-      resolve();
-    }
-    catch(err) {
-      if (callback) {
-        callback(err);
-      }
-    }
-  }).then(processNextRecordAsync.bind(this, data, i+1));
 }
 
 

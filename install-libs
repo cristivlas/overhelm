@@ -12,3 +12,7 @@ cp node_modules/jquery/dist/jquery.min.js public/lib
 # virtual-keyboard
 cp node_modules/virtual-keyboard/dist/js/jquery.keyboard.min.js public/lib
 cp node_modules/virtual-keyboard/dist/css/keyboard.min.css public/stylesheets
+
+#bootstrap
+cp node_modules/bootstrap/dist/js/bootstrap.min.js public/lib
+cp node_modules/bootstrap/dist/css/bootstrap.min.css public/stylesheets
