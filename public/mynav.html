@@ -441,7 +441,7 @@
               let layer = chartLayers[i];
               if (prev) {
                 if (overlap(layer, prev)
-                    && layer.getMaxResolution() / prev.getMaxResolution() > 1) {
+                    && layer.getMaxResolution() / prev.getMaxResolution() > 2) {
                   layer.setMinResolution(prev.getMaxResolution());
                 }
                 else {
@@ -794,27 +794,31 @@
             const matches = JSON.parse(xmlHttp.responseText);
             if (matches && matches.length) {
               let candidates = '<b>Nearest Matches</b><br>';
-              for (let i = 0; i < 10 && i < matches.length; ++i) {
+              for (let i = 0; i < 9 && i < matches.length; ++i) {
                 if (i==0) {
-                  candidates += '<u>';
+                  candidates += '<mark>';
                 }
                 candidates += (i + 1).toString() + '. ' + matches[i].name;
                 if (matches[i].state) {
                   candidates += ', ' + matches[i].state;
                 }
                 if (i==0) {
-                  candidates += '</u>';
+                  candidates += '</mark>';
                 }
                 candidates += '<br>';
               }
-              alertify.alert(candidates);
-
               const result = matches[0]; 
+
               currentLocation = [ parseFloat(result.lon), parseFloat(result.lat) ];
               if (geolocation.isTracking()) {
                 geolocation.stop();
-              } 
+              }
+
+              if (map && map.getView().getZoom() < 15) {
+                map.getView().setZoom(15);
+              }
               updateMap(currentLocation, 'images/view.png');
+              alertify.alert(candidates);
             }
             else {
               alertify.alert('No matches');
