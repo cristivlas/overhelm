@@ -19,8 +19,11 @@
 
     <style>
       .ui-keyboard {
-        width: 100%;
-        top: 200px; 
+        left: -20%;
+        top: 100%;
+      }
+      .ui-keyboard-button {
+        font-size: 1.35em;
       }
       .tide-chart {
         top: .5em;
@@ -162,8 +165,25 @@
       }
       ol.inherits(recenterControl, ol.control.Control);
       
-      
       const searchControl = function(opt_options) {
+        const kbdLayout = {
+          "name" : "ms-US English (Latin)",
+          "lang" : ["en"],
+          "normal" : [
+            "` 1 2 3 4 5 6 7 8 9 0 - = {bksp}",
+            "q w e r t y u i o p [ ] \u005c",
+            "a s d f g h j k l ; '",
+            "{shift} \u005c z x c v b n m , . / {shift}",
+            "{space}"
+          ],
+          "shift" : [
+            "~ ! @ # $ % ^ & * ( ) _ + {bksp}",
+            "Q W E R T Y U I O P { } |",
+            "A S D F G H J K L : \u0022",
+            "{shift} | Z X C V B N M < > / {shift}",
+            "{space}"
+          ]
+        };      
         const options = opt_options || {};
 
         const button = document.createElement('button');
@@ -175,7 +195,13 @@
           alertify.prompt('', function(valid, value) {
           });
           $('#alertify-text').keyboard({
+            layout: 'custom',
+            customLayout: kbdLayout,
             usePreview: false,
+            visible: function(e, keyboard, el) {
+              const kbdElem = document.getElementById('alertify-text_keyboard');
+              document.getElementById('alertify-form').appendChild(kbdElem);
+            }
           });
         }
         button.addEventListener('click', handler, false);
