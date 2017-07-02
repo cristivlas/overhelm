@@ -1,4 +1,3 @@
-//const devnull = require('dev-null');
 const https = require('https');
 
 // Load all chart metadata
@@ -79,7 +78,7 @@ function nextTile(tile) {
   }
   try {
     var req = https.get(options, function(resp) {
-      //resp.pipe(devnull());
+
       resp.on('end', function(err) {
         console.log(path);
         if (err) {
@@ -87,6 +86,7 @@ function nextTile(tile) {
         }
         nextTile(tile);
       });
+
       resp.on('data', function(chunk) {
       });
     });

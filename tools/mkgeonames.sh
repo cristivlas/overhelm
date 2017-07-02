@@ -4,7 +4,7 @@ prefix=geonames-
 
 rm -f ${prefix}*
 
-split --lines=100000 --suffix-length=1 US.txt $prefix
+split --lines=20000 --suffix-length=2 US.txt $prefix
 
 rm -rf US
 mkdir -p US
