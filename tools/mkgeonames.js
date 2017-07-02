@@ -28,7 +28,7 @@ function processRecord(data, i) {
     loc = {
       id: parts[0],
       name: parts[1],
-   // ascii: parts[2],
+      ascii: parts[2],
       lat: parts[4],
       lon: parts[5],
       elevation: parts[16]

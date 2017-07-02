@@ -366,11 +366,11 @@ router.get('/tides/:station/:time', function(req, res, next) {
 
 
 /******************************************************************
- *
+ * Search for location that matches name and is closest to lon-lat
  */
 router.get('/search/:name/:lon/:lat', function(req, res, next) {
   if (!geonames) {
-    geonames = require('./geonames.json');
+    geonames = require('./geonames.min.json');
   }
   let name = req.params.name.toLowerCase();
 
@@ -395,7 +395,7 @@ router.get('/search/:name/:lon/:lat', function(req, res, next) {
     return 0;
   });
 
-  res.send(JSON.stringify(matches.slice(0, 100), 0, 4));
+  res.send(JSON.stringify(matches.slice(0, 1000), 0, 4));
 });
 
 

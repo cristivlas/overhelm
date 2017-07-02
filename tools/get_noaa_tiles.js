@@ -2,7 +2,7 @@
 const https = require('https');
 
 // Load all chart metadata
-const charts = require('../routes/noaa-layers.json');
+const charts = require(__dirname + '/../routes/noaa-layers.json');
 
 // http://wiki.openstreetmap.org/wiki/Slippy_map_tilenames
 function long2tile(lon,zoom) {
