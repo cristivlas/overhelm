@@ -64,9 +64,8 @@ function processRecord(data, i) {
         for (let j = 0; j != len; ++j) {
           loc.charts.push(charts[j].ident);
         }
+      	console.log(JSON.stringify(loc, null, 4) + ',');
       }
-      console.log(JSON.stringify(loc, null, 4) + ',');
-      
       return processRecord(data, ++i);
     });
 

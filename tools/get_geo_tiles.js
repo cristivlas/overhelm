@@ -1,7 +1,16 @@
 const https = require('https');
 const geonames = require(__dirname + '/../routes/geonames.json');
 
-const srv = process.argv[2] || 'noaa';
+const start = new Date();
+
+function showETA(nFile) {
+  const now = new Date();
+  const speed = nFile / (now.getTime() - start.getTime());
+  const timeLeft = (geonames.length - nFile) / speed;
+  let eta = new Date();
+  eta.setTime(eta.getTime() + timeLeft);
+  console.log('***** ETA: ' + eta.toLocaleString() + ' *****');
+}
 
 // http://wiki.openstreetmap.org/wiki/Slippy_map_tilenames
 function long2tile(lon,zoom) {
@@ -45,6 +54,8 @@ function nextTileAsync(callback) {
 
 
 function nextTile() {
+  showETA(tile.i);
+
   if (++tile.zoom > maxZoom) {
     tile.zoom = minZoom;
     if (++tile.nChart >= tile.charts.length) {
@@ -56,13 +67,18 @@ function nextTile() {
       if (!tile.charts.length) {
         return nextTileAsync();
       }
+      for (let i = 0; i != tile.charts.length; ++i) {
+        tile.charts[i] = 'noaa/' + tile.charts[i];
+      }
+      tile.charts.push('wikimedia/osm-intl');
     }
   }
   const ident = tile.charts[tile.nChart];
-  console.log('[' + geonames[tile.i].ascii + ']', ident, 'zoom:' + tile.zoom);
+  console.log(tile.i + '/' + geonames.length
+    + ' [' + geonames[tile.i].ascii + ']', ident, 'zoom:' + tile.zoom);
   const x = long2tile(parseFloat(geonames[tile.i].lon), tile.zoom);
   const y = lat2tile(parseFloat(geonames[tile.i].lat), tile.zoom);
-  let path = '/tiles/' + srv + '/' + ident + '/' + tile.zoom + '/' + x + '/' + y;
+  let path = '/tiles/' + ident + '/' + tile.zoom + '/' + x + '/' + y;
   console.log(path);
 
   const options = {

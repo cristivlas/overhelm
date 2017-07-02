@@ -17,6 +17,7 @@
 
     <script src="lib/jquery.min.js"></script>
     <script src="lib/jquery.keyboard.min.js"></script>
+    <script src="lib/jquery.keyboard.extension-all.min.js"></script>
     <script src="lib/bootstrap.min.js"></script>
 
     <style>
@@ -25,7 +26,7 @@
       }
       .ui-keyboard {
         background: white;
-        background: -webkit-linear-gradient(lightblue, white);
+        background: -webkit-linear-gradient(navy, lightblue);
         top: 100%;
         left: -12.5%;
       }
@@ -229,6 +230,9 @@
                 const kbdElem = document.getElementById('alertify-text_keyboard');
                 form.appendChild(kbdElem);
               }
+            }).addTyping({
+              showTyping: true,
+              delay: 250
             });
           }
         }

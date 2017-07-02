@@ -10,12 +10,9 @@ geonames.json
 US
 US.txt
 
-alertify.min.js
-jquery.min.js
+public/lib/*
 alertify.bootstrap.css
 alertify.core.css
 alertify.default.css
 keyboard.min.css
-jquery.keyboard.min.js
-bootstrap.min.js
 bootstrap.min.css

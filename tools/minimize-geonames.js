@@ -9,6 +9,14 @@ let output = [];
 for (let i = 0; i != geonames.length; ) {
   let j = i;
   const g = geonames[i];
+  
+  // workaround for bug in mkgeonames.js
+  if (!g.charts) {
+    console.error(g.name);
+    ++i;
+    continue;
+  }
+
   for (; j != geonames.length; ++j) {
     if (g.name !== geonames[j].name) {
       break;
