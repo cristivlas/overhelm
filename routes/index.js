@@ -10,6 +10,7 @@ const isOnline = require('is-online');
 const path = require('path');
 const tmp = require('tmp');
 const urlJoin = require('url-join');
+const states = require('./states');
 
 const currentsStations = require('./Currents_Active_Stations.json');
 const waterLevelStations = require('./Waterlevel_Active_Stations.json');
@@ -365,6 +366,14 @@ router.get('/tides/:station/:time', function(req, res, next) {
 });
 
 
+function getState(s) {
+  const val = states(s);
+  if (val) {
+    s = val[1];
+  }
+  return s;
+}
+
 /******************************************************************
  * Search for location that matches name and is closest to lon-lat
  */
@@ -373,11 +382,20 @@ router.get('/search/:name/:lon/:lat', function(req, res, next) {
     geonames = require('./geonames.min.json');
   }
   let name = req.params.name.toLowerCase();
+  let state = null;
 
+  const tokens = name.split(',');
+  if (tokens.length > 1) {
+    name = tokens[0].trim();
+    state = getState(tokens[1].trim());
+  }
   let matches = [];
 
   for (let i = 0; i != geonames.length; ++i) {
     const c = geonames[i];
+    if (state && (!c.state || c.state.toLowerCase() !== state)) {
+      continue;
+    }
     if (c.name.toLowerCase().includes(name)) {
       matches.push(c);
     }
