@@ -23,7 +23,7 @@ let tile = {
   charts: []
 }
 
-/* testing
+
 function nextTileAsync(callback) {
   new Promise(function(resolve, reject) {
     try {
@@ -40,9 +40,9 @@ function nextTileAsync(callback) {
       }
       else reject(err);
     }
-  }).then(nextTileAsync.bind(this, callback));;
+  });
 }
-*/
+
 
 function nextTile() {
   if (++tile.zoom > maxZoom) {
@@ -51,8 +51,11 @@ function nextTile() {
       if (++tile.i >= geonames.lenght) {
         return false;
       }
-      tile.charts = geonames[tile.i].charts || [];
       tile.nChart = 0;
+      tile.charts = geonames[tile.i].charts || [];
+      if (!tile.charts.length) {
+        return nextTileAsync();
+      }
     }
   }
   const ident = tile.charts[tile.nChart];
@@ -94,5 +97,4 @@ function nextTile() {
   return true;
 }
 
-//nextTileAsync();
 nextTile();
