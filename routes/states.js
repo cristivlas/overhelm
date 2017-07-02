@@ -98,6 +98,14 @@ function findBestMatch(name) {
 
 function findMatch(name) {
   name = name.toLowerCase();
+  if (name.length == 2) {
+    const val = states.find(function(elem) {
+      return elem[1] == name;
+    });
+    if (val) {
+      return val;
+    }
+  }
   const res = bs(states, [name, ''], comp);
   if (res >= 0) {
      return states[res];
