@@ -1,6 +1,12 @@
 const geonames = require(__dirname + '/../routes/geonames.json');
 
 geonames.sort(function(a, b) {
+  if (a.state < b.state) {
+    return -1;
+  }
+  if (a.state > b.state) {
+    return 1;
+  }
   return a.name.localeCompare(b.name);
 });
 
@@ -19,6 +25,9 @@ for (let i = 0; i != geonames.length; ) {
 
   for (; j != geonames.length; ++j) {
     if (g.name !== geonames[j].name) {
+      break;
+    }
+    if (g.state !== geonames[j].state) {
       break;
     }
   }
