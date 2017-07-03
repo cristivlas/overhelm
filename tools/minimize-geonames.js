@@ -17,7 +17,14 @@ for (let i = 0; i != geonames.length; ) {
   const g = geonames[i];
   
   // workaround for bug in mkgeonames.js
-  if (!g.charts) {
+  if (!g.charts
+    // and filter some business names we don't care about
+    || g.name.includes('Holiday Inn') || g.name.includes('Hilton')
+    || g.name.includes('Hotel') || g.name.endsWith(' Spa') 
+    || g.name.includes(' Inn ') || g.name.endsWith(' Inn')
+    || g.name.includes(' Resort')
+    || g.name.endsWith('Church')
+    ) {
     console.error(g.name);
     ++i;
     continue;
