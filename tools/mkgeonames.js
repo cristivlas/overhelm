@@ -19,7 +19,9 @@ let httpsOpt = {
 const keywords = [
   'airport',
   'anchorage',
+  'atol',
   'bank',
+  'bayou',
   'basin',
   'bar',
   'bay',
@@ -38,6 +40,7 @@ const keywords = [
   'cove',
   'creek',
   'dam',
+  'delta',
   'dock',
   'ferry',
   'fish',
@@ -120,11 +123,13 @@ function filterName(name) {
 
 
 const blocked = [
-  /BANK/,
-  /BLDO/,
+  /^BANK/,
+  /^BLDG/,
+  /^BLDO/,
   /^CH/,
   /^CMTY/,
   /^HTL/,
+  /^MALL/,
   /^REC.*/,
   /^REST/,
   /^RET/,
@@ -132,7 +137,10 @@ const blocked = [
   /^RSRT/,
   /^SCH.*/,
   /^SPA/,
+  /^STNE/,
+  /^STNR/,
   /^SWT/,
+  /^TMB/,
 ]
 
 
