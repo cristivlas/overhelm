@@ -21,6 +21,10 @@
     <script src="lib/bootstrap.min.js"></script>
 
     <style>
+      .popover-title {
+        height: 30px;
+        background:rgba(0,65,135,.5);
+      }
       .popover-title .close {
         position: relative;
         bottom: 3px;
@@ -103,7 +107,7 @@
         font-weight: bold;
         font-family: monospace;
         color: white;
-        background-color: navy;
+        background:rgba(0,65,135,.9);
         opacity: 0.7;
       }
     </style>
@@ -729,7 +733,7 @@
                 datasets[0].backgroundColor.push('lightblue');
               }
               else {
-                datasets[0].backgroundColor.push('blue');
+                datasets[0].backgroundColor.push('rgba(0,65,135,.9)');
                 if (thresh == 0) {
                   thresh = i;
                   const j = Math.floor(i/step) + 1;
@@ -831,7 +835,8 @@
           const elem = popup.getElement();
           $(elem).popover('show');
           document.getElementById('close-popup').onclick = function() {
-            $(elem).popover('hide'); 
+            $(elem).popover('destroy'); 
+            popup.visible=false;
           }
         }
       }
@@ -869,7 +874,7 @@
             'placement': 'top',
             'content': '<div><b>' + place.name + '</b></div>' 
               + convertDMS(coord) + '<br>Elevation: ' + elevation + "'</br>",
-            'title':'Location Info<a href="#" id="close-popup" class="close">&times;</a>'
+            'title':'<a href="#" id="close-popup" class="close">&times;</a>'
           });
           popup.setPosition(pos);
           popup.visible = true; // popover on map postrender
