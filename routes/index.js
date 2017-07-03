@@ -357,9 +357,9 @@ router.get('/tides/:station/:time', function(req, res, next) {
     return 0;
   });
 
-  var result = new Array(240);
+  var result = new Array(241);
 
-  for (var i = 0; i < 240; ++i) {
+  for (var i = 0; i <= 240; ++i) {
     result[i] = tidePredictions[start + i];
   }
   res.send(JSON.stringify({ predictions: result }));

@@ -751,8 +751,10 @@
             } ]
             const now = new Date();
 
-            const predictions = JSON.parse(xmlHttp.responseText).predictions;
-
+            let predictions = JSON.parse(xmlHttp.responseText).predictions;
+            if (navigator.platform === 'iPhone') {
+              predictions = predictions.slice(0, predictions.length-1);
+            }
             // Grid lines color and thickness
             let lineColors = []
             let lineWidths = []
