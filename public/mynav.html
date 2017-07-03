@@ -36,15 +36,29 @@
         background: rgba(0,65,135,1);
         color: white;
       }
+      .ol-attribution ul {
+        font-size: 100%;
+        font-weight: bold;
+        position: relative;
+        bottom: 3px;
+      }
+      .ol-attribution a {
+        display: none;
+      }
       .popover-title {
         height: 30px;
         background:rgba(0,65,135,.5);
+        color: white;
       }
       .popover-title .close {
         position: relative;
-        bottom: 3px;
-        color: white;
+        bottom: 6px;
       } 
+      .popover-title a {
+        color: white;
+        display: inline-block;
+        opacity: 1;
+      }
       .popover-content {
         min-width: 250px;
       }
@@ -121,7 +135,7 @@
         font-family: monospace;
 				bottom: 2em;
 				left: .5em;
-        opacity: .7;
+        opacity: .95;
       }
       .speed {
         bottom: 4em;
@@ -134,7 +148,7 @@
         font-family: monospace;
         color: white;
         background:rgba(0,65,135,.9);
-        opacity: 0.7;
+        opacity: 0.8;
       }
     </style>
     <style type="text/css">
@@ -248,6 +262,7 @@
         var handler = function() {
           alertify.prompt('', function(valid, value) {
             if (valid) {
+              value = value.trim();
               searchLocation(value, currentLocation);
             }
           });
@@ -477,9 +492,11 @@
               const url = 'tiles/noaa/' + tileset.ident + '/{z}/{x}/{y}';
 
               const layer = new ol.layer.Tile({
-                source: new ol.source.XYZ({url: url}),
+                source: new ol.source.XYZ({
+                  url: url,
+                  attributions: tileset.ident.split('_')[0]
+                }),
                 maxResolution: maxRes,
-                //opacity: 0.95
               });
               layer.ident = tileset.ident;
               layer.upper = tileset.upper;
@@ -564,8 +581,10 @@
 
           if (!map) {
             map = new ol.Map({
-              controls: ol.control.defaults(
-                {attribution: false}
+              controls: ol.control.defaults({
+                attributionOptions: {
+                  collapsible: false,
+                }}
               ).extend([
                 tideChartCtrl,
                 new showTideControl(),
@@ -573,7 +592,7 @@
                 new recenterControl(),
                 new searchControl(),
                 new speedControl(),
-                new ol.control.ScaleLine({units: 'nautical'}),
+                /* new ol.control.ScaleLine({units: 'nautical'}) */
               ]),
               target: 'map',
               layers: [
@@ -756,7 +775,7 @@
                 datasets[0].backgroundColor.push('lightblue');
               }
               else {
-                datasets[0].backgroundColor.push('rgba(0,65,135,.5)');
+                datasets[0].backgroundColor.push('rgba(0,65,135,.75)');
                 if (thresh == 0) {
                   thresh = i;
                   const j = Math.floor(i/step) + 1;
@@ -897,7 +916,7 @@
             'placement': 'top',
             'content': '<div><b>' + place.name + '</b></div>' 
               + convertDMS(coord) + '<br>Elevation: ' + elevation + "'</br>",
-             'title':'<a href="#" id="close-popup" class="close">&times;</a>'
+             'title': place.code + '<a href="#" id="close-popup" class="close">&times;</a>'
           });
           popup.setPosition(pos);
           popup.visible = true; // popover on map postrender

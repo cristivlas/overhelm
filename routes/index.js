@@ -359,7 +359,7 @@ router.get('/tides/:station/:time', function(req, res, next) {
 
   var result = new Array(240);
 
-  for (var i = 0; i <= 240; ++i) {
+  for (var i = 0; i < 240; ++i) {
     result[i] = tidePredictions[start + i];
   }
   res.send(JSON.stringify({ predictions: result }));
@@ -413,7 +413,7 @@ router.get('/search/:name/:lon/:lat', function(req, res, next) {
     return 0;
   });
 
-  res.send(JSON.stringify(matches.slice(0, 1000), 0, 4));
+  res.send(JSON.stringify(matches.slice(0, 100)));
 });
 
 

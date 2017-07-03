@@ -15,3 +15,6 @@ for i in ${prefix}*; do
 done
 
 rm ${prefix}*
+
+# (echo [ && cat US/${prefix}* && echo ]) > geonames.json
+(echo [ && sed '$ s/.$//' US/${prefix}* && echo ]) > geonames.json

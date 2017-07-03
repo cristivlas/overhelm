@@ -1,4 +1,4 @@
-const geonames = require(__dirname + '/../routes/geonames.json');
+const geonames = require(__dirname + '/geonames.json');
 
 geonames.sort(function(a, b) {
   if (a.state < b.state) {
@@ -15,22 +15,6 @@ let output = [];
 for (let i = 0; i != geonames.length; ) {
   let j = i;
   const g = geonames[i];
-  
-  // workaround for bug in mkgeonames.js
-  if (!g.charts
-    // and filter some business names we don't care about
-    || g.name.includes('Holiday Inn') || g.name.includes('Hilton')
-    || g.name.includes('Best Western')
-    || g.name.includes('Hotel') || g.name.endsWith(' Spa') 
-    || g.name.includes(' Inn ') || g.name.endsWith(' Inn')
-    || g.name.includes(' Resort')
-    || g.name.includes(' Motel')
-    || g.name.endsWith('Church')
-    ) {
-    console.error(g.name);
-    ++i;
-    continue;
-  }
 
   for (; j != geonames.length; ++j) {
     if (g.name !== geonames[j].name) {
@@ -45,8 +29,10 @@ for (let i = 0; i != geonames.length; ) {
     elevation: g.elevation,
     lat: g.lat,
     lon: g.lon,
-    state: g.state
+    state: g.state,
+    code: g.code
   });
   i = j;
 }
-console.log(JSON.stringify(output, null, 4));
+console.error(output.length);
+console.log(JSON.stringify(output));
