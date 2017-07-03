@@ -21,8 +21,12 @@
     <script src="lib/bootstrap.min.js"></script>
 
     <style>
+      .popover-title .close {
+        position: relative;
+        bottom: 3px;
+      } 
       .popover-content {
-        min-width: 240px;
+        min-width: 300px;
       }
       .ui-keyboard {
         background: white;
@@ -557,9 +561,7 @@
             map.addOverlay(popup);
 
             map.on('postrender', function() {
-              if (popup.visible) {
-                $(popup.getElement()).popover('show');
-              }
+              showPopup();
             });
 
             //
@@ -824,6 +826,17 @@
       }
 
 
+      function showPopup() {
+        if (popup.visible) {
+          const elem = popup.getElement();
+          $(elem).popover('show');
+          document.getElementById('close-popup').onclick = function() {
+            $(elem).popover('hide'); 
+          }
+        }
+      }
+
+
       function searchLocation(name, coord) {
 
         function buildSelection(matches) {
@@ -855,12 +868,11 @@
             'html': true,
             'placement': 'top',
             'content': convertDMS(coord) + '<br>Elevation: ' + elevation + "'</br>",
-            'title': '<b>' + place.name + '</b>'
+            'title': '<b>' + place.name + '</b><a href="#" id="close-popup" class="close">&times;</a>'
           });
           popup.setPosition(pos);
           popup.visible = true; // popover on map postrender
         }
-
         const url = 'search/' + name + '/' + coord[0] + '/' + coord[1];
         const xmlHttp = new XMLHttpRequest();
         xmlHttp.onreadystatechange = function() {
