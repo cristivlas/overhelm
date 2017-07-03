@@ -20,9 +20,11 @@ for (let i = 0; i != geonames.length; ) {
   if (!g.charts
     // and filter some business names we don't care about
     || g.name.includes('Holiday Inn') || g.name.includes('Hilton')
+    || g.name.includes('Best Western')
     || g.name.includes('Hotel') || g.name.endsWith(' Spa') 
     || g.name.includes(' Inn ') || g.name.endsWith(' Inn')
     || g.name.includes(' Resort')
+    || g.name.includes(' Motel')
     || g.name.endsWith('Church')
     ) {
     console.error(g.name);
