@@ -143,7 +143,7 @@
     </div>
 
     <script>
-      const defaultZoom = 12;
+      const defaultZoom = 14;
       const locationTimeout = 3000;
 
       var savedZoom = defaultZoom;
@@ -467,7 +467,7 @@
               const layer = new ol.layer.Tile({
                 source: new ol.source.XYZ({url: url}),
                 maxResolution: maxRes,
-                opacity: 0.95
+                //opacity: 0.95
               });
               layer.ident = tileset.ident;
               layer.upper = tileset.upper;
