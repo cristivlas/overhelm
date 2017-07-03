@@ -26,7 +26,7 @@
         bottom: 3px;
       } 
       .popover-content {
-        width: 250px;
+        min-width: 250px;
       }
       .ui-keyboard {
         background: white;
@@ -867,8 +867,9 @@
             'animation': false,
             'html': true,
             'placement': 'top',
-            'content': convertDMS(coord) + '<br>Elevation: ' + elevation + "'</br>",
-            'title': '<b>' + place.name + '</b><a href="#" id="close-popup" class="close">&times;</a>'
+            'content': '<div><b>' + place.name + '</b></div>' 
+              + convertDMS(coord) + '<br>Elevation: ' + elevation + "'</br>",
+            'title':'Location Info<a href="#" id="close-popup" class="close">&times;</a>'
           });
           popup.setPosition(pos);
           popup.visible = true; // popover on map postrender
