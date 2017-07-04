@@ -125,15 +125,12 @@ function filterName(loc) {
     return true;
   }
   for (let i = 0; i != tok.length; ++i) {
-    if (keywords.find(function(elem) {
-        return elem === tok[i];
-      })) {
+    if (keywords.includes(tok[i])) {
 
-      // hack around 'Mobile Home Park' :)
-      if (tok[i]==='park' && loc.code==='PPL') {
+      // hack around 'Mobile Home Park'
+      if ((tok[i]==='park' || tok.includes('park')) && loc.code !=='PRK') {
         return false;
       }
-
       return true;
     }
   }
