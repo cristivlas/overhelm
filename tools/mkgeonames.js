@@ -118,7 +118,8 @@ Array.prototype.removeEmpty = function() {
 }
 
 
-function filterName(name) {
+function filterName(loc) {
+  const name = loc.ascii;
   const tok = name.toLowerCase().split(' ').removeEmpty();
   if (tok.length <= 2) {
     return true;
@@ -127,6 +128,12 @@ function filterName(name) {
     if (keywords.find(function(elem) {
         return elem === tok[i];
       })) {
+
+      // hack around 'Mobile Home Park' :)
+      if (tok[i]==='park' && loc.code==='PPL') {
+        return false;
+      }
+
       return true;
     }
   }
@@ -169,46 +176,8 @@ function filter(loc) {
       return false;
     }
   }
-  return filterName(loc.ascii);
+  return filterName(loc);
 }
-
-
-//
-// TEST
-//
-if (process.argv[2]==='test') {
-  const test = [
-    'Grove Hill Academy',
-    'Griffins (historical)',
-    'New World Academy',
-    'Little Stellwagen Basin',
-    'Southern California Borderland',
-    'Eastern Shore Shopping Center',
-    'Highland Park Golf Course',
-  ];
-
-  for (let i = 0; i != test.length; ++i) {
-    console.log([test[i], filterName(test[i])]);
-  }
-
-  let loc = {
-    "id": "4065478",
-    "name": "Grove Hill Academy",
-    "ascii": "Grove Hill Academy",
-    "lat": "31.70127",
-    "lon": "-87.77472",
-    "elevation": "154",
-    "code": "SCH",
-    "state": "AL",
-    "charts": [
-        "50000_1",
-        "411_1"
-    ]
-  }
-  console.log([loc, filter(loc)]);
-  return;
-}
-
 
 
 function processRecord(data, i) {
