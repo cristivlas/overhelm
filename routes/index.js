@@ -107,6 +107,28 @@ router.get('/tiles/:srv/:set/:z/:x/:y', function(req, res, next) {
     return next(err);
   }
 
+  function checkBounds(tilesets, ident, z, x, y) {
+    if (!tilesets) {
+      return true;
+    }
+    for (let i = 0; i != tilesets.length; ++i) {
+      const t = tilesets[i];
+      if (t.ident===ident) {
+        const b = t.tiles[z];
+        if (x < b[0] || x > b[2] || y > b[1] || y < b[3]) {
+          console.log('*** OUT OF BOUNDS:', ident, [z, x, y], b);
+          break;
+        }
+        return true;
+      }
+    }
+    return false;
+  }
+  const tset = tilesets[req.params.srv];
+  if (!checkBounds(tset, req.params.set, req.params.z, req.params.x, req.params.y)) {
+    return res.send();
+  }
+
   function formatTileCacheFileName(req, res, next) {
     let p = req.params;
     let fileName = [ p.set, p.z, p.x, p.y, 'png' ].join('.');

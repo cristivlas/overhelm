@@ -510,7 +510,7 @@
               let layer = chartLayers[i];
               if (prev) {
                 if (overlap(layer, prev)
-                    && layer.getMaxResolution() / prev.getMaxResolution() > 2) {
+                    && layer.getMaxResolution() / prev.getMaxResolution() > 3) {
                   layer.setMinResolution(prev.getMaxResolution());
                 }
                 else {
