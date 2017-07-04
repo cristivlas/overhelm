@@ -180,6 +180,7 @@
       var map = null;           // the map object
       var popup = null;
       var currentLocation = null;
+      var prevLocation = 'current location';
 
       /*****************************************************************
        * Tides information
@@ -912,12 +913,18 @@
           //otherwise we should multiply by 3.28084 -- I just checked a few data points
           //against Wikipedia
 
+          const info =
+            '<div><b>' + place.name + '</b></div>' 
+              + convertDMS(coord) + '<br>Elevation: ' + elevation + "'"
+              + '<br><em>' + Math.floor(place.dist * 100) / 100 
+              + ' nautical miles from ' + prevLocation + '</em>';
+          prevLocation = place.name;
+
           $(e).popover({
             'animation': false,
             'html': true,
             'placement': 'top',
-            'content': '<div><b>' + place.name + '</b></div>' 
-              + convertDMS(coord) + '<br>Elevation: ' + elevation + "'</br>",
+            'content': info,
              'title': place.code + '<a href="#" id="close-popup" class="close">&times;</a>'
           });
           popup.setPosition(pos);

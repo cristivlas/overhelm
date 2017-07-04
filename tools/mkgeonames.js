@@ -78,6 +78,7 @@ const keywords = [
   'narrows',
   'park',
   'pass',
+  'passage',
   'peninsula',
   'pier',
   'point',

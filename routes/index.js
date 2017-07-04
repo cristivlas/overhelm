@@ -243,12 +243,11 @@ router.get('/tiles/:srv/:set/:z/:x/:y', function(req, res, next) {
 //
 // https://stackoverflow.com/questions/21279559/geolocation-closest-locationlat-long-from-my-position
 //
-function getDistanceFromLatLonInKm(lat1,lon1,lat2,lon2) {
+function getDistanceFromLatLong(lat1,lon1,lat2,lon2) {
   function deg2rad(deg) {
     return deg * (Math.PI/180)
   }
 
-  const R = 6371; // Radius of the earth in km
   const dLat = deg2rad(lat2-lat1);  // deg2rad below
   const dLon = deg2rad(lon2-lon1); 
   const a = 
@@ -256,13 +255,12 @@ function getDistanceFromLatLonInKm(lat1,lon1,lat2,lon2) {
     Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) * 
     Math.sin(dLon/2) * Math.sin(dLon/2); 
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); 
-  const d = R * c; // Distance in km
-  return d;
+  return c;
 }
 
 function getDistance(req, st) {
   const params = req.params;
-  return getDistanceFromLatLonInKm(
+  return getDistanceFromLatLong(
     req.params.lat, req.params.lon,
     st.Latitude, st.Longitude);
 }
@@ -414,18 +412,23 @@ router.get('/search/:name/:lon/:lat', function(req, res, next) {
   let matches = [];
 
   for (let i = 0; i != geonames.length; ++i) {
-    const c = geonames[i];
+    let c = geonames[i];
     if (state && (!c.state || c.state.toLowerCase() !== state)) {
       continue;
     }
     if (c.name.toLowerCase().includes(name)) {
+      c.dist = getDistanceFromLatLong(c.lat, c.lon, req.params.lat, req.params.lon);
+      c.dist *= 3440; // nautical miles, for the front-end's convenience
       matches.push(c);
     }
   }
 
   matches.sort(function(a,b) {
-    let dist1 = getDistanceFromLatLonInKm(a.lat, a.lon, req.params.lat, req.params.lon);
-    let dist2 = getDistanceFromLatLonInKm(b.lat, b.lon, req.params.lat, req.params.lon);
+    //let dist1 = getDistanceFromLatLong(a.lat, a.lon, req.params.lat, req.params.lon);
+    //let dist2 = getDistanceFromLatLong(b.lat, b.lon, req.params.lat, req.params.lon);
+    const dist1 = a.dist;
+    const dist2 = b.dist;
+
     if (dist1 < dist2) {
       return -1;
     }
@@ -436,6 +439,31 @@ router.get('/search/:name/:lon/:lat', function(req, res, next) {
   });
 
   res.send(JSON.stringify(matches.slice(0, 100)));
+});
+
+
+/******************************************************************
+ * Get distance between two points
+ */
+router.get('/dist/:units/:lon1/:lat1/:lon2/:lat2', function(req, res, next) {
+  let dist = getDistanceFromLatLong(
+    req.params.lat1,
+    req.params.lon1,
+    req.params.lat2,
+    req.params.lon2);
+  switch (req.params.units.trim().toLowerCase()) {
+    case 'km':
+      dist *= 6371; // radius of earth in km
+      break;
+    case 'nm':
+      dist *= 3440; // radius of earth in nautical miles
+      break;
+    case 'm':
+      dist *= 3959; // radius in miles
+      break;
+    default:
+  }
+  res.send(dist.toString());
 });
 
 
