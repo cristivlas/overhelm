@@ -624,6 +624,7 @@
               const coord = e.coordinate;
               const lonLat = ol.proj.transform(coord, 'EPSG:3857', 'EPSG:4326');
               currentLocation = lonLat;
+              prevLocation = 'current location';
               updateMap(lonLat, 'images/view.png');
             });
           }
@@ -973,6 +974,7 @@
       function updateDefault() {
         if (!currentLocation) {
           currentLocation = [-122.4049, 47.6810] // Shilshole Bay
+          prevLocation = 'current location';
         }
         updateMap(currentLocation, 'images/view.png');
       }
@@ -985,6 +987,7 @@
           }
           if (coord.lon && coord.lat) {
             currentLocation = [ coord.lon, coord.lat ];
+            prevLocation = 'current location';
             updateMap(currentLocation);
           }
         },
