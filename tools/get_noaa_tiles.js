@@ -71,15 +71,21 @@ function nextChart(tile) {
 
 
 function updateStatus(err, tile) {
-  const html = '<html><meta http-equiv="refresh" content="5"><body>Process '
-    + process.pid + ' started: ' + start.toLocaleString()
+  const html = '<html><meta http-equiv="refresh" content="5">'
+    + '<body>Process '
+    + process.pid + '<div id="start"></div>'
     + '<br>Zoom level: ' + zoom
     + '<br>Charts: ' + tile.i + ' out of ' + charts.length
     + ' (current: ' + charts[tile.i].ident + ')'
     + '<br>Tiles: ' + nTiles
-    + '<br>ETA: ' + getETA(tile.i, charts.length).toLocaleString()
-    + '</body></html\n';
-  const path = __dirname + '/../public/status.html';
+    + '<br><div id="eta"></div>'
+    + '</body>'
+    + '<script>document.getElementById("start").innerHTML="Started: " + new Date('
+    + start.getTime() + ').toLocaleString();document.getElementById("eta").innerHTML='
+    + '"ETA: " + new Date('
+    + getETA(tile.i, charts.length).getTime() + ').toLocaleString()</script></html>'
+
+  const path = __dirname + '/../public/status-' + zoom + '.html';
   fs.writeFile(path, html, function(err) {
   });
 

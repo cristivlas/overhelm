@@ -498,6 +498,7 @@
                   attributions: tileset.ident.split('_')[0]
                 }),
                 maxResolution: maxRes,
+                opacity: .7
               });
               layer.ident = tileset.ident;
               layer.upper = tileset.upper;
@@ -511,7 +512,7 @@
               let layer = chartLayers[i];
               if (prev) {
                 if (overlap(layer, prev)
-                    && layer.getMaxResolution() / prev.getMaxResolution() > 3) {
+                    && layer.getMaxResolution() / prev.getMaxResolution() > 2) {
                   layer.setMinResolution(prev.getMaxResolution());
                 }
                 else {

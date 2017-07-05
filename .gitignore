@@ -11,7 +11,7 @@ US
 US.txt
 
 public/lib/*
-public/status.html
+public/status*
 
 alertify.bootstrap.css
 alertify.core.css
