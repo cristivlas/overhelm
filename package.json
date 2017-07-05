@@ -21,6 +21,7 @@
     "jade": "~1.11.0",
     "jquery": "^3.2.1",
     "morgan": "^1.8.2",
+    "pngjs": "^3.2.0",
     "serialport": "^4.0.7",
     "serve-favicon": "~2.4.2",
     "tmp": "0.0.31",

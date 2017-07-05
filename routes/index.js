@@ -8,6 +8,7 @@ const http = require('http');
 const https = require('https');
 const isOnline = require('is-online');
 const path = require('path');
+const PNG = require('pngjs').PNG;
 const tmp = require('tmp');
 const urlJoin = require('url-join');
 const states = require('./states');
@@ -126,7 +127,7 @@ router.get('/tiles/:srv/:set/:z/:x/:y', function(req, res, next) {
   }
   const tset = tilesets[req.params.srv];
   if (!checkBounds(tset, req.params.set, req.params.z, req.params.x, req.params.y)) {
-    return res.send();
+    return res.send(204);
   }
 
   function formatTileCacheFileName(req, res, next) {
@@ -147,6 +148,24 @@ router.get('/tiles/:srv/:set/:z/:x/:y', function(req, res, next) {
     file.on('error', function(err) {
       res.end(err);
     });
+  }
+
+  function isEmptyPNG(filePath) {
+    let isEmpty = true;
+    const data = fs.readFileSync(filePath);
+    try {
+      const png = PNG.sync.read(data);
+      for (let i = 0; i < png.data.length; ++i) {
+        if (png.data[i] != 0) {
+          isEmpty = false;
+          break;
+        }
+      }
+    }
+    catch (err) {
+      console.log(err.message);
+    }
+    return isEmpty;
   }
 
   function downloadAndUploadTile(filePath, req, res, next) {
@@ -179,6 +198,14 @@ router.get('/tiles/:srv/:set/:z/:x/:y', function(req, res, next) {
 
           if (response.statusCode == 200) {
             console.log('Finished downloading: ' + filePath);
+            if (isEmptyPNG(tmpFileName)) {
+              fs.unlinkSync(tmpFileName);
+              console.log('Tile is empty: ' + filePath);
+              //
+              // todo: update emptyTiles.txt
+              //
+              return res.send(204);
+            }
             fs.rename(tmpFileName, filePath, function(err) {
               if (err) {
                 fs.unlinkSync(tmpFileName);
@@ -219,7 +246,7 @@ router.get('/tiles/:srv/:set/:z/:x/:y', function(req, res, next) {
     uploadTile(cachedFilePath, req, res, next);
   }
   else if (!__online || req.query.source === 'local') {
-    res.send();
+    res.send(204);
   }
   else {
     const emptyList = path.normalize(
@@ -233,7 +260,7 @@ router.get('/tiles/:srv/:set/:z/:x/:y', function(req, res, next) {
       }
       else {
         console.log(cmd, ':', stdout);
-        res.send();
+        res.send(204);
       }
     });
   }
