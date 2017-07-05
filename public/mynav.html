@@ -612,7 +612,7 @@
             });
 
             //
-            // USe double click to switch from location tracking to viewing mode
+            // Use double click to switch from location tracking to viewing mode
             //
             map.on('dblclick', function(e) {
               e.preventDefault();
@@ -624,7 +624,7 @@
               const coord = e.coordinate;
               const lonLat = ol.proj.transform(coord, 'EPSG:3857', 'EPSG:4326');
               currentLocation = lonLat;
-              prevLocation = 'current location';
+              prevLocation = 'previous location';
               updateMap(lonLat, 'images/view.png');
             });
           }
@@ -974,7 +974,7 @@
       function updateDefault() {
         if (!currentLocation) {
           currentLocation = [-122.4049, 47.6810] // Shilshole Bay
-          prevLocation = 'current location';
+          prevLocation = 'Shilshole Bay';
         }
         updateMap(currentLocation, 'images/view.png');
       }
