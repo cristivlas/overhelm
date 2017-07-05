@@ -1,7 +1,20 @@
+const fs = require('fs');
 const https = require('https');
 
 // Load all chart metadata
 const charts = require(__dirname + '/../routes/noaa-layers.json');
+
+
+const start = new Date();
+
+function getETA(i, n) {
+  const now = new Date();
+  const speed = i / (now.getTime() - start.getTime());
+  const timeLeft = (n - i) / speed;
+  let eta = new Date();
+  eta.setTime(eta.getTime() + timeLeft);
+  return eta;
+}
 
 // http://wiki.openstreetmap.org/wiki/Slippy_map_tilenames
 function long2tile(lon,zoom) {
@@ -38,6 +51,8 @@ var currentTile = {
   yMin: -1,
   yMax: -1,
 }
+var nTiles = -1;
+
 
 function nextChart(tile) {
   ++tile.i;
@@ -55,7 +70,24 @@ function nextChart(tile) {
 }
 
 
+function updateStatus(err, tile) {
+  const html = '<html><meta http-equiv="refresh" content="5"><body>Process '
+    + process.pid + ' started: ' + start.toLocaleString()
+    + '<br>Zoom level: ' + zoom
+    + '<br>Charts: ' + tile.i + ' out of ' + charts.length
+    + ' (current: ' + charts[tile.i].ident + ')'
+    + '<br>Tiles: ' + nTiles
+    + '<br>ETA: ' + getETA(tile.i, charts.length).toLocaleString()
+    + '</body></html\n';
+  const path = __dirname + '/../public/status.html';
+  fs.writeFile(path, html, function(err) {
+  });
+
+}
+
+
 function nextTile(tile) {
+  ++nTiles;
   ++tile.x;
   if (tile.x > tile.xMax) {
     ++tile.y;
@@ -78,9 +110,16 @@ function nextTile(tile) {
   }
   try {
     var req = https.get(options, function(resp) {
+      if (resp.statusCode===204) {
+        console.log([ident, tile.x, tile.y]);
+        tile.x = tile.xMax;
+        tile.y = tile.yMax;
+        return nextTile(tile);
+      }
 
       resp.on('end', function(err) {
         console.log(path);
+        updateStatus(err, tile);
         if (err) {
           console.log(err);
         }

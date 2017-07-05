@@ -127,7 +127,7 @@ router.get('/tiles/:srv/:set/:z/:x/:y', function(req, res, next) {
   }
   const tset = tilesets[req.params.srv];
   if (!checkBounds(tset, req.params.set, req.params.z, req.params.x, req.params.y)) {
-    return res.send(204);
+    return res.sendStatus(204);
   }
 
   function formatTileCacheFileName(req, res, next) {
@@ -168,7 +168,7 @@ router.get('/tiles/:srv/:set/:z/:x/:y', function(req, res, next) {
     return isEmpty;
   }
 
-  function downloadAndUploadTile(filePath, req, res, next) {
+  function downloadAndUploadTile(filePath, req, res, next, empty) {
     console.log('Downloading: ' + filePath);
     function ensureDirectoryExists(filePath) {
       let dirname = path.dirname(filePath);
@@ -201,10 +201,16 @@ router.get('/tiles/:srv/:set/:z/:x/:y', function(req, res, next) {
             if (isEmptyPNG(tmpFileName)) {
               fs.unlinkSync(tmpFileName);
               console.log('Tile is empty: ' + filePath);
+              
               //
-              // todo: update emptyTiles.txt
+              // update emptyTiles.txt
               //
-              return res.send(204);
+              const parts = path.basename(filePath).split('.');
+              const entry = parts[1] + ' ' + parts[2] + ' ' + parts[3] + '\n';
+              console.log(empty, entry);
+              fs.appendFileSync(empty, entry);
+
+              return res.sendStatus(204);
             }
             fs.rename(tmpFileName, filePath, function(err) {
               if (err) {
@@ -246,7 +252,7 @@ router.get('/tiles/:srv/:set/:z/:x/:y', function(req, res, next) {
     uploadTile(cachedFilePath, req, res, next);
   }
   else if (!__online || req.query.source === 'local') {
-    res.send(204);
+    res.sendStatus(204);
   }
   else {
     const emptyList = path.normalize(
@@ -256,11 +262,11 @@ router.get('/tiles/:srv/:set/:z/:x/:y', function(req, res, next) {
 
     exec (cmd, function(err, stdout, stderr) {
       if (err) {
-        downloadAndUploadTile(cachedFilePath, req, res, next)
+        downloadAndUploadTile(cachedFilePath, req, res, next, emptyList)
       }
       else {
         console.log(cmd, ':', stdout);
-        res.send(204);
+        res.sendStatus(204);
       }
     });
   }
