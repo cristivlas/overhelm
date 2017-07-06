@@ -70,7 +70,7 @@ function nextChart(tile) {
 }
 
 
-function updateStatus(err, tile) {
+function updateStatus(err, tile, done=false) {
   const html = '<html><meta http-equiv="refresh" content="5">'
     + '<body>Process '
     + process.pid + '<div id="start"></div>'
@@ -83,8 +83,8 @@ function updateStatus(err, tile) {
     + '<script>document.getElementById("start").innerHTML="Started: " + new Date('
     + start.getTime() + ').toLocaleString();document.getElementById("eta").innerHTML='
     + '"ETA: " + new Date('
-    + getETA(tile.i, charts.length).getTime() + ').toLocaleString()</script>'
-    + (err ? err : '') + '</html>'
+    + getETA(tile.i, charts.length).getTime() + ').toLocaleString()</script><br>'
+    + (err ? err : '') + (done ? '<br>Completed.': '') + '</html>'
 
   const path = __dirname + '/../public/status-' + zoom + '.html';
   fs.writeFileSync(path, html);
@@ -98,6 +98,7 @@ function nextTile(tile) {
     ++tile.y;
     if (tile.y > tile.yMax) {
       if (!nextChart(tile)) {
+        updateStatus(null, tile, true);
         return false;
       }
       tile.y = tile.yMin;
@@ -119,7 +120,6 @@ function nextTile(tile) {
         console.log([ident, tile.x, tile.y]);
         tile.x = tile.xMax;
         tile.y = tile.yMax;
-        updateStatus(null, tile);
         return nextTile(tile);
       }
 
@@ -148,3 +148,4 @@ function nextTile(tile) {
 }
 
 nextTile(currentTile);
+

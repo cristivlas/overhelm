@@ -212,7 +212,6 @@
       var popup = null;
       var selectedLocation = null;
       var prevLocationName = 'current location';
-      var headingRotation = 0;
       var savedZoom = defaultZoom;
 
       /*****************************************************************
@@ -343,10 +342,15 @@
         button.id = 'dest';
         button.disabled = true;
         var handler = function() {
-          if (popup.place && !popup.visible && destination) {
-            geolocation.stop();
-            updateMap(popup.destCoord, 'images/view.png');
-            updatePopup(destination, popup.destPlace, popup.destCoord);
+          if (popup.place && destination) {
+            if (popup.visible) {
+              map.getView().setCenter(destination);
+            }
+            else {
+              geolocation.stop();
+              updateMap(popup.destCoord);
+              updatePopup(destination, popup.destPlace, popup.destCoord);
+            }
           }
         }
         button.addEventListener('click', handler, false);
@@ -470,7 +474,7 @@
           }),
           style: new ol.style.Style({
             stroke: new ol.style.Stroke({
-              color: '#8000f0',
+              color: '#008000',
               width: 3
             }),
             image: new ol.style.Icon({
@@ -493,11 +497,11 @@
       }
 
 
-      function updatePositionLayer(pos, iconUrl) {
+      function updatePositionLayer(pos) {
         if (marker) {
           map.removeLayer(marker);
         }
-        marker = getPositionLayer(pos, iconUrl);
+        marker = getPositionLayer(pos);
         map.addLayer(marker);
       }
 
@@ -505,30 +509,54 @@
       /**
        * Construct position marker layer
        */
-      function getPositionLayer(xy, iconUrl) {
-        var iconFeature = new ol.Feature({
+      function getPositionLayer(xy) {
+        let iconFeature = new ol.Feature({
           geometry: new ol.geom.Point(xy),
-          name: 'Current position',
         });
-
-        var iconStyle = new ol.style.Style({
-          image: new ol.style.Icon(/** @type {olx.style.IconOptions} */ ({
+        let rotation = 0;
+        let iconUrl = 'images/view.png';
+        if (geolocation.isTracking()) {
+          iconUrl = 'images/marker.png';
+          rotation = geolocation.rotation;
+        }
+        let iconStyle = new ol.style.Style({
+          image: new ol.style.Icon({
             anchor: [0.5, 0.5],
             anchorXUnits: 'fraction',
             anchorYUnits: 'fraction',
             src: iconUrl,
             rotateWithView: true,
-            rotation: geolocation.isTracking() ? headingRotation : 0
-          }))
+            rotation: rotation,
+          })
         });
         iconFeature.setStyle(iconStyle);
 
-        var vectorSource = new ol.source.Vector({
-          features: [iconFeature]
-        });
+        features = [iconFeature];
+
+        if (geolocation.coord && !geolocation.isTracking()) {
+          xy = ol.proj.fromLonLat([geolocation.coord.lon, geolocation.coord.lat]);
+
+          iconFeature = new ol.Feature({
+            geometry: new ol.geom.Point(xy)
+          });
+          iconStyle = new ol.style.Style({
+            image: new ol.style.Icon({
+              anchor: [0.5, 0.5],
+              anchorXUnits: 'fraction',
+              anchorYUnits: 'fraction',
+              src: 'images/marker.png',
+              rotateWithView: true,
+              rotation: geolocation.rotation
+            })
+          });
+          iconFeature.setStyle(iconStyle);
+          features.push(iconFeature);
+        }
 
         return new ol.layer.Vector({
-          source: vectorSource,
+          source: new ol.source.Vector({
+            features: features
+          })
         });
       }
 
@@ -649,7 +677,7 @@
       /**
        * Construct / update the map object
        */
-      function updateMap(coord, iconUrl = 'images/marker.png') {
+      function updateMap(coord) {
         if (popup && popup.visible) {
           $(popup.getElement()).popover('destroy');
           popup.visible = popup.shown = false;
@@ -738,12 +766,12 @@
               const lonLat = ol.proj.transform(coord, 'EPSG:3857', 'EPSG:4326');
               selectedLocation = lonLat;
               prevLocationName = 'previous location';
-              updateMap(lonLat, 'images/view.png');
+              updateMap(lonLat);
             });
           }
 
           updateCourseLayer(pos);
-          updatePositionLayer(pos, iconUrl);
+          updatePositionLayer(pos);
         });
        
         elem = document.getElementById('location');
@@ -1126,7 +1154,7 @@
                 if (map && map.getView().getZoom() < defaultZoom) {
                     map.getView().setZoom(defaultZoom);
                 }
-                const pos = updateMap(coord, 'images/view.png');
+                const pos = updateMap(coord);
                 updatePopup(pos, matches[elem.selectedIndex], coord);
               });
             }
@@ -1150,7 +1178,7 @@
           selectedLocation = [-122.4049, 47.6810] // Shilshole Bay
           prevLocationName = 'Shilshole Bay';
         }
-        let pos = updateMap(selectedLocation, 'images/view.png');
+        let pos = updateMap(selectedLocation);
         if (map) {
           map.pos = pos;
         }
@@ -1159,9 +1187,6 @@
 
       var geolocation = new Geolocation({
         onSuccess: function(coord) {
-          if (coord.heading) {
-            headingRotation = coord.heading * (Math.PI / 180);
-          }
           if (coord.lon && coord.lat) {
             selectedLocation = [ coord.lon, coord.lat ];
             prevLocationName = 'current location';
