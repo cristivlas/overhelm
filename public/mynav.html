@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html>
-  <head>
+  head>
     <title>Chart Navigator [Alpha]</title>
     <meta name="viewport" content="initial-scale=1.0, user-scalable=no, width=device-width">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -191,7 +191,7 @@
     </div>
 
     <script>
-      const defaultZoom = 14;
+      const defaultZoom = 13;
       const locationTimeout = 3000;
 
       var chartTilesets = null; // current tilesets, stringified
@@ -334,16 +334,10 @@
         button.id = 'dest';
         button.disabled = true;
         var handler = function() {
-          if (popup.place && !popup.visible) {
+          if (popup.place && !popup.visible && destination) {
             geolocation.stop();
-            if (destination) {
-              updateMap(popup.destCoord, 'images/view.png');
-              updatePopup(destination, popup.destPlace, popup.destCoord);
-            }
-            else {
-              updateMap(selectedLocation, 'images/view.png');
-              updatePopup(popup.pos, popup.place, selectedLocation);
-            }
+            updateMap(popup.destCoord, 'images/view.png');
+            updatePopup(destination, popup.destPlace, popup.destCoord);
           }
         }
         button.addEventListener('click', handler, false);
@@ -1063,9 +1057,11 @@
           prevLocationName = popup.destPlace.name;
         }
         else {
-          html += '<br><em>' + Math.floor(place.dist * 100) / 100
-            + ' nautical miles from ' + prevLocationName + '</em>'
-            + '<div id="cancel-course" display: none></div>';
+          if (place.dist) {
+            html += '<br><em>' + Math.floor(place.dist * 100) / 100
+                 + ' nautical miles from ' + prevLocationName + '</em>'
+          }
+          html += '<div id="cancel-course" display: none></div>';
           btn += '<button type="button" class="set-course" id="set-course">Set course</button>';
           prevLocationName = place.name;
         }
