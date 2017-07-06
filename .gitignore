@@ -9,6 +9,8 @@ log.*
 geonames.json
 US
 US.txt
+CA
+CA.txt
 
 public/lib/*
 public/status*
