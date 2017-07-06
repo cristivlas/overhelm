@@ -3,6 +3,7 @@
   <head>
     <title>Chart Navigator [Alpha]</title>
     <meta name="viewport" content="initial-scale=1.0, user-scalable=no, width=device-width">
+    <meta name="apple-mobile-web-app-capable" content="yes">
     <link rel="stylesheet" href="lib/OpenLayers/4.2.0/ol.css" type="text/css">
     <link rel="stylesheet" href="stylesheets/alertify.core.css" type="text/css">
     <link rel="stylesheet" href="stylesheets/alertify.bootstrap.css" type="text/css">
@@ -150,6 +151,13 @@
         background:rgba(0,65,135,.9);
         opacity: 0.8;
       }
+      .set-course {
+        position: absolute;
+        right: 5px;
+        bottom: 5px;
+        color: white;
+        background:rgba(0,65,135,.5);
+      }
     </style>
     <style type="text/css">
       html, body, .map {
@@ -181,6 +189,7 @@
       var popup = null;
       var currentLocation = null;
       var prevLocation = 'current location';
+      var courseLayer = null;
 
       /*****************************************************************
        * Tides information
@@ -395,7 +404,7 @@
       /**
        * Construct position marker layer
        */
-      function curPosLayer(xy, iconUrl) {
+      function updatePositionLayer(xy, iconUrl) {
         var iconFeature = new ol.Feature({
           geometry: new ol.geom.Point(xy),
           name: 'Current position',
@@ -498,7 +507,7 @@
                   attributions: tileset.ident.split('_')[0]
                 }),
                 maxResolution: maxRes,
-                opacity: .7
+                opacity: .9
               });
               layer.ident = tileset.ident;
               layer.upper = tileset.upper;
@@ -630,10 +639,15 @@
             });
           }
 
+          if (courseLayer) {
+            // move course layer to top
+            map.removeLayer(courseLayer);
+            map.addLayer(courseLayer); 
+          }
           if (marker) {
             map.removeLayer(marker);
           }
-          marker = curPosLayer(pos, iconUrl);
+          marker = updatePositionLayer(pos, iconUrl);
           map.addLayer(marker);
         });
        
@@ -878,12 +892,52 @@
 
 
       function showPopup() {
-        if (popup.visible) {
+        if (popup.visible && !popup.shown) {
+          popup.shown = true;
           const elem = popup.getElement();
           $(elem).popover('show');
           document.getElementById('close-popup').onclick = function() {
             $(elem).popover('destroy'); 
-            popup.visible=false;
+            popup.visible = popup.shown = false;
+          }
+          document.getElementById('set-course').onclick = function() {
+            $(elem).popover('destroy'); 
+            popup.visible = popup.shown = false;
+            if (courseLayer) {
+              let f = courseLayer.getSource().getFeatures();
+              f[0].setGeometry(new ol.geom.LineString([popup.prevPos, popup.pos]));
+              f[1].setGeometry(new ol.geom.Point(popup.pos));
+              return;
+            }
+            courseLayer = new ol.layer.Vector({
+              source: new ol.source.Vector({
+                features: [
+                  new ol.Feature({
+                    geometry: new ol.geom.LineString([popup.prevPos, popup.pos])
+                  }),
+                  new ol.Feature({
+                    geometry: new ol.geom.Point(popup.pos)
+                  }),
+                ]
+              }),
+              style: new ol.style.Style({
+                stroke: new ol.style.Stroke({
+                  color: 'magenta',
+                  width: 2
+                }),
+                image: new ol.style.Icon({
+                  anchor: [0.5, 1],
+                  anchorXUnits: 'fraction',
+                  anchorYUnits: 'fraction',
+                  src: 'images/pointer.png'
+                })
+              })
+            });
+            map.addLayer(courseLayer);
+          }
+          document.getElementById('clear-course').onclick = function() {
+            map.removeLayer(courseLayer);
+            courseLayer = null;
           }
         }
       }
@@ -908,6 +962,8 @@
         }
 
         function updatePopup(pos, place, coord) {
+          popup.prevPos = ol.proj.fromLonLat(currentLocation);
+          popup.pos = pos;
           const e = popup.getElement();
 
           const elevation = place.elevation < 0 ? 0 : place.elevation;
@@ -915,23 +971,32 @@
           //otherwise we should multiply by 3.28084 -- I just checked a few data points
           //against Wikipedia
 
-          const info =
-            '<div><b>' + place.name + '</b></div>' 
-              + convertDMS(coord) + '<br>Elevation: ' + elevation + "'"
-              + '<br><em>' + Math.floor(place.dist * 100) / 100 
-              + ' nautical miles from ' + prevLocation + '</em>';
+          let html = '<div><b>' + place.name + '</b></div>' 
+              + convertDMS(coord) + '<br>Elevation: ' + elevation + "'";
+
+          if (currentLocation[0]===coord[0] && currentLocation[1]===coord[1]) {
+            html += '<br><button type="button" class="set-course" id="clear-course">Clear course</button>';
+            html += '<div id="set-course" display: none></div>';
+          }
+          else {
+            html += '<br><em>' + Math.floor(place.dist * 100) / 100
+              + ' nautical miles from ' + prevLocation + '</em>'
+              + ' <button type="button" class="set-course" id="set-course">Set course</button>'
+              + '<div id="clear-course" display: none></div>';
+          }
           prevLocation = place.name;
 
           $(e).popover({
             'animation': false,
             'html': true,
             'placement': 'top',
-            'content': info,
+            'content': html,
              'title': place.code + '<a href="#" id="close-popup" class="close">&times;</a>'
           });
           popup.setPosition(pos);
           popup.visible = true; // popover on map postrender
         }
+
         const url = 'search/' + name + '/' + coord[0] + '/' + coord[1];
         const xmlHttp = new XMLHttpRequest();
         xmlHttp.onreadystatechange = function() {

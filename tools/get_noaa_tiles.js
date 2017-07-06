@@ -83,12 +83,11 @@ function updateStatus(err, tile) {
     + '<script>document.getElementById("start").innerHTML="Started: " + new Date('
     + start.getTime() + ').toLocaleString();document.getElementById("eta").innerHTML='
     + '"ETA: " + new Date('
-    + getETA(tile.i, charts.length).getTime() + ').toLocaleString()</script></html>'
+    + getETA(tile.i, charts.length).getTime() + ').toLocaleString()</script>'
+    + (err ? err : '') + '</html>'
 
   const path = __dirname + '/../public/status-' + zoom + '.html';
-  fs.writeFile(path, html, function(err) {
-  });
-
+  fs.writeFileSync(path, html);
 }
 
 
