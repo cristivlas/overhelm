@@ -124,6 +124,13 @@
       .ol-touch .search {
         top: 130px;
       }
+      .destination {
+        top: 138px;
+        left: .5em;
+      }
+      .ol-touch .destination {
+        top: 165px;
+      }
       .chart {
         background-color: white;
         opacity: 0.7;
@@ -157,6 +164,7 @@
         bottom: 5px;
         color: white;
         background:rgba(0,65,135,.5);
+        border-radius: 6px;
       }
     </style>
     <style type="text/css">
@@ -180,16 +188,17 @@
       const defaultZoom = 14;
       const locationTimeout = 3000;
 
-      var savedZoom = defaultZoom;
-
       var chartTilesets = null; // current tilesets, stringified
       var chartLayers = [];     // current layers
       var marker = null;        // layer that marks current position
+      var courseLayer = null;
+      var destination = null;
       var map = null;           // the map object
       var popup = null;
       var currentLocation = null;
       var prevLocation = 'current location';
-      var courseLayer = null;
+      var headingRotation = 0;
+      var savedZoom = defaultZoom;
 
       /*****************************************************************
        * Tides information
@@ -305,7 +314,38 @@
       }
       ol.inherits(searchControl, ol.control.Control);
 
-     
+      /**
+       * Custom control to show the current destination
+       */
+      const destControl = function(opt_options) {
+        const options = opt_options || {};
+
+        const button = document.createElement('button');
+        const icon = document.createElement('img');
+        icon.src = 'images/pointer-icon.png';
+        button.appendChild(icon);
+        button.title = 'Show destination';
+        var handler = function() {
+          if (popup.place) {
+            geolocation.stop();
+            updateMap(popup.coord, 'images/view.png');
+            updatePopup(popup.pos, popup.place, popup.coord);
+          }
+        }
+        button.addEventListener('click', handler, false);
+
+        var element = document.createElement('div');
+        element.className = 'destination ol-unselectable ol-control';
+        element.appendChild(button);
+
+        ol.control.Control.call(this, {
+          element: element,
+          target: options.target
+        });
+      }
+      ol.inherits(destControl, ol.control.Control);
+
+
       /**
        * Custom control for drawing water levels
        */
@@ -399,12 +439,56 @@
 			ol.inherits(speedControl, ol.control.Control);
 				
 
-      var headingRotation = 0;
+      function getCourseLayer(pos, dest) {
+        return new ol.layer.Vector({
+          source: new ol.source.Vector({
+            features: [
+              new ol.Feature({
+                geometry: new ol.geom.LineString([pos, dest])
+              }),
+              new ol.Feature({
+                geometry: new ol.geom.Point(dest)
+              }),
+            ]
+          }),
+          style: new ol.style.Style({
+            stroke: new ol.style.Stroke({
+              color: 'magenta',
+              width: 2
+            }),
+            image: new ol.style.Icon({
+              anchor: [0.5, 1],
+              anchorXUnits: 'fraction',
+              anchorYUnits: 'fraction',
+              src: 'images/pointer.png'
+            })
+          })
+        });
+      }
+
+
+      function updateCourseLayer() {
+        map.removeLayer(courseLayer);
+        if (destination) {
+          courseLayer = getCourseLayer(map.pos, destination);
+          map.addLayer(courseLayer);
+        }
+      }
+
+
+      function updatePositionLayer(pos, iconUrl) {
+        if (marker) {
+          map.removeLayer(marker);
+        }
+        marker = getPositionLayer(pos, iconUrl);
+        map.addLayer(marker);
+      }
+
 
       /**
        * Construct position marker layer
        */
-      function updatePositionLayer(xy, iconUrl) {
+      function getPositionLayer(xy, iconUrl) {
         var iconFeature = new ol.Feature({
           geometry: new ol.geom.Point(xy),
           name: 'Current position',
@@ -551,8 +635,9 @@
       function updateMap(coord, iconUrl = 'images/marker.png') {
         if (popup && popup.visible) {
           $(popup.getElement()).popover('destroy');
-          popup.visible = false;
+          popup.visible = popup.shown = false;
         }
+
         let elem = document.getElementById('speed');
         if (elem) {
           elem.innerHTML = Math.floor(geolocation.speed * 100) / 100 + ' kts';
@@ -602,6 +687,7 @@
 								new locationControl({coords: coord}),
                 new recenterControl(),
                 new searchControl(),
+                new destControl(),
                 new speedControl(),
                 /* new ol.control.ScaleLine({units: 'nautical'}) */
               ]),
@@ -639,16 +725,8 @@
             });
           }
 
-          if (courseLayer) {
-            // move course layer to top
-            map.removeLayer(courseLayer);
-            map.addLayer(courseLayer); 
-          }
-          if (marker) {
-            map.removeLayer(marker);
-          }
-          marker = updatePositionLayer(pos, iconUrl);
-          map.addLayer(marker);
+          updateCourseLayer(pos);
+          updatePositionLayer(pos, iconUrl);
         });
        
         elem = document.getElementById('location');
@@ -896,55 +974,68 @@
           popup.shown = true;
           const elem = popup.getElement();
           $(elem).popover('show');
-          document.getElementById('close-popup').onclick = function() {
+          function closePopup() {
             $(elem).popover('destroy'); 
             popup.visible = popup.shown = false;
+          }
+          function setDestination(pos) {
+            destination = pos;
+            updateCourseLayer();
+            closePopup();
+            geolocation.start();
+          }
+          document.getElementById('close-popup').onclick = function() {
+            closePopup();
           }
           document.getElementById('set-course').onclick = function() {
-            $(elem).popover('destroy'); 
-            popup.visible = popup.shown = false;
-            if (courseLayer) {
-              let f = courseLayer.getSource().getFeatures();
-              f[0].setGeometry(new ol.geom.LineString([popup.prevPos, popup.pos]));
-              f[1].setGeometry(new ol.geom.Point(popup.pos));
-              return;
-            }
-            courseLayer = new ol.layer.Vector({
-              source: new ol.source.Vector({
-                features: [
-                  new ol.Feature({
-                    geometry: new ol.geom.LineString([popup.prevPos, popup.pos])
-                  }),
-                  new ol.Feature({
-                    geometry: new ol.geom.Point(popup.pos)
-                  }),
-                ]
-              }),
-              style: new ol.style.Style({
-                stroke: new ol.style.Stroke({
-                  color: 'magenta',
-                  width: 2
-                }),
-                image: new ol.style.Icon({
-                  anchor: [0.5, 1],
-                  anchorXUnits: 'fraction',
-                  anchorYUnits: 'fraction',
-                  src: 'images/pointer.png'
-                })
-              })
-            });
-            map.addLayer(courseLayer);
+            setDestination(popup.pos);
           }
-          document.getElementById('clear-course').onclick = function() {
-            map.removeLayer(courseLayer);
-            courseLayer = null;
+          document.getElementById('cancel-course').onclick = function() {
+            setDestination(null);
           }
         }
       }
 
 
-      function searchLocation(name, coord) {
+      function updatePopup(pos, place, coord) {
+        popup.pos = pos;
+        popup.place = place;
+        popup.coord = coord;
+        const e = popup.getElement();
 
+        const elevation = place.elevation < 0 ? 0 : place.elevation;
+        //contrary to docs from geonames.org, elevation seems to be in feet, not meters
+        //otherwise we should multiply by 3.28084 -- I just checked a few data points
+        //against Wikipedia
+
+        let html = '<div><b>' + place.name + '</b></div>' 
+            + convertDMS(coord) + '<br>Elevation: ' + elevation + "'";
+
+        if (pos===destination) {
+          html += ' <button type="button" class="set-course" id="cancel-course">Cancel course</button>'
+            + ' <div id="set-course" display: none></div>';
+        }
+        else {
+          html += '<br><em>' + Math.floor(place.dist * 100) / 100
+            + ' nautical miles from ' + prevLocation + '</em>'
+            + ' <button type="button" class="set-course" id="set-course">Set course</button>'
+            + ' <div id="cancel-course" display: none></div>';
+        }
+        prevLocation = place.name;
+        $(e).popover({
+          'animation': false,
+          'html': true,
+          'placement': 'top',
+          'content': html,
+           'title': place.code + '<a href="#" id="close-popup" class="close">&times;</a>'
+        });
+        popup.setPosition(pos);
+        popup.shown = false;
+        popup.visible = true; // popover on map postrender
+      }
+
+
+      function searchLocation(name, coord) {
         function buildSelection(matches) {
           let selectHtml = '<b>Nearest Matches</b><br>';
           selectHtml += '<select id="searchResults" class="search-results">';
@@ -959,42 +1050,6 @@
           }
           selectHtml += '</select>';
           return selectHtml;
-        }
-
-        function updatePopup(pos, place, coord) {
-          popup.prevPos = ol.proj.fromLonLat(currentLocation);
-          popup.pos = pos;
-          const e = popup.getElement();
-
-          const elevation = place.elevation < 0 ? 0 : place.elevation;
-          //contrary to docs from geonames.org, elevation seems to be in feet, not meters
-          //otherwise we should multiply by 3.28084 -- I just checked a few data points
-          //against Wikipedia
-
-          let html = '<div><b>' + place.name + '</b></div>' 
-              + convertDMS(coord) + '<br>Elevation: ' + elevation + "'";
-
-          if (currentLocation[0]===coord[0] && currentLocation[1]===coord[1]) {
-            html += '<br><button type="button" class="set-course" id="clear-course">Clear course</button>';
-            html += '<div id="set-course" display: none></div>';
-          }
-          else {
-            html += '<br><em>' + Math.floor(place.dist * 100) / 100
-              + ' nautical miles from ' + prevLocation + '</em>'
-              + ' <button type="button" class="set-course" id="set-course">Set course</button>'
-              + '<div id="clear-course" display: none></div>';
-          }
-          prevLocation = place.name;
-
-          $(e).popover({
-            'animation': false,
-            'html': true,
-            'placement': 'top',
-            'content': html,
-             'title': place.code + '<a href="#" id="close-popup" class="close">&times;</a>'
-          });
-          popup.setPosition(pos);
-          popup.visible = true; // popover on map postrender
         }
 
         const url = 'search/' + name + '/' + coord[0] + '/' + coord[1];
@@ -1042,7 +1097,10 @@
           currentLocation = [-122.4049, 47.6810] // Shilshole Bay
           prevLocation = 'Shilshole Bay';
         }
-        updateMap(currentLocation, 'images/view.png');
+        let pos = updateMap(currentLocation, 'images/view.png');
+        if (map) {
+          map.pos = pos;
+        }
       }
 
 
@@ -1054,7 +1112,7 @@
           if (coord.lon && coord.lat) {
             currentLocation = [ coord.lon, coord.lat ];
             prevLocation = 'current location';
-            updateMap(currentLocation);
+            map.pos = updateMap(currentLocation);
           }
         },
         onError: function(err) {
@@ -1063,8 +1121,8 @@
       });
 
 
-      geolocation.start();
       updateDefault();
+      geolocation.start();
 
     </script>
   </body>
