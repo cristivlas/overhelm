@@ -340,7 +340,6 @@
         button.appendChild(icon);
         button.title = 'Show destination';
         button.id = 'dest';
-        button.disabled = true;
         var handler = function() {
           if (popup.place && destination) {
             if (popup.visible) {
@@ -356,8 +355,10 @@
         button.addEventListener('click', handler, false);
 
         var element = document.createElement('div');
+        element.id = 'dest-div';
         element.className = 'destination ol-custom ol-unselectable ol-control';
         element.appendChild(button);
+        element.style.visibility = 'hidden';
 
         ol.control.Control.call(this, {
           element: element,
@@ -1038,9 +1039,11 @@
           }
           document.getElementById('set-course').onclick = function() {
             setDestination(popup.pos);
+            document.getElementById('dest-div').style.visibility = 'visible';
           }
           document.getElementById('cancel-course').onclick = function() {
             setDestination(null);
+            document.getElementById('dest-div').style.visibility = 'hidden';
           }
         }
       }
@@ -1067,8 +1070,6 @@
       }
 
       function updatePopup(pos, place, coord) {
-        document.getElementById('dest').disabled = false;
-
         popup.pos = pos;
         popup.place = place;
         popup.coord = coord;
@@ -1083,21 +1084,26 @@
         let html = '<div><b>' + place.name + '</b> ' + place.code + '</div>' 
             + convertDMS(coord) + '<br>Elevation: ' + elevation + "'";
 
+        function distance(d) {
+          if (d===0) {
+            const coord = [ geolocation.coord.lon, geolocation.coord.lat ];
+            d = getDistanceFromLonLat(popup.coord, coord) * 3440;
+            prevLocationName = 'current location';
+          }
+          return '<br><em>' + Math.floor(d * 1000) / 1000
+            + ' nautical miles from ' + prevLocationName + '</em>';
+        }
         let btn = '';
 
-        if (pos===destination) {
-          const d = getDistanceFromLonLat(popup.destCoord, selectedLocation);
-          html += '<br><em>' + Math.floor(d * 3440 * 100) / 100
-            + ' nautical miles from ' + prevLocationName + '</em>'
+        if (destination && pos[0]===destination[0] && pos[1]===destination[1]) {
+          const d = getDistanceFromLonLat(popup.destCoord, selectedLocation) * 3440;
+          html += distance(d);
           html += '<div id="set-course" display: none></div>';
           btn  += '<button type="button" class="set-course" id="cancel-course">Cancel course</button>';
           prevLocationName = popup.destPlace.name;
         }
         else {
-          if (place.dist) {
-            html += '<br><em>' + Math.floor(place.dist * 100) / 100
-                 + ' nautical miles from ' + prevLocationName + '</em>'
-          }
+          html += distance(place.dist);
           html += '<div id="cancel-course" display: none></div>';
           btn += '<button type="button" class="set-course" id="set-course">Set course</button>';
           prevLocationName = place.name;

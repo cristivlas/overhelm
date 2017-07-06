@@ -84,7 +84,7 @@ function updateStatus(err, tile, done=false) {
     + start.getTime() + ').toLocaleString();document.getElementById("eta").innerHTML='
     + '"ETA: " + new Date('
     + getETA(tile.i, charts.length).getTime() + ').toLocaleString()</script><br>'
-    + (err ? err : '') + (done ? '<br>Completed.': '') + '</html>'
+    + (err ? err : '') + (done ? '<br>Completed.': '') + '</html>';
 
   const path = __dirname + '/../public/status-' + zoom + '.html';
   fs.writeFileSync(path, html);
