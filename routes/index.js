@@ -478,6 +478,7 @@ router.get('/search/:name/:lon/:lat', function(req, res, next) {
 /******************************************************************
  * Get distance between two points
  */
+/*
 router.get('/dist/:units/:lon1/:lat1/:lon2/:lat2', function(req, res, next) {
   let dist = getDistanceFromLatLong(
     req.params.lat1,
@@ -498,6 +499,6 @@ router.get('/dist/:units/:lon1/:lat1/:lon2/:lat2', function(req, res, next) {
   }
   res.send(dist.toString());
 });
-
+*/
 
 module.exports = router;

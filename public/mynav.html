@@ -83,10 +83,16 @@
       .search-results {
         width: 100%;
       }
+      .ol-zoom {
+        background: gray;
+      }
+      .ol-custom {
+        background: gray;
+      }
       .tide-chart {
         top: .5em;
         right: .5em;
-        background-color: rgb(255,255,235);
+        background: rgb(255,255,235);
         opacity: .97;
         width: 35%;
         border-radius: 8px;
@@ -125,7 +131,7 @@
         top: 130px;
       }
       .destination {
-        top: 138px;
+        top: 140px;
         left: .5em;
       }
       .ol-touch .destination {
@@ -160,8 +166,8 @@
       }
       .set-course {
         position: absolute;
-        right: 5px;
-        bottom: 5px;
+        left: .5em;
+        top: .5em;
         color: white;
         background:rgba(0,65,135,.5);
         border-radius: 6px;
@@ -195,8 +201,8 @@
       var destination = null;
       var map = null;           // the map object
       var popup = null;
-      var currentLocation = null;
-      var prevLocation = 'current location';
+      var selectedLocation = null;
+      var prevLocationName = 'current location';
       var headingRotation = 0;
       var savedZoom = defaultZoom;
 
@@ -236,7 +242,7 @@
         button.addEventListener('click', handler, false);
 
         var element = document.createElement('div');
-        element.className = 're-center ol-unselectable ol-control';
+        element.className = 're-center ol-custom ol-unselectable ol-control';
         element.appendChild(button);
 
         ol.control.Control.call(this, {
@@ -282,7 +288,7 @@
           alertify.prompt('', function(valid, value) {
             if (valid) {
               value = value.trim();
-              searchLocation(value, currentLocation);
+              searchLocation(value, selectedLocation);
             }
           });
 
@@ -304,7 +310,7 @@
         button.addEventListener('click', handler, false);
 
         var element = document.createElement('div');
-        element.className = 'search ol-unselectable ol-control';
+        element.className = 'search ol-custom ol-unselectable ol-control';
         element.appendChild(button);
 
         ol.control.Control.call(this, {
@@ -325,17 +331,25 @@
         icon.src = 'images/pointer-icon.png';
         button.appendChild(icon);
         button.title = 'Show destination';
+        button.id = 'dest';
+        button.disabled = true;
         var handler = function() {
-          if (popup.place) {
+          if (popup.place && !popup.visible) {
             geolocation.stop();
-            updateMap(popup.coord, 'images/view.png');
-            updatePopup(popup.pos, popup.place, popup.coord);
+            if (destination) {
+              updateMap(popup.destCoord, 'images/view.png');
+              updatePopup(destination, popup.destPlace, popup.destCoord);
+            }
+            else {
+              updateMap(selectedLocation, 'images/view.png');
+              updatePopup(popup.pos, popup.place, selectedLocation);
+            }
           }
         }
         button.addEventListener('click', handler, false);
 
         var element = document.createElement('div');
-        element.className = 'destination ol-unselectable ol-control';
+        element.className = 'destination ol-custom ol-unselectable ol-control';
         element.appendChild(button);
 
         ol.control.Control.call(this, {
@@ -719,8 +733,8 @@
               }
               const coord = e.coordinate;
               const lonLat = ol.proj.transform(coord, 'EPSG:3857', 'EPSG:4326');
-              currentLocation = lonLat;
-              prevLocation = 'previous location';
+              selectedLocation = lonLat;
+              prevLocationName = 'previous location';
               updateMap(lonLat, 'images/view.png');
             });
           }
@@ -979,9 +993,13 @@
             popup.visible = popup.shown = false;
           }
           function setDestination(pos) {
-            destination = pos;
-            updateCourseLayer();
             closePopup();
+            destination = pos;
+            if (destination) {
+              popup.destPlace = popup.place;
+              popup.destCoord = popup.coord;
+            }
+            updateCourseLayer();
             geolocation.start();
           }
           document.getElementById('close-popup').onclick = function() {
@@ -996,11 +1014,34 @@
         }
       }
 
+      function getDistanceFromLonLat(coord1, coord2) {
+       
+        const lon1 = coord1[0];
+        const lat1 = coord1[1];
+        const lon2 = coord2[0];
+        const lat2 = coord2[1];
+
+        function deg2rad(deg) {
+          return deg * (Math.PI/180)
+        }
+
+        const dLat = deg2rad(lat2-lat1);  // deg2rad below
+        const dLon = deg2rad(lon2-lon1); 
+        const a = 
+          Math.sin(dLat/2) * Math.sin(dLat/2) +
+          Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) * 
+          Math.sin(dLon/2) * Math.sin(dLon/2); 
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); 
+        return c;
+      }
 
       function updatePopup(pos, place, coord) {
+        document.getElementById('dest').disabled = false;
+
         popup.pos = pos;
         popup.place = place;
         popup.coord = coord;
+
         const e = popup.getElement();
 
         const elevation = place.elevation < 0 ? 0 : place.elevation;
@@ -1008,26 +1049,34 @@
         //otherwise we should multiply by 3.28084 -- I just checked a few data points
         //against Wikipedia
 
-        let html = '<div><b>' + place.name + '</b></div>' 
+        let html = '<div><b>' + place.name + '</b> ' + place.code + '</div>' 
             + convertDMS(coord) + '<br>Elevation: ' + elevation + "'";
 
+        let btn = '';
+
         if (pos===destination) {
-          html += ' <button type="button" class="set-course" id="cancel-course">Cancel course</button>'
-            + ' <div id="set-course" display: none></div>';
+          const d = getDistanceFromLonLat(popup.destCoord, selectedLocation);
+          html += '<br><em>' + Math.floor(d * 3440 * 100) / 100
+            + ' nautical miles from ' + prevLocationName + '</em>'
+          html += '<div id="set-course" display: none></div>';
+          btn  += '<button type="button" class="set-course" id="cancel-course">Cancel course</button>';
+          prevLocationName = popup.destPlace.name;
         }
         else {
           html += '<br><em>' + Math.floor(place.dist * 100) / 100
-            + ' nautical miles from ' + prevLocation + '</em>'
-            + ' <button type="button" class="set-course" id="set-course">Set course</button>'
-            + ' <div id="cancel-course" display: none></div>';
+            + ' nautical miles from ' + prevLocationName + '</em>'
+            + '<div id="cancel-course" display: none></div>';
+          btn += '<button type="button" class="set-course" id="set-course">Set course</button>';
+          prevLocationName = place.name;
         }
-        prevLocation = place.name;
+        selectedLocation = coord;
+
         $(e).popover({
           'animation': false,
           'html': true,
           'placement': 'top',
           'content': html,
-           'title': place.code + '<a href="#" id="close-popup" class="close">&times;</a>'
+          'title': btn + '<a href="#" id="close-popup" class="close">&times;</a>'
         });
         popup.setPosition(pos);
         popup.shown = false;
@@ -1074,7 +1123,6 @@
                 }
                 const pos = updateMap(coord, 'images/view.png');
                 updatePopup(pos, matches[elem.selectedIndex], coord);
-                currentLocation = coord;
               });
             }
             else {
@@ -1093,11 +1141,11 @@
 
 
       function updateDefault() {
-        if (!currentLocation) {
-          currentLocation = [-122.4049, 47.6810] // Shilshole Bay
-          prevLocation = 'Shilshole Bay';
+        if (!selectedLocation) {
+          selectedLocation = [-122.4049, 47.6810] // Shilshole Bay
+          prevLocationName = 'Shilshole Bay';
         }
-        let pos = updateMap(currentLocation, 'images/view.png');
+        let pos = updateMap(selectedLocation, 'images/view.png');
         if (map) {
           map.pos = pos;
         }
@@ -1110,9 +1158,9 @@
             headingRotation = coord.heading * (Math.PI / 180);
           }
           if (coord.lon && coord.lat) {
-            currentLocation = [ coord.lon, coord.lat ];
-            prevLocation = 'current location';
-            map.pos = updateMap(currentLocation);
+            selectedLocation = [ coord.lon, coord.lat ];
+            prevLocationName = 'current location';
+            map.pos = updateMap(selectedLocation);
           }
         },
         onError: function(err) {
