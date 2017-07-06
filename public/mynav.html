@@ -343,13 +343,12 @@
         var handler = function() {
           if (popup.place && destination) {
             if (popup.visible) {
-              map.getView().setCenter(destination);
+              $(popup.getElement()).popover('destroy');
+              popup.visible = popup.show = false;  
             }
-            else {
-              geolocation.stop();
-              updateMap(popup.destCoord);
-              updatePopup(destination, popup.destPlace, popup.destCoord);
-            }
+            geolocation.stop();
+            updateMap(popup.destCoord);
+            updatePopup(destination, popup.destPlace, popup.destCoord);
           }
         }
         button.addEventListener('click', handler, false);
@@ -534,7 +533,7 @@
 
         features = [iconFeature];
 
-        if (geolocation.coord && !geolocation.isTracking()) {
+        if (destination && geolocation.coord && !geolocation.isTracking()) {
           xy = ol.proj.fromLonLat([geolocation.coord.lon, geolocation.coord.lat]);
 
           iconFeature = new ol.Feature({
@@ -569,7 +568,7 @@
         const tilesetsUrl = 'tilesets/noaa/' + coord[0] + '/' + coord[1];
         const xmlHttp = new XMLHttpRequest();
         xmlHttp.onreadystatechange = function() {
-          if (xmlHttp.readyState == 4 && xmlHttp.status == 200) {
+          if (xmlHttp.readyState === 4 && xmlHttp.status === 200) {
             callback(xmlHttp.responseText);
           }
         }
@@ -694,7 +693,7 @@
           center: pos,
           zoom: defaultZoom,
           minZoom: 3,
-          maxZoom: 16,
+          maxZoom: 17,
           enableRotation: false,
         });
 
@@ -831,8 +830,8 @@
         function processWaterLevelStation(event) {
           const xmlHttp = event.currentTarget;
           
-          if (xmlHttp.readyState == 4) {
-            if (xmlHttp.status != 200) {
+          if (xmlHttp.readyState === 4) {
+            if (xmlHttp.status !== 200) {
               console.log(xmlHttp.response.text);
               return;
             }
@@ -883,7 +882,7 @@
         function processWaterLevelRequest(stationInfo, event) {
           const xmlHttp = event.currentTarget;
 
-          if (xmlHttp.readyState == 4 && xmlHttp.status == 200) {
+          if (xmlHttp.readyState === 4 && xmlHttp.status === 200) {
             let labels = []
             let datasets = [ {
               label: '',
@@ -993,7 +992,7 @@
 
       function processCurrentsStation(event) {
         const xmlHttp = event.currentTarget;
-        if (xmlHttp.readyState == 4 && xmlHttp.status == 200) {
+        if (xmlHttp.readyState === 4 && xmlHttp.status === 200) {
           console.log(xmlHttp.responseText);
           const station = JSON.parse(xmlHttp.responseText);
           const now = new Date();            
@@ -1009,7 +1008,7 @@
 
       function processCurrents(event) {
         const xmlHttp = event.currentTarget;
-        if (xmlHttp.readyState == 4 && xmlHttp.status == 200) {
+        if (xmlHttp.readyState === 4 && xmlHttp.status === 200) {
           console.log(xmlHttp.responseText);
         }
       }
@@ -1028,6 +1027,7 @@
             closePopup();
             destination = pos;
             if (destination) {
+              // TODO: move these to another namespace
               popup.destPlace = popup.place;
               popup.destCoord = popup.coord;
             }
@@ -1131,8 +1131,11 @@
             const m = matches[i];
             selectHtml += '<option value="[' + m.lon + ',' + m.lat + ']">';
             selectHtml += m.name;
+            if (m.stateName) {
+              selectHtml += ', ' + m.stateName;
+            }
             if (m.state) {
-              selectHtml += ', ' + m.state;
+              selectHtml += ' (' + m.state + ')';
             }
             selectHtml += '</option>';
           }
@@ -1143,7 +1146,7 @@
         const url = 'search/' + name + '/' + coord[0] + '/' + coord[1];
         const xmlHttp = new XMLHttpRequest();
         xmlHttp.onreadystatechange = function() {
-          if (xmlHttp.readyState == 4 && xmlHttp.status == 200) {
+          if (xmlHttp.readyState === 4 && xmlHttp.status === 200) {
             const matches = JSON.parse(xmlHttp.responseText);
             if (matches && matches.length) {
               const selectHtml = buildSelection(matches);

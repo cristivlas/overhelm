@@ -166,6 +166,9 @@ const blocked = [
 
 
 function filter(loc) {
+  if (loc.code==='ADM1') {
+    return true;
+  }
   //
   // skip locations that are too high up above sea level
   //
@@ -210,6 +213,9 @@ function processRecord(data, i) {
   }
   if (parts[10]) {
     loc.state = parts[10];
+    if (loc.code==='ADM1') {
+      console.error(loc);
+    }
   }
 
   let charts = '';

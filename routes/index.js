@@ -15,7 +15,6 @@ const states = require('./states');
 
 const currentsStations = require('./Currents_Active_Stations.json');
 const waterLevelStations = require('./Waterlevel_Active_Stations.json');
-let geonames = null;
 
 const router = express.Router();
 
@@ -104,7 +103,7 @@ router.get('/tiles/:srv/:set/:z/:x/:y', function(req, res, next) {
   const service = tileService[req.params.srv];
   if (!service) {
     var err = new Error('Unrecognized tile service: ' + srv);
-    err.status = 500;
+    err.status = 503;
     return next(err);
   }
 
@@ -136,24 +135,31 @@ router.get('/tiles/:srv/:set/:z/:x/:y', function(req, res, next) {
     return urlJoin('tiles', p.srv, p.set, fileName);
   }
 
-  function uploadTile(filePath, req, res, next) {
+  function uploadTile(filePath, req, res, next, callback) {
     let file = fs.createReadStream(filePath);
     res.setHeader('content-type', 'image/png');
     file.pipe(res);
 
     file.on('close', function() {
       res.end();
+      if (callback) {
+        callback(null);
+      }
     });
 
     file.on('error', function(err) {
       res.end(err);
+      if (callback) {
+        callback(err);
+      }
+      return next(err);
     });
   }
 
   function isEmptyPNG(filePath) {
     let isEmpty = true;
-    const data = fs.readFileSync(filePath);
     try {
+      const data = fs.readFileSync(filePath);
       const png = PNG.sync.read(data);
       for (let i = 0; i < png.data.length; ++i) {
         if (png.data[i] != 0) {
@@ -196,26 +202,37 @@ router.get('/tiles/:srv/:set/:z/:x/:y', function(req, res, next) {
           file.close();
           console.log(options.host, response.statusCode);
 
-          if (response.statusCode == 200) {
+          if (response.statusCode===200) {
+
             console.log('Finished downloading: ' + filePath);
+
             if (isEmptyPNG(tmpFileName)) {
-              fs.unlinkSync(tmpFileName);
               console.log('Tile is empty: ' + filePath);
-              
+              fs.unlink(tmpFileName, function(err) {
+                if (err) {
+                  console.log([tmpFileName, err.message]);
+                }
+              });
               //
               // update emptyTiles.txt
               //
               const parts = path.basename(filePath).split('.');
-              const entry = parts[1] + ' ' + parts[2] + ' ' + parts[3] + '\n';
-              console.log(empty, entry);
-              fs.appendFileSync(empty, entry);
-
+              try { 
+                const entry = parts[1] + ' ' + parts[2] + ' ' + parts[3] + '\n';
+                console.log(empty, entry);
+                fs.appendFileSync(empty, entry);
+              }
+              catch (err) {
+                console.log([empty, parts, err.message]);
+              }
               return res.sendStatus(204);
             }
             fs.rename(tmpFileName, filePath, function(err) {
               if (err) {
-                fs.unlinkSync(tmpFileName);
-                next(err);
+                console.log(err.message);
+                uploadTile(tmpFileName, req, res, next, function() {
+                  fs.unlink(tmpFileName);
+                });
               }
               else {
                 uploadTile(filePath, req, res, next);
@@ -419,20 +436,38 @@ router.get('/tides/:station/:time', function(req, res, next) {
 });
 
 
-function getState(s) {
-  const val = states(s);
-  if (val) {
-    s = val[1];
-  }
-  return s;
-}
+
+
+let geonames = null;
+let stateNames = {};
 
 /******************************************************************
  * Search for location that matches name and is closest to lon-lat
  */
 router.get('/search/:name/:lon/:lat', function(req, res, next) {
+  
+  function getState(s) {
+    const val = states(s);
+    if (val) {
+      s = val[1];
+    }
+    return s;
+  }
+
+  function getStateOrProvince(place) {
+    if (place.state) {
+      return place.stateName = stateNames[place.state];
+    }
+  }
+
   if (!geonames) {
     geonames = require('./geonames.min.json');
+    for (let i = 0; i != geonames.length; ++i) {
+      const c = geonames[i];
+      if (c.state && c.code==='ADM1') {
+        stateNames[c.state] = c.name;
+      }
+    }
   }
   let name = req.params.name.toLowerCase();
   let state = null;
@@ -452,13 +487,14 @@ router.get('/search/:name/:lon/:lat', function(req, res, next) {
     if (c.name.toLowerCase().includes(name)) {
       c.dist = getDistanceFromLatLong(c.lat, c.lon, req.params.lat, req.params.lon);
       c.dist *= 3440; // nautical miles, for the front-end's convenience
+
+      getStateOrProvince(c, geonames);
+
       matches.push(c);
     }
   }
 
   matches.sort(function(a,b) {
-    //let dist1 = getDistanceFromLatLong(a.lat, a.lon, req.params.lat, req.params.lon);
-    //let dist2 = getDistanceFromLatLong(b.lat, b.lon, req.params.lat, req.params.lon);
     const dist1 = a.dist;
     const dist2 = b.dist;
 
