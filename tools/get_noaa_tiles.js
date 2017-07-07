@@ -74,7 +74,7 @@ function nextChart(tile) {
 
 
 function updateStatus(err, tile, done=false) {
-  const i = tile.i >= charts.length ? charts.length - 1 : i;
+  const i = tile.i >= charts.length ? charts.length - 1 : tile.i;
   const html = '<html><meta http-equiv="refresh" content="5">'
     + '<body>Process '
     + process.pid + '<div id="start"></div>'
