@@ -8,6 +8,9 @@ const charts = require(__dirname + '/../routes/noaa-layers.json');
 const start = new Date();
 
 function getETA(i, n) {
+  if (i > n) {
+    i = n;
+  }
   const now = new Date();
   const speed = i / (now.getTime() - start.getTime());
   const timeLeft = (n - i) / speed;
@@ -70,21 +73,22 @@ function nextChart(tile) {
 }
 
 
-function updateStatus(err, tile) {
+function updateStatus(err, tile, done=false) {
+  const i = tile.i >= charts.length ? charts.length - 1 : tile.i;
   const html = '<html><meta http-equiv="refresh" content="5">'
     + '<body>Process '
     + process.pid + '<div id="start"></div>'
     + '<br>Zoom level: ' + zoom
     + '<br>Charts: ' + tile.i + ' out of ' + charts.length
-    + ' (current: ' + charts[tile.i].ident + ')'
+    + ' (current: ' + charts[i].ident + ')'
     + '<br>Tiles: ' + nTiles
     + '<br><div id="eta"></div>'
     + '</body>'
     + '<script>document.getElementById("start").innerHTML="Started: " + new Date('
     + start.getTime() + ').toLocaleString();document.getElementById("eta").innerHTML='
     + '"ETA: " + new Date('
-    + getETA(tile.i, charts.length).getTime() + ').toLocaleString()</script>'
-    + (err ? err : '') + '</html>'
+    + getETA(tile.i, charts.length).getTime() + ').toLocaleString()</script><br>'
+    + (err ? err : '') + (done ? '<br>Completed.': '') + '</html>';
 
   const path = __dirname + '/../public/status-' + zoom + '.html';
   fs.writeFileSync(path, html);
@@ -98,6 +102,7 @@ function nextTile(tile) {
     ++tile.y;
     if (tile.y > tile.yMax) {
       if (!nextChart(tile)) {
+        updateStatus(null, tile, true);
         return false;
       }
       tile.y = tile.yMin;
@@ -119,7 +124,6 @@ function nextTile(tile) {
         console.log([ident, tile.x, tile.y]);
         tile.x = tile.xMax;
         tile.y = tile.yMax;
-        updateStatus(null, tile);
         return nextTile(tile);
       }
 
@@ -148,3 +152,4 @@ function nextTile(tile) {
 }
 
 nextTile(currentTile);
+

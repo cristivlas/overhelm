@@ -65,7 +65,7 @@
         opacity: 1;
       }
       .popover-content {
-        min-width: 250px;
+        min-width: 220px;
       }
       .ui-keyboard {
         background: white;
@@ -180,7 +180,7 @@
       .set-course {
         position: absolute;
         left: .5em;
-        top: .5em;
+        top: .4em;
         color: white;
         background:rgba(0,65,135,.5);
         border-radius: 6px;
@@ -216,7 +216,6 @@
       var popup = null;
       var selectedLocation = null;
       var prevLocationName = 'current location';
-      var headingRotation = 0;
       var savedZoom = defaultZoom;
 
       /*****************************************************************
@@ -345,19 +344,24 @@
         button.appendChild(icon);
         button.title = 'Show destination';
         button.id = 'dest';
-        button.disabled = true;
         var handler = function() {
-          if (popup.place && !popup.visible && destination) {
+          if (popup.place && destination) {
+            if (popup.visible) {
+              $(popup.getElement()).popover('destroy');
+              popup.visible = popup.show = false;  
+            }
             geolocation.stop();
-            updateMap(popup.destCoord, 'images/view.png');
+            updateMap(popup.destCoord);
             updatePopup(destination, popup.destPlace, popup.destCoord);
           }
         }
         button.addEventListener('click', handler, false);
 
         var element = document.createElement('div');
+        element.id = 'dest-div';
         element.className = 'destination ol-custom ol-unselectable ol-control';
         element.appendChild(button);
+        element.style.visibility = 'hidden';
 
         ol.control.Control.call(this, {
           element: element,
@@ -474,7 +478,7 @@
           }),
           style: new ol.style.Style({
             stroke: new ol.style.Stroke({
-              color: '#8000f0',
+              color: '#008000',
               width: 3
             }),
             image: new ol.style.Icon({
@@ -497,11 +501,11 @@
       }
 
 
-      function updatePositionLayer(pos, iconUrl) {
+      function updatePositionLayer(pos) {
         if (marker) {
           map.removeLayer(marker);
         }
-        marker = getPositionLayer(pos, iconUrl);
+        marker = getPositionLayer(pos);
         map.addLayer(marker);
       }
 
@@ -509,30 +513,54 @@
       /**
        * Construct position marker layer
        */
-      function getPositionLayer(xy, iconUrl) {
-        var iconFeature = new ol.Feature({
+      function getPositionLayer(xy) {
+        let iconFeature = new ol.Feature({
           geometry: new ol.geom.Point(xy),
-          name: 'Current position',
         });
-
-        var iconStyle = new ol.style.Style({
-          image: new ol.style.Icon(/** @type {olx.style.IconOptions} */ ({
+        let rotation = 0;
+        let iconUrl = 'images/view.png';
+        if (geolocation.isTracking()) {
+          iconUrl = 'images/marker.png';
+          rotation = geolocation.rotation;
+        }
+        let iconStyle = new ol.style.Style({
+          image: new ol.style.Icon({
             anchor: [0.5, 0.5],
             anchorXUnits: 'fraction',
             anchorYUnits: 'fraction',
             src: iconUrl,
             rotateWithView: true,
-            rotation: geolocation.isTracking() ? headingRotation : 0
-          }))
+            rotation: rotation,
+          })
         });
         iconFeature.setStyle(iconStyle);
 
-        var vectorSource = new ol.source.Vector({
-          features: [iconFeature]
-        });
+        features = [iconFeature];
+
+        if (destination && geolocation.coord && !geolocation.isTracking()) {
+          xy = ol.proj.fromLonLat([geolocation.coord.lon, geolocation.coord.lat]);
+
+          iconFeature = new ol.Feature({
+            geometry: new ol.geom.Point(xy)
+          });
+          iconStyle = new ol.style.Style({
+            image: new ol.style.Icon({
+              anchor: [0.5, 0.5],
+              anchorXUnits: 'fraction',
+              anchorYUnits: 'fraction',
+              src: 'images/marker.png',
+              rotateWithView: true,
+              rotation: geolocation.rotation
+            })
+          });
+          iconFeature.setStyle(iconStyle);
+          features.push(iconFeature);
+        }
 
         return new ol.layer.Vector({
-          source: vectorSource,
+          source: new ol.source.Vector({
+            features: features
+          })
         });
       }
 
@@ -544,7 +572,7 @@
         const tilesetsUrl = 'tilesets/noaa/' + coord[0] + '/' + coord[1];
         const xmlHttp = new XMLHttpRequest();
         xmlHttp.onreadystatechange = function() {
-          if (xmlHttp.readyState == 4 && xmlHttp.status == 200) {
+          if (xmlHttp.readyState === 4 && xmlHttp.status === 200) {
             callback(xmlHttp.responseText);
           }
         }
@@ -653,7 +681,7 @@
       /**
        * Construct / update the map object
        */
-      function updateMap(coord, iconUrl = 'images/marker.png') {
+      function updateMap(coord) {
         if (popup && popup.visible) {
           $(popup.getElement()).popover('destroy');
           popup.visible = popup.shown = false;
@@ -669,7 +697,7 @@
           center: pos,
           zoom: defaultZoom,
           minZoom: 3,
-          maxZoom: 16,
+          maxZoom: 17,
           enableRotation: false,
         });
 
@@ -742,12 +770,12 @@
               const lonLat = ol.proj.transform(coord, 'EPSG:3857', 'EPSG:4326');
               selectedLocation = lonLat;
               prevLocationName = 'previous location';
-              updateMap(lonLat, 'images/view.png');
+              updateMap(lonLat);
             });
           }
 
           updateCourseLayer(pos);
-          updatePositionLayer(pos, iconUrl);
+          updatePositionLayer(pos);
         });
        
         elem = document.getElementById('location');
@@ -806,8 +834,8 @@
         function processWaterLevelStation(event) {
           const xmlHttp = event.currentTarget;
           
-          if (xmlHttp.readyState == 4) {
-            if (xmlHttp.status != 200) {
+          if (xmlHttp.readyState === 4) {
+            if (xmlHttp.status !== 200) {
               console.log(xmlHttp.response.text);
               return;
             }
@@ -858,7 +886,7 @@
         function processWaterLevelRequest(stationInfo, event) {
           const xmlHttp = event.currentTarget;
 
-          if (xmlHttp.readyState == 4 && xmlHttp.status == 200) {
+          if (xmlHttp.readyState === 4 && xmlHttp.status === 200) {
             let labels = []
             let datasets = [ {
               label: '',
@@ -968,7 +996,7 @@
 
       function processCurrentsStation(event) {
         const xmlHttp = event.currentTarget;
-        if (xmlHttp.readyState == 4 && xmlHttp.status == 200) {
+        if (xmlHttp.readyState === 4 && xmlHttp.status === 200) {
           console.log(xmlHttp.responseText);
           const station = JSON.parse(xmlHttp.responseText);
           const now = new Date();            
@@ -984,7 +1012,7 @@
 
       function processCurrents(event) {
         const xmlHttp = event.currentTarget;
-        if (xmlHttp.readyState == 4 && xmlHttp.status == 200) {
+        if (xmlHttp.readyState === 4 && xmlHttp.status === 200) {
           console.log(xmlHttp.responseText);
         }
       }
@@ -1003,6 +1031,7 @@
             closePopup();
             destination = pos;
             if (destination) {
+              // TODO: move these to another namespace
               popup.destPlace = popup.place;
               popup.destCoord = popup.coord;
             }
@@ -1014,9 +1043,11 @@
           }
           document.getElementById('set-course').onclick = function() {
             setDestination(popup.pos);
+            document.getElementById('dest-div').style.visibility = 'visible';
           }
           document.getElementById('cancel-course').onclick = function() {
             setDestination(null);
+            document.getElementById('dest-div').style.visibility = 'hidden';
           }
         }
       }
@@ -1043,8 +1074,6 @@
       }
 
       function updatePopup(pos, place, coord) {
-        document.getElementById('dest').disabled = false;
-
         popup.pos = pos;
         popup.place = place;
         popup.coord = coord;
@@ -1059,21 +1088,26 @@
         let html = '<div><b>' + place.name + '</b> ' + place.code + '</div>' 
             + convertDMS(coord) + '<br>Elevation: ' + elevation + "'";
 
+        function distance(d) {
+          if (d===0) {
+            const coord = [ geolocation.coord.lon, geolocation.coord.lat ];
+            d = getDistanceFromLonLat(popup.coord, coord) * 3440;
+            prevLocationName = 'current location';
+          }
+          return '<br><em>' + Math.floor(d * 1000) / 1000
+            + ' nautical miles from ' + prevLocationName + '</em>';
+        }
         let btn = '';
 
-        if (pos===destination) {
-          const d = getDistanceFromLonLat(popup.destCoord, selectedLocation);
-          html += '<br><em>' + Math.floor(d * 3440 * 100) / 100
-            + ' nautical miles from ' + prevLocationName + '</em>'
+        if (destination && pos[0]===destination[0] && pos[1]===destination[1]) {
+          const d = getDistanceFromLonLat(popup.destCoord, selectedLocation) * 3440;
+          html += distance(d);
           html += '<div id="set-course" display: none></div>';
           btn  += '<button type="button" class="set-course" id="cancel-course">Cancel course</button>';
           prevLocationName = popup.destPlace.name;
         }
         else {
-          if (place.dist) {
-            html += '<br><em>' + Math.floor(place.dist * 100) / 100
-                 + ' nautical miles from ' + prevLocationName + '</em>'
-          }
+          html += distance(place.dist);
           html += '<div id="cancel-course" display: none></div>';
           btn += '<button type="button" class="set-course" id="set-course">Set course</button>';
           prevLocationName = place.name;
@@ -1101,8 +1135,11 @@
             const m = matches[i];
             selectHtml += '<option value="[' + m.lon + ',' + m.lat + ']">';
             selectHtml += m.name;
+            if (m.stateName) {
+              selectHtml += ', ' + m.stateName;
+            }
             if (m.state) {
-              selectHtml += ', ' + m.state;
+              selectHtml += ' (' + m.state + ')';
             }
             selectHtml += '</option>';
           }
@@ -1113,7 +1150,7 @@
         const url = 'search/' + name + '/' + coord[0] + '/' + coord[1];
         const xmlHttp = new XMLHttpRequest();
         xmlHttp.onreadystatechange = function() {
-          if (xmlHttp.readyState == 4 && xmlHttp.status == 200) {
+          if (xmlHttp.readyState === 4 && xmlHttp.status === 200) {
             const matches = JSON.parse(xmlHttp.responseText);
             if (matches && matches.length) {
               const selectHtml = buildSelection(matches);
@@ -1130,7 +1167,7 @@
                 if (map && map.getView().getZoom() < defaultZoom) {
                     map.getView().setZoom(defaultZoom);
                 }
-                const pos = updateMap(coord, 'images/view.png');
+                const pos = updateMap(coord);
                 updatePopup(pos, matches[elem.selectedIndex], coord);
               });
             }
@@ -1154,7 +1191,7 @@
           selectedLocation = [-122.4049, 47.6810] // Shilshole Bay
           prevLocationName = 'Shilshole Bay';
         }
-        let pos = updateMap(selectedLocation, 'images/view.png');
+        let pos = updateMap(selectedLocation);
         if (map) {
           map.pos = pos;
         }
@@ -1163,9 +1200,6 @@
 
       var geolocation = new Geolocation({
         onSuccess: function(coord) {
-          if (coord.heading) {
-            headingRotation = coord.heading * (Math.PI / 180);
-          }
           if (coord.lon && coord.lat) {
             selectedLocation = [ coord.lon, coord.lat ];
             prevLocationName = 'current location';

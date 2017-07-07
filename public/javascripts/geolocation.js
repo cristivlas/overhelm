@@ -7,6 +7,7 @@ class Geolocation {
     this._successCallback = options.onSuccess;
     this._ios = (navigator.platform == 'iPad' || navigator.platform == 'iPhone');
     this.speed = 0;
+    this.rotation = 0;
   }
 
   start() {
@@ -129,7 +130,10 @@ class Geolocation {
     if (!coord.heading && this._heading) {
       coord.heading = this._heading;
     }
+    this.coord = coord;
     this.speed = coord.speed;
+    this.rotation = coord.heading * (Math.PI / 180);
+
     if (this._successCallback) {
       this._successCallback(coord);
     }
