@@ -1,5 +1,21 @@
 const geonames = require(__dirname + '/geonames.json');
 
+// blame Canada
+const provinces = [
+  { code: '01', abbr: 'AB' },  // Alberta
+  { code: '02', abbr: 'BC' },  // British Columbia
+  { code: '03', abbr: 'MB' },  // Manitoba
+  { code: '04', abbr: 'NB' },  // New Brunswick
+  { code: '07', abbr: 'NS' },  // Nova Scotia
+  { code: '08', abbr: 'ON' },  // Ontario
+  { code: '09', abbr: 'PE' },  // Prince Edward Island
+  { code: '10', abbr: 'QC' },  // Quebec
+  { code: '11', abbr: 'SK' },  // Saskatchewan,
+  { code: '12', abbr: 'YT' },  // Yukon Territory
+  { code: '13', abbr: 'NT' },  // Northwest Territories
+  { code: '14', abbr: 'NU' },  // Nunavut
+]
+
 geonames.sort(function(a, b) {
   if (a.state < b.state) {
     return -1;
@@ -23,6 +39,12 @@ for (let i = 0; i != geonames.length; ) {
     if (g.state !== geonames[j].state) {
       break;
     }
+  }
+  let p = provinces.find(function(elem) {
+    return elem.code===g.state;
+  });
+  if (p) {
+    g.state = p.abbr;
   }
   output.push({
     name: g.name,
