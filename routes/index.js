@@ -189,79 +189,83 @@ router.get('/tiles/:srv/:set/:z/:x/:y', function(req, res, next) {
     const tmpFileName = tmp.tmpNameSync();
 
     let file = fs.createWriteStream(tmpFileName);
-    let options = {
-      host: service.host(req.params.set),
-      path: service.url(req.params.set, req.params.x, req.params.y, req.params.z),
-    };
 
-    try {
-      var protocol = service.ssl ? https : http;
-      let request = protocol.get(options, function(response) {
-        response.pipe(file);
-        file.on('finish', function() {
-          file.close();
-          console.log(options.host, response.statusCode);
+      let options = {
+        host: service.host(req.params.set),
+        path: service.url(req.params.set, req.params.x, req.params.y, req.params.z),
+      };
 
-          if (response.statusCode===200) {
+    file.on('open', function() {
+      try {
+        var protocol = service.ssl ? https : http;
+        let request = protocol.get(options, function(response) {
+          response.pipe(file);
+          file.on('finish', function() {
+            file.close();
+            console.log(options.host, response.statusCode);
 
-            console.log('Finished downloading: ' + filePath);
+            if (response.statusCode===200) {
 
-            if (isEmptyPNG(tmpFileName)) {
-              console.log('Tile is empty: ' + filePath);
-              fs.unlink(tmpFileName, function(err) {
+              console.log('Finished downloading: ' + filePath);
+
+              if (isEmptyPNG(tmpFileName)) {
+                console.log('Tile is empty: ' + filePath);
+                fs.unlink(tmpFileName, function(err) {
+                  if (err) {
+                    console.log([tmpFileName, err.message]);
+                  }
+                });
+                //
+                // update emptyTiles.txt
+                //
+                const parts = path.basename(filePath).split('.');
+                try { 
+                  const entry = parts[1] + ' ' + parts[2] + ' ' + parts[3] + '\n';
+                  console.log(empty, entry);
+                  fs.appendFileSync(empty, entry);
+                }
+                catch (err) {
+                  console.log([empty, parts, err.message]);
+                }
+                return res.sendStatus(204);
+              }
+              fs.rename(tmpFileName, filePath, function(err) {
                 if (err) {
-                  console.log([tmpFileName, err.message]);
+                  console.log(err.message);
+                  uploadTile(tmpFileName, req, res, next, function() {
+                    fs.unlink(tmpFileName);
+                  });
+                }
+                else {
+                  uploadTile(filePath, req, res, next);
                 }
               });
-              //
-              // update emptyTiles.txt
-              //
-              const parts = path.basename(filePath).split('.');
-              try { 
-                const entry = parts[1] + ' ' + parts[2] + ' ' + parts[3] + '\n';
-                console.log(empty, entry);
-                fs.appendFileSync(empty, entry);
-              }
-              catch (err) {
-                console.log([empty, parts, err.message]);
-              }
-              return res.sendStatus(204);
             }
-            fs.rename(tmpFileName, filePath, function(err) {
-              if (err) {
-                console.log(err.message);
-                uploadTile(tmpFileName, req, res, next, function() {
-                  fs.unlink(tmpFileName);
-                });
-              }
-              else {
-                uploadTile(filePath, req, res, next);
-              }
-            });
-          }
-          else {
-            fs.unlinkSync(tmpFileName);
-            console.log(filePath + ': ' + response.statusMessage);
-            res.statusCode = response.statusCode;
-            res.send(response.statusMessage);
-          }
+            else {
+              fs.unlinkSync(tmpFileName);
+              console.log(filePath + ': ' + response.statusMessage);
+              res.statusCode = response.statusCode;
+              res.send(response.statusMessage);
+            }
+          });
         });
-      });
 
-      request.on('error', function(err) {
+        request.on('error', function(err) {
+          file.close();
+          fs.unlinkSync(tmpFileName);
+          console.log(err);
+          next(err);
+        });
+
+        request.end();
+      }
+      catch (err) {
         file.close();
         fs.unlinkSync(tmpFileName);
         next(err);
-      });
-
-      request.end();
-    }
-    catch (err) {
-      file.close();
-      fs.unlinkSync(tmpFileName);
-      next(err);
-    }
-  }
+      }
+    });
+  } // function downloadAndUploadTile
 
   const cachedFilePath = formatTileCacheFileName(req, res, next);
 
