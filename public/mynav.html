@@ -478,7 +478,7 @@
           }),
           style: new ol.style.Style({
             stroke: new ol.style.Stroke({
-              color: '#008000',
+              color: 'green',
               width: 3
             }),
             image: new ol.style.Icon({
@@ -764,7 +764,7 @@
               if (geolocation.isTracking()) {
                 geolocation.stop();
                 savedZoom = map.getView().getZoom();
-                alertify.alert('Location tracking paused. Click the location button to resume.');
+                alertify.alert('Location tracking paused. Use the arrow button to resume.');
               }
               const coord = e.coordinate;
               const lonLat = ol.proj.transform(coord, 'EPSG:3857', 'EPSG:4326');
