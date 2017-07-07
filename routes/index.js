@@ -190,12 +190,12 @@ router.get('/tiles/:srv/:set/:z/:x/:y', function(req, res, next) {
 
     let file = fs.createWriteStream(tmpFileName);
 
+    file.on('open', function() {
       let options = {
         host: service.host(req.params.set),
         path: service.url(req.params.set, req.params.x, req.params.y, req.params.z),
       };
 
-    file.on('open', function() {
       try {
         var protocol = service.ssl ? https : http;
         let request = protocol.get(options, function(response) {
