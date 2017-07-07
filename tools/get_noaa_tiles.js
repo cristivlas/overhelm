@@ -8,6 +8,9 @@ const charts = require(__dirname + '/../routes/noaa-layers.json');
 const start = new Date();
 
 function getETA(i, n) {
+  if (i > n) {
+    i = n;
+  }
   const now = new Date();
   const speed = i / (now.getTime() - start.getTime());
   const timeLeft = (n - i) / speed;
@@ -71,12 +74,13 @@ function nextChart(tile) {
 
 
 function updateStatus(err, tile, done=false) {
+  const i = tile.i >= charts.length ? charts.length - 1 : tile.i;
   const html = '<html><meta http-equiv="refresh" content="5">'
     + '<body>Process '
     + process.pid + '<div id="start"></div>'
     + '<br>Zoom level: ' + zoom
     + '<br>Charts: ' + tile.i + ' out of ' + charts.length
-    + ' (current: ' + charts[tile.i].ident + ')'
+    + ' (current: ' + charts[i].ident + ')'
     + '<br>Tiles: ' + nTiles
     + '<br><div id="eta"></div>'
     + '</body>'
