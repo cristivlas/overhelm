@@ -185,7 +185,13 @@ router.get('/tiles/:srv/:set/:z/:x/:y', function(req, res, next) {
       fs.mkdirSync(dirname);
     }
 
-    ensureDirectoryExists(filePath);
+    try {
+      ensureDirectoryExists(filePath);
+    }
+    catch (err) {
+      console.log(err.message);
+      return next(err);
+    }
     const tmpFileName = tmp.tmpNameSync();
 
     let file = fs.createWriteStream(tmpFileName);
