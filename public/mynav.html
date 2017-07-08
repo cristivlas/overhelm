@@ -65,7 +65,7 @@
         opacity: 1;
       }
       .popover-content {
-        min-width: 220px;
+        min-width: 240px;
       }
       .ui-keyboard {
         background: white;
@@ -1083,7 +1083,7 @@
         //otherwise we should multiply by 3.28084 -- I just checked a few data points
         //against Wikipedia
 
-        let html = '<div><b>' + place.name + '</b>  [' + place.code + ']</div>'
+        let html = '<div><b>' + place.name + '</b></div>'
             + convertDMS(coord) + '<br>Elevation: ' + elevation + "'";
 
         function distance(d) {
