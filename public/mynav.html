@@ -65,7 +65,7 @@
         opacity: 1;
       }
       .popover-content {
-        min-width: 220px;
+        min-width: 240px;
       }
       .ui-keyboard {
         background: white;
@@ -1092,7 +1092,7 @@
             d = getDistanceFromLonLat(popup.coord, coord) * 3440;
             prevLocationName = 'current location';
           }
-          return '<br>' + Math.floor(d * 1000) / 1000
+          return ' ' + Math.floor(d * 1000) / 1000
             + ' nautical miles from ' + prevLocationName;
         }
         let btn = '';
