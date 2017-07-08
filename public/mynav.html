@@ -1083,7 +1083,7 @@
         //otherwise we should multiply by 3.28084 -- I just checked a few data points
         //against Wikipedia
 
-        let html = '<div><b>' + place.name + '</b> ' + place.code + '</div>' 
+        let html = '<div><b>' + place.name + '</b>  [' + place.code + ']</div>'
             + convertDMS(coord) + '<br>Elevation: ' + elevation + "'";
 
         function distance(d) {
@@ -1122,19 +1122,16 @@
         popup.setPosition(pos);
         popup.shown = false;
         popup.visible = true; // popover on map postrender
+        map.getView().setCenter(pos);
 
         const xmlHttp = new XMLHttpRequest();
         xmlHttp.onreadystatechange = function() {
-          if (xmlHttp.readyState === 4) {
-            if (xmlHttp.status === 200) {
-              const w = JSON.parse(xmlHttp.responseText);
-              html += '<image width="25%" src="' + w.image + '"/> ';
-              html += 'Weather: ' + w.weather + ' ' + w.temp
-                + ' Humidity: ' + w.humidity
-                + ' Wind: ' + w.wind;
-            }
-            popup.shown = false;
-            popup.setPosition(pos);
+          if (xmlHttp.readyState === 4 && xmlHttp.status === 200) {
+            const w = JSON.parse(xmlHttp.responseText);
+            html += '<image width="20%" src="' + w.image + '"/> ';
+            html += w.weather + ' ' + w.temp
+              + ' Humidity: ' + w.humidity
+              + ' Wind: ' + w.wind;
             $(e).popover('destroy');
             $(e).popover({
               'animation': false,
@@ -1143,7 +1140,7 @@
               'content': html,
               'title': btn + '<a href="#" id="close-popup" class="close">&times;</a>'
             });
-            map.getView().setCenter(pos);
+            popup.shown = false;
             map.render();
           }
         }
