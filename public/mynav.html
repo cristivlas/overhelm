@@ -1083,17 +1083,14 @@
         //otherwise we should multiply by 3.28084 -- I just checked a few data points
         //against Wikipedia
 
-        let html = '<div><b>' + place.name + '</b></div>'
-            + convertDMS(coord) + '<br>Elevation: ' + elevation + "'";
-
+        let html = '<b>' + place.name + '</b>' + convertDMS(coord);
         function distance(d) {
           if (d===0) {
             const coord = [ geolocation.coord.lon, geolocation.coord.lat ];
             d = getDistanceFromLonLat(popup.coord, coord) * 3440;
             prevLocationName = 'current location';
           }
-          return ' ' + Math.floor(d * 1000) / 1000
-            + ' nautical miles from ' + prevLocationName;
+          return '<br>' + Math.floor(d * 100) / 100 + ' nautical miles from ' + prevLocationName + '.';
         }
         let btn = '';
 
@@ -1128,10 +1125,12 @@
         xmlHttp.onreadystatechange = function() {
           if (xmlHttp.readyState === 4 && xmlHttp.status === 200) {
             const w = JSON.parse(xmlHttp.responseText);
-            html += '<image width="20%" src="' + w.image + '"/> ';
+            html += '<div><image width="20%" src="' + w.image + '"/>';
             html += w.weather + ' ' + w.temp
               + ' Humidity: ' + w.humidity
-              + ' Wind: ' + w.wind;
+              + ' Wind: ' + w.wind
+              + '</div>';
+
             $(e).popover('destroy');
             $(e).popover({
               'animation': false,
