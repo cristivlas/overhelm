@@ -126,9 +126,8 @@ function nextTile(tile) {
         updateStatus(null, tile);
         return nextTile(tile);
       }
-
       resp.on('end', function(err) {
-        console.log(path);
+        console.log([resp.statusCode, resp.statusMessage, path]);
         updateStatus(err, tile);
         if (err) {
           console.log(err);

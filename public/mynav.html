@@ -1093,7 +1093,7 @@
             prevLocationName = 'current location';
           }
           return ' ' + Math.floor(d * 1000) / 1000
-            + ' nautical miles from ' + prevLocationName;
+            + ' nautical miles from ' + prevLocationName + '.';
         }
         let btn = '';
 
@@ -1128,7 +1128,7 @@
         xmlHttp.onreadystatechange = function() {
           if (xmlHttp.readyState === 4 && xmlHttp.status === 200) {
             const w = JSON.parse(xmlHttp.responseText);
-            html += '<br><image width="20%" src="' + w.image + '"/> ';
+            html += '<br><image width="15%" src="' + w.image + '"/> ';
             html += w.weather + ' ' + w.temp
               + ' Humidity: ' + w.humidity
               + ' Wind: ' + w.wind;

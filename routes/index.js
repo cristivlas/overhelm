@@ -195,8 +195,17 @@ router.get('/tiles/:srv/:set/:z/:x/:y', function(req, res, next) {
     }
     const tmpFileName = tmp.tmpNameSync();
 
-    let file = fs.createWriteStream(tmpFileName);
-
+    let file = null;
+    try {
+      file = fs.createWriteStream(tmpFileName);
+    }
+    catch(err) {
+      console.log(err);
+      return next(err);
+    }
+    file.on('error', function(err) {
+      console.log(err);
+    });
     file.on('open', function() {
       let options = {
         host: service.host(req.params.set),
@@ -275,6 +284,7 @@ router.get('/tiles/:srv/:set/:z/:x/:y', function(req, res, next) {
   } // function downloadAndUploadTile
 
   const cachedFilePath = formatTileCacheFileName(req, res, next);
+  console.log(cachedFilePath);
 
   if (fs.existsSync(cachedFilePath)) {
     uploadTile(cachedFilePath, req, res, next);
