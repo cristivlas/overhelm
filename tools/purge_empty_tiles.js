@@ -64,6 +64,7 @@ crawl(start, function(err, filePath, emptyList) {
   }
   catch (err) {
     console.log(err.message);
+    isEmpty = false;
   }
 
   if (isEmpty) {

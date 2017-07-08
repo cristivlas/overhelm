@@ -170,6 +170,7 @@ router.get('/tiles/:srv/:set/:z/:x/:y', function(req, res, next) {
     }
     catch (err) {
       console.log(err.message);
+      isEmpty = false;
     }
     return isEmpty;
   }
@@ -520,31 +521,5 @@ router.get('/search/:name/:lon/:lat', function(req, res, next) {
   res.send(JSON.stringify(matches.slice(0, 100)));
 });
 
-
-/******************************************************************
- * Get distance between two points
- */
-/*
-router.get('/dist/:units/:lon1/:lat1/:lon2/:lat2', function(req, res, next) {
-  let dist = getDistanceFromLatLong(
-    req.params.lat1,
-    req.params.lon1,
-    req.params.lat2,
-    req.params.lon2);
-  switch (req.params.units.trim().toLowerCase()) {
-    case 'km':
-      dist *= 6371; // radius of earth in km
-      break;
-    case 'nm':
-      dist *= 3440; // radius of earth in nautical miles
-      break;
-    case 'm':
-      dist *= 3959; // radius in miles
-      break;
-    default:
-  }
-  res.send(dist.toString());
-});
-*/
-
 module.exports = router;
+

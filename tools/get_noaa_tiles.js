@@ -54,7 +54,7 @@ var currentTile = {
   yMin: -1,
   yMax: -1,
 }
-var nTiles = -1;
+var nTiles = 0;
 
 
 function nextChart(tile) {
@@ -96,7 +96,6 @@ function updateStatus(err, tile, done=false) {
 
 
 function nextTile(tile) {
-  ++nTiles;
   ++tile.x;
   if (tile.x > tile.xMax) {
     ++tile.y;
@@ -134,6 +133,7 @@ function nextTile(tile) {
         if (err) {
           console.log(err);
         }
+        ++nTiles;
         nextTile(tile);
       });
 
