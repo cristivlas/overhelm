@@ -1092,8 +1092,8 @@
             d = getDistanceFromLonLat(popup.coord, coord) * 3440;
             prevLocationName = 'current location';
           }
-          return ' <em>' + Math.floor(d * 1000) / 1000
-            + ' nautical miles from ' + prevLocationName + '</em>';
+          return ' ' + Math.floor(d * 1000) / 1000
+            + ' nautical miles from ' + prevLocationName;
         }
         let btn = '';
 
