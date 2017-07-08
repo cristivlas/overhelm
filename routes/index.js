@@ -521,5 +521,57 @@ router.get('/search/:name/:lon/:lat', function(req, res, next) {
   res.send(JSON.stringify(matches.slice(0, 100)));
 });
 
+
+/******************************************************************
+ *
+ */
+router.get('/weather/:lon/:lat', function(req, res, next) {
+  if (!__online) {
+    return res.sendStatus(204);
+  }
+  const url = 'http://api.wunderground.com/api/c1537719c680efb0/conditions/q/'
+    + req.params.lat + ',' + req.params.lon + '.json';
+
+  let data = '';
+
+  http.get(url, function(response) {
+    response.on('data', function(chunk) {
+      data += chunk;
+    });
+    response.on('error', function(err) {
+      console.log(err);
+      return next(err);
+    });
+    response.on('end', function() {
+      const wu = JSON.parse(data).current_observation;
+      try {
+        const report = {
+          //image: wu.image.url,
+          image: '/images/wu_logo_130x80.png',
+          time: wu.observation_time_rfc822,
+          weather: wu.weather,
+          temp: wu.temperature_string,
+          wind: wu.wind_string,
+          wind_degrees: wu.wind_degrees,
+          wind_mph: wu.wind_mph,
+          humidity: wu.relative_humidity,
+          visibility: wu.visibility_mph
+        }
+        res.end(JSON.stringify(report, null, 4));
+      }
+      catch(err) {
+        console.log(err);
+        return next(err);
+      }
+    });
+  })
+  .on('error', function(err) {
+    console.log(err);
+    return next(err);
+  })
+  .end();
+});
+
+
 module.exports = router;
 

@@ -6,7 +6,7 @@
     <meta name="viewport" content="initial-scale=1.0, user-scalable=no, width=device-width">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-title" content="Ragnar [Alpha]">
-    <link rel="apple-touch-icon" href="images/sailboat.png">
+    <link rel="apple-touch-icon" href="/images/sailboat.png">
 
     <link rel="stylesheet" href="lib/OpenLayers/4.2.0/ol.css" type="text/css">
     <link rel="stylesheet" href="stylesheets/alertify.core.css" type="text/css">
@@ -1092,7 +1092,7 @@
             d = getDistanceFromLonLat(popup.coord, coord) * 3440;
             prevLocationName = 'current location';
           }
-          return '<br><em>' + Math.floor(d * 1000) / 1000
+          return ' <em>' + Math.floor(d * 1000) / 1000
             + ' nautical miles from ' + prevLocationName + '</em>';
         }
         let btn = '';
@@ -1122,6 +1122,33 @@
         popup.setPosition(pos);
         popup.shown = false;
         popup.visible = true; // popover on map postrender
+
+        const xmlHttp = new XMLHttpRequest();
+        xmlHttp.onreadystatechange = function() {
+          if (xmlHttp.readyState === 4) {
+            if (xmlHttp.status === 200) {
+              const w = JSON.parse(xmlHttp.responseText);
+              html += '<image width="25%" src="' + w.image + '"/> ';
+              html += 'Weather: ' + w.weather + ' ' + w.temp
+                + ' Humidity: ' + w.humidity
+                + ' Wind: ' + w.wind;
+            }
+            popup.shown = false;
+            popup.setPosition(pos);
+            $(e).popover('destroy');
+            $(e).popover({
+              'animation': false,
+              'html': true,
+              'placement': 'top',
+              'content': html,
+              'title': btn + '<a href="#" id="close-popup" class="close">&times;</a>'
+            });
+            map.getView().setCenter(pos);
+            map.render();
+          }
+        }
+        xmlHttp.open('GET', '/weather/' + coord[0] + '/' + coord[1]);
+        xmlHttp.send();
       }
 
 
