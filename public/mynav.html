@@ -1083,9 +1083,7 @@
         //otherwise we should multiply by 3.28084 -- I just checked a few data points
         //against Wikipedia
 
-        let html = '<div><b>' + place.name + '</b></div>'
-            + convertDMS(coord) + '<br>Elevation: ' + elevation + "'";
-
+        let html = '<b>' + place.name + '</b>' + convertDMS(coord);
         function distance(d) {
           if (d===0) {
             const coord = [ geolocation.coord.lon, geolocation.coord.lat ];
@@ -1131,7 +1129,9 @@
             html += '<br><image width="15%" src="' + w.image + '"/> ';
             html += w.weather + ' ' + w.temp
               + ' Humidity: ' + w.humidity
-              + ' Wind: ' + w.wind;
+              + ' Wind: ' + w.wind
+              + '</div>';
+
             $(e).popover('destroy');
             $(e).popover({
               'animation': false,
