@@ -478,7 +478,7 @@
           }),
           style: new ol.style.Style({
             stroke: new ol.style.Stroke({
-              color: '#008000',
+              color: 'green',
               width: 3
             }),
             image: new ol.style.Icon({
@@ -640,7 +640,7 @@
                   attributions: tileset.ident.split('_')[0]
                 }),
                 maxResolution: maxRes,
-                opacity: .9
+                opacity: .7
               });
               layer.ident = tileset.ident;
               layer.upper = tileset.upper;
@@ -764,7 +764,7 @@
               if (geolocation.isTracking()) {
                 geolocation.stop();
                 savedZoom = map.getView().getZoom();
-                alertify.alert('Location tracking paused. Click the location button to resume.');
+                alertify.alert('Location tracking paused. Use the arrow button to resume.');
               }
               const coord = e.coordinate;
               const lonLat = ol.proj.transform(coord, 'EPSG:3857', 'EPSG:4326');
@@ -854,14 +854,10 @@
             waterLevelStation = s;
             tideChartTime = now;
 
-            const stationInfo = 'Station: ' + s.Id + ' ' + s.Name + ' ' + s.State;
-
-            if (tideChart) {
-              tideChart.options.title.text = stationInfo;
-            }
+            const stationInfo = s.Id + ' ' + s.Name + ' ' + s.State;
 
             const currentTime = now.toISOString();
-            console.log(currentTime);
+            // console.log(currentTime);
             const useNOAAData = location.search == '?noaa';
             var url;
             if (useNOAAData) {
@@ -895,10 +891,7 @@
             } ]
             const now = new Date();
 
-            let predictions = JSON.parse(xmlHttp.responseText).predictions;
-            if (navigator.platform === 'iPhone') {
-              predictions = predictions.slice(0, predictions.length-1);
-            }
+            const predictions = JSON.parse(xmlHttp.responseText).predictions;
             // Grid lines color and thickness
             let lineColors = []
             let lineWidths = []
@@ -915,18 +908,24 @@
               date.setTime(date.getTime() - date.getTimezoneOffset() * 60000);
 
               const a = date.toString().split(' ');
-              labels.push(a[0] + ' ' + dateHelper(date.getHours()) + ':'  + dateHelper(date.getMinutes()));
+              const time = dateHelper(date.getHours()) + ':'  + dateHelper(date.getMinutes());
+              labels.push(a[0] + ' ' + time);
               datasets[0].data.push(predictions[i].v);
-              if (date.getTime() <= now.getTime()) {
+              if (date.getTime() < now.getTime()) {
                 datasets[0].backgroundColor.push('lightblue');
               }
               else {
                 datasets[0].backgroundColor.push('rgba(0,65,135,.75)');
-                if (thresh == 0) {
+                if (thresh === 0) {
+                  let average = (parseFloat(predictions[i].v) + parseFloat(predictions[i-1].v))/2;
+                  average = Math.floor(100 * average) / 100;
+                  console.log([predictions[i].v, predictions[i-1].v, average]);
+                  stationInfo += '  ' + now.toTimeString().split(' ')[0] + ' ' + average + "'";
+
                   thresh = i;
-                  const j = Math.floor(i/step) + 1;
-                  lineColors[j] = '#606060';
-                  lineWidths[j] = 2;
+                  const j = Math.floor(i/step);
+                  lineColors[j-1] = lineColors[j] = lineColors[j+1] = '#606060';
+                  lineWidths[j-1] = lineWidths[j] = lineWidths[j+1] = 2;
                 }
               }
             }
@@ -936,6 +935,7 @@
                 labels: labels,
                 datasets: datasets
               }
+              tideChart.options.title.text = stationInfo;
               tideChart.update();
             }
             else {
@@ -975,7 +975,6 @@
                   }
                 }
               });
-
             }
           }
         }

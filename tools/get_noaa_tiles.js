@@ -124,6 +124,7 @@ function nextTile(tile) {
         console.log([ident, tile.x, tile.y]);
         tile.x = tile.xMax;
         tile.y = tile.yMax;
+        updateStatus(null, tile);
         return nextTile(tile);
       }
 

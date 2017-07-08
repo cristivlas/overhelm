@@ -19,4 +19,4 @@ done
 rm ${prefix}*
 
 # (echo [ && cat ${country}/${prefix}* && echo ]) > geonames.json
-(echo [ && sed '$ s/.$//' ${country}/${prefix}* && echo ]) > geonames.json
+#(echo [ && sed '$ s/.$//' ${country}/${prefix}* && echo ]) > geonames.json
