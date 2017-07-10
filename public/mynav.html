@@ -109,7 +109,7 @@
         box-shadow: 3px 3px 4px rgba(50,50,50,.5);
       }
       .ol-touch .tide-chart {
-        width: 75%;
+        width: 85%;
         right: 0px;
       }
       .tablet .tide-chart {
@@ -640,7 +640,7 @@
                   attributions: tileset.ident.split('_')[0]
                 }),
                 maxResolution: maxRes,
-                opacity: .7
+                opacity: .95
               });
               layer.ident = tileset.ident;
               layer.upper = tileset.upper;
@@ -896,7 +896,7 @@
             let lineWidths = []
 
             let thresh = 0;
-            const step = 3;
+            const step = 10;
 
             for (i = 0; i < predictions.length; i += step) {
               const t = predictions[i].t;
@@ -1083,7 +1083,7 @@
         //otherwise we should multiply by 3.28084 -- I just checked a few data points
         //against Wikipedia
 
-        let html = '<b>' + place.name + '</b>' + convertDMS(coord);
+        let html = '<b>' + place.name + '</b> ' + convertDMS(coord);
         function distance(d) {
           if (d===0) {
             const coord = [ geolocation.coord.lon, geolocation.coord.lat ];
@@ -1092,6 +1092,7 @@
           }
           return ' ' + Math.floor(d * 1000) / 1000
             + ' nautical miles from ' + prevLocationName + '.';
+
         }
         let btn = '';
 
