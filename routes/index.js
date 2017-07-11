@@ -539,7 +539,7 @@ router.get('/weather/:lon/:lat', function(req, res, next) {
   if (!__online) {
     return res.sendStatus(204);
   }
-  const url = 'http://api.wunderground.com/api/c1537719c680efb0/conditions/q/'
+  const url = 'http://api.wunderground.com/api/c1537719c680efb0/geolookup/conditions/q/'
     + req.params.lat + ',' + req.params.lon + '.json';
 
   let data = '';
@@ -565,7 +565,8 @@ router.get('/weather/:lon/:lat', function(req, res, next) {
           wind_degrees: wu.wind_degrees,
           wind_mph: wu.wind_mph,
           humidity: wu.relative_humidity,
-          visibility: wu.visibility_mph
+          visibility: wu.visibility_mi,
+          station: wu.observation_location.full,
         }
         res.end(JSON.stringify(report, null, 4));
       }

@@ -964,9 +964,10 @@
               const ticks = c.ticks;
               c.ticks = [];
               c.ticks[0] = label(ticks, 0);
+              c.ticks[closest] = label(ticks, closest);
               c.ticks[ticks.length-1] = label(ticks, ticks.length-1);
-              c.ticks[iMin] = ['', label(ticks, iMin)];
-              c.ticks[iMax] = ['', label(ticks, iMax)];
+              c.ticks[iMin] = ['', label(ticks, iMin).split(' ')[1]];
+              c.ticks[iMax] = ['', label(ticks, iMax).split(' ')[1]];
             }
 
 
@@ -985,16 +986,16 @@
                 animation: {
                   onComplete: function() {
                     const ctx = this.chart.ctx;
-                    ctx.fillStyle = 'black';
-                    ctx.font = 'italic 16px calibri';
+                    ctx.fillStyle = 'darkorange'
+                    ctx.font = 'bold 18px calibri';
                     const meta = this.getDatasetMeta(0);
                     for (let i = 0; i != meta.data.length; ++i) {
                       if (meta.data[i]._model.radius===0) {
                         continue;
                       }
                       const data = this.data.datasets[0].data;
-                      const value = tickDate(this.data.labels[i])[1] + ' ' + data[i] + "'";
-                      ctx.fillText(value, meta.data[i]._model.x - 75, meta.data[i]._model.y + 25);
+                      const value = data[i] + "'";
+                      ctx.fillText(value, meta.data[i]._model.x + 10, meta.data[i]._model.y + 10);
                     }
                   }
                 },
@@ -1160,12 +1161,14 @@
           html += '<div id="set-course" display: none></div>';
           btn  += '<button type="button" class="set-course" id="cancel-course">Cancel course</button>';
           prevLocationName = popup.destPlace.name;
+          if (popup.destPlace.state) prevLocationName += ', ' + popup.destPlace.state;
         }
         else {
           html += distance(place.dist);
           html += '<div id="cancel-course" display: none></div>';
           btn += '<button type="button" class="set-course" id="set-course">Set course</button>';
           prevLocationName = place.name;
+          if (place.state) prevLocationName += ', ' + place.state;
         }
         selectedLocation = coord;
 
@@ -1185,10 +1188,12 @@
         xmlHttp.onreadystatechange = function() {
           if (xmlHttp.readyState === 4 && xmlHttp.status === 200) {
             const w = JSON.parse(xmlHttp.responseText);
-            html += '<image width="15%" src="' + w.image + '"/> ';
-            html += w.weather + ' ' + w.temp
+            html += '<b>Weather</b><image width="15%" src="' + w.image + '"/> ';
+            html += w.weather + '<br>' + w.temp
               + ' Humidity: ' + w.humidity
-              + ' Wind: ' + w.wind;
+              + ' Wind: ' + w.wind + ' (' + w.wind_degrees + '&deg;)'
+              // + ' Visibility: ' + w.visibility + ' miles'
+              + ' <i>Station: ' + w.station + '</i>';
 
             $(e).popover('destroy');
             $(e).popover({
