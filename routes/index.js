@@ -287,28 +287,33 @@ router.get('/tiles/:srv/:set/:z/:x/:y', function(req, res, next) {
   } // function downloadAndUploadTile
 
   const cachedFilePath = formatTileCacheFileName(req, res, next);
+  try {
+    if (fs.existsSync(cachedFilePath)) {
+      uploadTile(cachedFilePath, req, res, next);
+    }
+    else if (!__online || req.query.source === 'local') {
+      res.sendStatus(204);
+    }
+    else {
+      const emptyList = path.normalize(
+        __dirname + '/../' + path.dirname(cachedFilePath) + '/emptyTiles.txt');
 
-  if (fs.existsSync(cachedFilePath)) {
-    uploadTile(cachedFilePath, req, res, next);
+      const cmd = 'grep "' + req.params.z + ' ' + req.params.x + ' ' + req.params.y + '" ' + emptyList;
+
+      exec (cmd, function(err, stdout, stderr) {
+        if (err) {
+          downloadAndUploadTile(cachedFilePath, req, res, next, emptyList)
+        }
+        else {
+          console.log(cmd, ':', stdout);
+          res.sendStatus(204);
+        }
+      });
+    }
   }
-  else if (!__online || req.query.source === 'local') {
-    res.sendStatus(204);
-  }
-  else {
-    const emptyList = path.normalize(
-      __dirname + '/../' + path.dirname(cachedFilePath) + '/emptyTiles.txt');
-
-    const cmd = 'grep "' + req.params.z + ' ' + req.params.x + ' ' + req.params.y + '" ' + emptyList;
-
-    exec (cmd, function(err, stdout, stderr) {
-      if (err) {
-        downloadAndUploadTile(cachedFilePath, req, res, next, emptyList)
-      }
-      else {
-        console.log(cmd, ':', stdout);
-        res.sendStatus(204);
-      }
-    });
+  catch (err) {
+    console.log(err);
+    return nex(err);
   }
 });
 
