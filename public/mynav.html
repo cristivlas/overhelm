@@ -910,13 +910,10 @@
             } ]
 
 
-            let closest = 0;
-            let iMin = 0;
-            let iMax = 0;
-
             const now = new Date();
-
             const data = datasets[0].data;
+
+            let closest = 0;
             for (let i = 0; i < predictions.length; ++i) {
               labels.push(predictions[i].t);
               data[i] = predictions[i].v;
@@ -924,95 +921,118 @@
               if (closest===0 && t[0].getTime() >= now.getTime()) {
                 closest = i;
               }
-              if (parseFloat(data[i]) < parseFloat(data[iMin])) {
+            }
+            let valMin = 99999;
+            let iMin = closest;
+            for (let i = closest; i < predictions.length; ++i) {
+              const val = parseFloat(predictions[i].v);
+              if (val < valMin) {
                 iMin = i;
+                valMin = val;
               }
-              if (parseFloat(data[i]) > parseFloat(data[iMax])) {
-                iMax = i;
+              if (val > valMin) {
+                if (iMin===closest) {
+                  valMin = val;
+                }
+                else {
+                  break;
+                }
               }
             }
+            let iMax = closest;
+            let valMax = -99999;
+            for (let i = closest; i < predictions.length; ++i) {
+              const val = parseFloat(predictions[i].v);
+              if (val > valMax) {
+                iMax = i;
+                valMax = val;
+              }
+              if (val < valMax) {
+                if (iMax===closest) {
+                  valMax = val;
+                }
+                else {
+                  break;
+                }
+              }
+            }
+            
+            function rebuildTicks(c) {
+              function label(ticks, i) {
+                return tickDate(ticks[i])[1];
+              }
+              const ticks = c.ticks;
+              c.ticks = [];
+              c.ticks[0] = label(ticks, 0);
+              c.ticks[ticks.length-1] = label(ticks, ticks.length-1);
+              c.ticks[iMin] = ['', label(ticks, iMin)];
+              c.ticks[iMax] = ['', label(ticks, iMax)];
+            }
+
+
             datasets[0].pointRadius[closest] = 6;
 
-            if (tideChart) {
-              tideChart.data = {
+            const ctx = document.getElementById('tideChart');
+
+            tideChart = new Chart.Line(ctx, {
+              data: {
                 labels: labels,
                 datasets: datasets
-              }
-              tideChart.options.title.text = stationInfo;
-              tideChart.update();
-            }
-            else {
-              const ctx = document.getElementById('tideChart');
+              },
 
-              tideChart = new Chart.Line(ctx, {
-                data: {
-                  labels: labels,
-                  datasets: datasets
-                },
+              options: {
 
-                options: {
-                  animation: {
-                    onComplete: function() {
-                      const ctx = this.chart.ctx;
-                      ctx.fillStyle = 'black';
-                      ctx.font = 'bold 16px calibri';
-                      const meta = this.getDatasetMeta(0);
-                      for (let i = 0; i != meta.data.length; ++i) {
-                        if (meta.data[i]._model.radius===0) {
-                          continue;
-                        }
-                        const data = this.data.datasets[0].data;
-                        const value = tickDate(this.data.labels[i])[1] + ' ' + data[i] + "'";
-                        ctx.fillText(value, meta.data[i]._model.x - 75, meta.data[i]._model.y + 20);
+                animation: {
+                  onComplete: function() {
+                    const ctx = this.chart.ctx;
+                    ctx.fillStyle = 'black';
+                    ctx.font = 'italic 16px calibri';
+                    const meta = this.getDatasetMeta(0);
+                    for (let i = 0; i != meta.data.length; ++i) {
+                      if (meta.data[i]._model.radius===0) {
+                        continue;
                       }
+                      const data = this.data.datasets[0].data;
+                      const value = tickDate(this.data.labels[i])[1] + ' ' + data[i] + "'";
+                      ctx.fillText(value, meta.data[i]._model.x - 75, meta.data[i]._model.y + 25);
                     }
-                  },
-                  legend: {
-                    display: false
-                  },
-                  title: {
-                    display: true,
-                    fontSize: 10,
-                    padding: 0,
-                    position: 'bottom',
-                    text: stationInfo
-                  },
-                  scales: {
-                    yAxes: [ {
-                        gridLines: {
-                          color: 'lightblue',
-                        },
-                      }
-                    ],
-
-                    xAxes: [ {
-                        gridLines: {
-                          color: 'lightblue',
-                        },
-
-                        ticks: {
-                          fontSize: 12,
-                          maxRotation: 0,
-                          autoSkip: false,
-                        },
-
-                        afterBuildTicks: function(c) {
-                          function label(ticks, i) {
-                            return tickDate(ticks[i])[1];
-                          }
-                          const ticks = c.ticks;
-                          c.ticks = [];
-                          c.ticks[0] = label(ticks, 0);
-                          c.ticks[ticks.length-1] = label(ticks, ticks.length-1);
-                          c.ticks[iMin] = ['', label(ticks, iMin).split(' ')[1]];
-                          c.ticks[iMax] = ['', label(ticks, iMax).split(' ')[1]];
-                        }
-                      },
-                    ]
-                  },
+                  }
                 },
-              });
-            }
+                legend: {
+                  display: false
+                },
+                title: {
+                  display: true,
+                  fontSize: 10,
+                  padding: 0,
+                  position: 'bottom',
+                  text: stationInfo
+                },
+                scales: {
+                  yAxes: [ {
+                      gridLines: {
+                        color: 'lightblue',
+                      },
+                    }
+                  ],
+
+                  xAxes: [ {
+                      gridLines: {
+                        color: 'lightblue',
+                      },
+
+                      ticks: {
+                        fontSize: 12,
+                        maxRotation: 0,
+                        autoSkip: false,
+                      },
+
+                      afterBuildTicks: rebuildTicks
+                    },
+                  ]
+                },
+              },
+            });
           }
         }
         const xmlHttp = new XMLHttpRequest();
