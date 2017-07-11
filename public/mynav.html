@@ -217,6 +217,8 @@
       var selectedLocation = null;
       var prevLocationName = 'current location';
       var savedZoom = defaultZoom;
+      var lastInteraction = null;
+
 
       /*****************************************************************
        * Tides information
@@ -245,6 +247,7 @@
         button.appendChild(icon);
         button.title = 'Track current location';
         var handler = function() {
+          lastInteraction = null;
           if (!geolocation.isTracking()) {
             map.getView().setZoom(savedZoom);
           }
@@ -700,8 +703,19 @@
           enableRotation: false,
         });
 
+        view.on('change:center', function() {
+          lastInteraction = new Date();
+        });
+        
+        view.on('change:resolution', function() {
+          lastInteraction = new Date();
+        });
+
         if (!ol.extent.containsXY(view.calculateExtent(), pos[0], pos[1])) {
-          view.setCenter(pos);
+          const now = new Date();
+          if (!lastInteraction || now.getTime() - lastInteraction.getTime() > 3 * 60 * 1000) {
+            view.setCenter(pos);
+          }
         }
        
         /**

@@ -137,22 +137,24 @@ router.get('/tiles/:srv/:set/:z/:x/:y', function(req, res, next) {
 
   function uploadTile(filePath, req, res, next, callback) {
     let file = fs.createReadStream(filePath);
-    res.setHeader('content-type', 'image/png');
-    file.pipe(res);
+    file.on('open', function() {
+      res.setHeader('content-type', 'image/png');
+      file.pipe(res);
 
-    file.on('close', function() {
-      res.end();
-      if (callback) {
-        callback(null);
-      }
-    });
+      file.on('close', function() {
+        res.end();
+        if (callback) {
+          callback(null);
+        }
+      });
 
-    file.on('error', function(err) {
-      res.end(err);
-      if (callback) {
-        callback(err);
-      }
-      return next(err);
+      file.on('error', function(err) {
+        res.end(err);
+        if (callback) {
+          callback(err);
+        }
+        return next(err);
+      });
     });
   }
 
@@ -193,10 +195,11 @@ router.get('/tiles/:srv/:set/:z/:x/:y', function(req, res, next) {
       console.log(err.message);
       return next(err);
     }
-    const tmpFileName = tmp.tmpNameSync();
-
+    let tmpFileName = null;
     let file = null;
+
     try {
+      tmpFileName = tmp.tmpNameSync();
       file = fs.createWriteStream(tmpFileName);
     }
     catch(err) {
@@ -284,7 +287,6 @@ router.get('/tiles/:srv/:set/:z/:x/:y', function(req, res, next) {
   } // function downloadAndUploadTile
 
   const cachedFilePath = formatTileCacheFileName(req, res, next);
-  console.log(cachedFilePath);
 
   if (fs.existsSync(cachedFilePath)) {
     uploadTile(cachedFilePath, req, res, next);
@@ -398,7 +400,7 @@ router.get('/location', function(req, res, next) {
   const loc = getLocation();
 
   if (!__online && loc.time) {
-    exec('date -s "' + loc.time.toString() + '"', function(err, stdout, stderr) {
+    exec('sudo date -s "' + loc.time.toString() + '"', function(err, stdout, stderr) {
       if (err) {
         console.log(err.message);
       }
