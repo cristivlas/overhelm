@@ -906,7 +906,7 @@
               pointBorderColor: 'black',
               pointBackgroundColor: 'orange',
               pointRadius: new Array(predictions.length).fill(0),
-              //fill: false
+              fill: false
             } ]
 
 
@@ -916,9 +916,9 @@
 
             const now = new Date();
 
-            for (i = 0; i < predictions.length; ++i) {
+            const data = datasets[0].data;
+            for (let i = 0; i < predictions.length; ++i) {
               labels.push(predictions[i].t);
-              data = datasets[0].data;
               data[i] = predictions[i].v;
               const t = tickDate(predictions[i].t);
               if (closest===0 && t[0].getTime() >= now.getTime()) {
@@ -932,8 +932,6 @@
               }
             }
             datasets[0].pointRadius[closest] = 6;
-            //datasets[0].pointRadius[iMin] = 5;
-            //datasets[0].pointRadius[iMax] = 5;
 
             if (tideChart) {
               tideChart.data = {
@@ -1006,7 +1004,6 @@
                           c.ticks = [];
                           c.ticks[0] = label(ticks, 0);
                           c.ticks[ticks.length-1] = label(ticks, ticks.length-1);
-                          // c.ticks[closest] = label(ticks, closest);
                           c.ticks[iMin] = ['', label(ticks, iMin).split(' ')[1]];
                           c.ticks[iMax] = ['', label(ticks, iMax).split(' ')[1]];
                         }
