@@ -901,7 +901,7 @@
             let labels = []
             const datasets = [ {
               data: [],
-              borderColor: 'blue',
+              borderColor: 'rgba(0,65,135, .9)',
               backgroundColor: 'rgba(0,65,135, .3)',
               pointBorderColor: 'black',
               pointBackgroundColor: 'orange',
@@ -931,7 +931,7 @@
                 iMax = i;
               }
             }
-            datasets[0].pointRadius[closest] = 6;
+            datasets[0].pointRadius[closest] = 5;
             //datasets[0].pointRadius[iMin] = 5;
             //datasets[0].pointRadius[iMax] = 5;
 
@@ -956,7 +956,7 @@
                   animation: {
                     onComplete: function() {
                       const ctx = this.chart.ctx;
-                      ctx.fillStyle = 'black';
+                      ctx.fillStyle = 'navy';
                       ctx.font = 'bold 16px calibri';
                       const meta = this.getDatasetMeta(0);
                       for (let i = 0; i != meta.data.length; ++i) {
@@ -974,7 +974,7 @@
                   },
                   title: {
                     display: true,
-                    fontSize: 12,
+                    fontSize: 10,
                     padding: 0,
                     position: 'bottom',
                     text: stationInfo
@@ -1007,8 +1007,8 @@
                           c.ticks[0] = label(ticks, 0);
                           c.ticks[ticks.length-1] = label(ticks, ticks.length-1);
                           // c.ticks[closest] = label(ticks, closest);
-                          c.ticks[iMin] = [ label(ticks, iMin), 'Low: ' + predictions[iMin].v + "'"]
-                          c.ticks[iMax] = [ label(ticks, iMax), 'High: ' + predictions[iMax].v + "'"]
+                          c.ticks[iMin] = ['', label(ticks, iMin).split(' ')[1]];
+                          c.ticks[iMax] = ['', label(ticks, iMax).split(' ')[1]];
                         }
                       },
                     ]
