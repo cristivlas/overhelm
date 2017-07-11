@@ -906,7 +906,7 @@
               pointBorderColor: 'black',
               pointBackgroundColor: 'orange',
               pointRadius: new Array(predictions.length).fill(0),
-              fill: false
+              //fill: false
             } ]
 
 
@@ -931,9 +931,9 @@
                 iMax = i;
               }
             }
-            datasets[0].pointRadius[closest] = 5;
-            datasets[0].pointRadius[iMin] = 5;
-            datasets[0].pointRadius[iMax] = 5;
+            datasets[0].pointRadius[closest] = 6;
+            //datasets[0].pointRadius[iMin] = 5;
+            //datasets[0].pointRadius[iMax] = 5;
 
             if (tideChart) {
               tideChart.data = {
@@ -946,14 +946,29 @@
             else {
               const ctx = document.getElementById('tideChart');
 
-              tideChart = new Chart(ctx, {
-                type: 'line',
+              tideChart = new Chart.Line(ctx, {
                 data: {
                   labels: labels,
                   datasets: datasets
                 },
 
                 options: {
+                  animation: {
+                    onComplete: function() {
+                      const ctx = this.chart.ctx;
+                      ctx.fillStyle = 'black';
+                      ctx.font = 'bold 16px calibri';
+                      const meta = this.getDatasetMeta(0);
+                      for (let i = 0; i != meta.data.length; ++i) {
+                        if (meta.data[i]._model.radius===0) {
+                          continue;
+                        }
+                        const data = this.data.datasets[0].data;
+                        const value = tickDate(this.data.labels[i])[1] + ' ' + data[i] + "'";
+                        ctx.fillText(value, meta.data[i]._model.x - 75, meta.data[i]._model.y + 20);
+                      }
+                    }
+                  },
                   legend: {
                     display: false
                   },
@@ -967,18 +982,18 @@
                   scales: {
                     yAxes: [ {
                         gridLines: {
-                          //color: 'navy',
+                          color: 'lightblue',
                         },
                       }
                     ],
 
                     xAxes: [ {
                         gridLines: {
-                          //color: 'navy',
+                          color: 'lightblue',
                         },
 
                         ticks: {
-                          fontSize: 10,
+                          fontSize: 12,
                           maxRotation: 0,
                           autoSkip: false,
                         },
@@ -991,9 +1006,9 @@
                           c.ticks = [];
                           c.ticks[0] = label(ticks, 0);
                           c.ticks[ticks.length-1] = label(ticks, ticks.length-1);
-                          c.ticks[closest] = label(ticks, closest);
-                          c.ticks[iMin] = label(ticks, iMin).split(' ')[1];
-                          c.ticks[iMax] = label(ticks, iMax).split(' ')[1];
+                          // c.ticks[closest] = label(ticks, closest);
+                          c.ticks[iMin] = [ label(ticks, iMin), 'Low: ' + predictions[iMin].v + "'"]
+                          c.ticks[iMax] = [ label(ticks, iMax), 'High: ' + predictions[iMax].v + "'"]
                         }
                       },
                     ]
@@ -1116,7 +1131,7 @@
             d = getDistanceFromLonLat(popup.coord, coord) * 3440;
             prevLocationName = 'current location';
           }
-          return ' ' + Math.floor(d * 1000) / 1000
+          return ' ' + Math.floor(d * 100) / 100
             + ' nautical miles from ' + prevLocationName + '.';
 
         }
