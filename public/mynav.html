@@ -842,7 +842,7 @@
             let s = JSON.parse(xmlHttp.responseText);
 
             const now = new Date();
-            if (waterLevelStation && s.Id == waterLevelStation.Id) {
+            if (waterLevelStation && s.Id === waterLevelStation.Id) {
               //
               // same station? update every 30 minutes
               //
@@ -853,10 +853,10 @@
             waterLevelStation = s;
             tideChartTime = now;
 
-            const stationInfo = s.Id + ' ' + s.Name + ' ' + s.State;
+            const stationInfo = 'Station: ' + s.Id + ' ' + s.Name + ' ' + s.State;
 
             const currentTime = now.toISOString();
-            // console.log(currentTime);
+
             const useNOAAData = location.search == '?noaa';
             var url;
             if (useNOAAData) {
@@ -879,55 +879,61 @@
          * Process response from NOAA
          */
         function processWaterLevelRequest(stationInfo, event) {
+
+          function tickDate(t) {
+            const arr = t.split(/[- :]/);
+            const date = new Date(arr[0], arr[1]-1, arr[2], arr[3], arr[4]);
+            // Convert to local time
+            date.setTime(date.getTime() - date.getTimezoneOffset() * 60000);
+            const a = date.toString().split(' ');
+            const timeString = a[0]
+              + ' ' + dateHelper(date.getHours())
+              + ':' + dateHelper(date.getMinutes());
+                                  
+            return [date, timeString];
+          }
+
           const xmlHttp = event.currentTarget;
 
-          if (xmlHttp.readyState === 4 && xmlHttp.status === 200) {
+          if (xmlHttp.readyState===4 && xmlHttp.status===200) {
+            const predictions = JSON.parse(xmlHttp.responseText).predictions;
+
             let labels = []
-            let datasets = [ {
-              label: '',
+            const datasets = [ {
               data: [],
-              backgroundColor: [] ,
+              borderColor: 'blue',
+              backgroundColor: 'rgba(0,65,135, .3)',
+              pointBorderColor: 'black',
+              pointBackgroundColor: 'orange',
+              pointRadius: new Array(predictions.length).fill(0),
+              fill: false
             } ]
+
+
+            let closest = 0;
+            let iMin = 0;
+            let iMax = 0;
+
             const now = new Date();
 
-            const predictions = JSON.parse(xmlHttp.responseText).predictions;
-            // Grid lines color and thickness
-            let lineColors = []
-            let lineWidths = []
-
-            let thresh = 0;
-            const step = 10;
-
-            for (i = 0; i < predictions.length; i += step) {
-              const t = predictions[i].t;
-              const arr = t.split(/[- :]/);
-              const date = new Date(arr[0], arr[1]-1, arr[2], arr[3], arr[4]);
-
-              // Convert to local time
-              date.setTime(date.getTime() - date.getTimezoneOffset() * 60000);
-
-              const a = date.toString().split(' ');
-              const time = dateHelper(date.getHours()) + ':'  + dateHelper(date.getMinutes());
-              labels.push(a[0] + ' ' + time);
-              datasets[0].data.push(predictions[i].v);
-              if (date.getTime() < now.getTime()) {
-                datasets[0].backgroundColor.push('lightblue');
+            for (i = 0; i < predictions.length; ++i) {
+              labels.push(predictions[i].t);
+              data = datasets[0].data;
+              data[i] = predictions[i].v;
+              const t = tickDate(predictions[i].t);
+              if (closest===0 && t[0].getTime() >= now.getTime()) {
+                closest = i;
               }
-              else {
-                datasets[0].backgroundColor.push('rgba(0,65,135,.75)');
-                if (thresh === 0) {
-                  let average = (parseFloat(predictions[i].v) + parseFloat(predictions[i-1].v))/2;
-                  average = Math.floor(100 * average) / 100;
-                  console.log([predictions[i].v, predictions[i-1].v, average]);
-                  stationInfo += '  ' + now.toTimeString().split(' ')[0] + ' ' + average + "'";
-
-                  thresh = i;
-                  const j = Math.floor(i/step);
-                  lineColors[j-1] = lineColors[j] = lineColors[j+1] = '#606060';
-                  lineWidths[j-1] = lineWidths[j] = lineWidths[j+1] = 2;
-                }
+              if (parseFloat(data[i]) < parseFloat(data[iMin])) {
+                iMin = i;
+              }
+              if (parseFloat(data[i]) > parseFloat(data[iMax])) {
+                iMax = i;
               }
             }
+            datasets[0].pointRadius[closest] = 5;
+            datasets[0].pointRadius[iMin] = 5;
+            datasets[0].pointRadius[iMax] = 5;
 
             if (tideChart) {
               tideChart.data = {
@@ -941,11 +947,12 @@
               const ctx = document.getElementById('tideChart');
 
               tideChart = new Chart(ctx, {
-                type: 'bar',
+                type: 'line',
                 data: {
                   labels: labels,
                   datasets: datasets
                 },
+
                 options: {
                   legend: {
                     display: false
@@ -958,21 +965,40 @@
                     text: stationInfo
                   },
                   scales: {
+                    yAxes: [ {
+                        gridLines: {
+                          //color: 'navy',
+                        },
+                      }
+                    ],
+
                     xAxes: [ {
                         gridLines: {
-                          color: lineColors,
-                          lineWidth: lineWidths
+                          //color: 'navy',
                         },
+
                         ticks: {
                           fontSize: 10,
-                          maxTicksLimit: 4,
                           maxRotation: 0,
-                          autoSkip: true,
+                          autoSkip: false,
+                        },
+
+                        afterBuildTicks: function(c) {
+                          function label(ticks, i) {
+                            return tickDate(ticks[i])[1];
+                          }
+                          const ticks = c.ticks;
+                          c.ticks = [];
+                          c.ticks[0] = label(ticks, 0);
+                          c.ticks[ticks.length-1] = label(ticks, ticks.length-1);
+                          c.ticks[closest] = label(ticks, closest);
+                          c.ticks[iMin] = label(ticks, iMin).split(' ')[1];
+                          c.ticks[iMax] = label(ticks, iMax).split(' ')[1];
                         }
-                      }
+                      },
                     ]
-                  }
-                }
+                  },
+                },
               });
             }
           }
