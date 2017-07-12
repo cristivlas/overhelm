@@ -691,6 +691,7 @@
           }
           callback();
         });
+        callback();
       }
 
 
@@ -1149,7 +1150,6 @@
               popup.destPlace = popup.place;
               popup.destCoord = popup.coord;
             }
-            updateCourseLayer();
             geolocation.start();
             lastInteraction = null;
           }
