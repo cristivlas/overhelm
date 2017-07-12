@@ -36,7 +36,9 @@ let tilesets = {}
 /******************************************************************
  * Return tilesets for a given service, longitude and latitude 
  */
-router.get('/tilesets/:srv/:lon/:lat', function(req, res, next) {
+router.get('/tilesets/:srv/:lon/:lat/:minLon/:minLat/:maxLon/:maxLat',
+  function(req, res, next) {
+
   const srv = req.params.srv;
   if (!tilesets[srv]) {
     tilesets[srv] = require('./' + srv + '-layers.json');
@@ -59,6 +61,21 @@ router.get('/tilesets/:srv/:lon/:lat', function(req, res, next) {
     if (a.height < b.height) return 1;
     return 0;
   });
+
+  // Culling: if the most detailed tileset covers the extent
+  // of the current view, return just that tileset
+
+  for (let i = sets.length-1; i >= 0; --i) {
+    const a = sets[i];
+    if (a.lower[0] <= parseFloat(req.params.minLon)
+      && a.lower[1] <= parseFloat(req.params.minLat)
+      && a.upper[0] >= parseFloat(req.params.maxLon)
+      && a.upper[1] >= parseFloat(req.params.maxLat)) {
+
+      sets = [ a ];
+      break;
+    }
+  }
   res.end(JSON.stringify(sets));
 });
 
