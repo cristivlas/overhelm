@@ -118,7 +118,6 @@
       .show-tide {
         top: .5em;
         right: .5em;
-        background-color: rgb(255,255,235);
       }
       .ol-touch .show-tide {
         right: 0px;
@@ -204,7 +203,7 @@
     </div>
 
     <script>
-      const defaultZoom = 13;
+      const defaultZoom = 12;
       const locationTimeout = 3000;
 
       var chartTilesets = null; // current tilesets, stringified
@@ -422,7 +421,7 @@
         button.addEventListener('click', handler, false);
 
         var element = document.createElement('div');
-        element.className = 'show-tide ol-unselectable ol-control';
+        element.className = 'show-tide ol-custom ol-unselectable ol-control';
         element.appendChild(button);
 
         ol.control.Control.call(this, {
@@ -568,11 +567,25 @@
       }
 
 
+      function roundPoint(p, prec) {
+        p[0] = Math.floor(p[0] * prec)/prec;
+        p[1] = Math.floor(p[1] * prec)/prec;
+      }
+
       /**
        * Ask the backend for the tilesets that match the current coordinates
        */ 
-      function getChartTilesets(coord, callback) {
-        const tilesetsUrl = 'tilesets/noaa/' + coord[0] + '/' + coord[1];
+      function getChartTilesets(coord, extent, callback) {
+        const minLonLat = ol.proj.transform([extent[0], extent[1]], 'EPSG:3857', 'EPSG:4326');
+        const maxLonLat = ol.proj.transform([extent[2], extent[3]], 'EPSG:3857', 'EPSG:4326');
+
+        roundPoint(minLonLat, 1000);
+        roundPoint(maxLonLat, 1000);
+
+        const tilesetsUrl = 'tilesets/noaa/' + coord[0] + '/' + coord[1]
+          + '/' + minLonLat[0] + '/' + minLonLat[1]
+          + '/' + maxLonLat[0] + '/' + maxLonLat[1];
+
         const xmlHttp = new XMLHttpRequest();
         xmlHttp.onreadystatechange = function() {
           if (xmlHttp.readyState === 4 && xmlHttp.status === 200) {
@@ -607,8 +620,9 @@
        */
       function updateChartLayers(coord, view, callback) {
         const viewMaxRes = view.getMaxResolution();
+        const extent = view.calculateExtent();
 
-        getChartTilesets(coord, function(tilesets) {
+        getChartTilesets(coord, extent, function(tilesets) {
           if (tilesets !== chartTilesets) {
             chartTilesets = tilesets;
             console.log('----- Chart tilesets changed -----');
@@ -680,6 +694,11 @@
       }
 
 
+      function updateFeatures(pos) {
+        updateCourseLayer();
+        updatePositionLayer(pos);
+      }
+
       /**
        * Construct / update the map object
        */
@@ -705,10 +724,16 @@
 
         view.on('change:center', function() {
           lastInteraction = new Date();
+          updateChartLayers(selectedLocation, view, function() {
+            updateFeatures(map.pos); 
+          });
         });
         
         view.on('change:resolution', function() {
           lastInteraction = new Date();
+          updateChartLayers(selectedLocation, view, function() {
+            updateFeatures(map.pos); 
+          });
         });
 
         if (!ol.extent.containsXY(view.calculateExtent(), pos[0], pos[1])) {
@@ -786,9 +811,8 @@
               updateMap(lonLat);
             });
           }
-
-          updateCourseLayer(pos);
-          updatePositionLayer(pos);
+          updateFeatures(pos);
+          map.pos = pos;
         });
        
         elem = document.getElementById('location');
@@ -1007,7 +1031,7 @@
                     const ctx = this.chart.ctx;
                     const fillStyle = ctx.fillStyle;
                     const font = ctx.font;
-                    ctx.fillStyle = 'blue';
+                    ctx.fillStyle = 'navy';
                     ctx.font = 'bold 18px calibri';
                     const meta = this.getDatasetMeta(0);
                     for (let i = 0; i != meta.data.length; ++i) {
@@ -1315,10 +1339,7 @@
           selectedLocation = [-122.4049, 47.6810] // Shilshole Bay
           prevLocationName = 'Shilshole Bay';
         }
-        let pos = updateMap(selectedLocation);
-        if (map) {
-          map.pos = pos;
-        }
+        updateMap(selectedLocation);
       }
 
 
@@ -1327,7 +1348,7 @@
           if (coord.lon && coord.lat) {
             selectedLocation = [ coord.lon, coord.lat ];
             prevLocationName = 'current location';
-            map.pos = updateMap(selectedLocation);
+            updateMap(selectedLocation);
           }
         },
         onError: function(err) {
