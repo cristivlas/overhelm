@@ -573,7 +573,7 @@ router.get('/weather/:lon/:lat', function(req, res, next) {
           wind_mph: wu.wind_mph,
           humidity: wu.relative_humidity,
           visibility: wu.visibility_mi,
-          station: wu.observation_location.full,
+          station: wu.observation_location.city + ' ' + wu.observation_location.state,
         }
         res.end(JSON.stringify(report, null, 4));
       }

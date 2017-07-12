@@ -65,7 +65,7 @@
         opacity: 1;
       }
       .popover-content {
-        min-width: 240px;
+        min-width: 250px;
       }
       .ui-keyboard {
         background: white;
@@ -103,7 +103,7 @@
         top: .5em;
         right: .5em;
         background: rgb(255,255,235);
-        opacity: .97;
+        opacity: .95;
         width: 35%;
         border-radius: 8px;
         box-shadow: 3px 3px 4px rgba(50,50,50,.5);
@@ -247,12 +247,12 @@
         button.appendChild(icon);
         button.title = 'Track current location';
         var handler = function() {
-          lastInteraction = null;
           if (!geolocation.isTracking()) {
             map.getView().setZoom(savedZoom);
           }
           geolocation.stop();
           geolocation.start();
+          lastInteraction = null;
         }
         button.addEventListener('click', handler, false);
 
@@ -911,17 +911,17 @@
 
           if (xmlHttp.readyState===4 && xmlHttp.status===200) {
             const predictions = JSON.parse(xmlHttp.responseText).predictions;
+
             let labels = []
             const datasets = [ {
               data: [],
               borderColor: 'blue',
-              backgroundColor: 'rgba(0,65,135,.1)',
+              borderWidth: 2,
+              backgroundColor: 'rgba(0,65,135,.3)',
               pointBorderColor: 'black',
               pointBackgroundColor: 'orange',
               pointRadius: new Array(predictions.length).fill(0),
-              //fill: false
             } ]
-
 
             const now = new Date();
             const data = datasets[0].data;
@@ -976,11 +976,11 @@
               }
               const ticks = c.ticks;
               c.ticks = [];
-              c.ticks[0] = label(ticks, 0);
-              c.ticks[closest] = label(ticks, closest);
-              c.ticks[ticks.length-1] = label(ticks, ticks.length-1);
-              c.ticks[iMin] = ['', label(ticks, iMin).split(' ')[1]];
-              c.ticks[iMax] = ['', label(ticks, iMax).split(' ')[1]];
+              c.ticks[0] = ['', label(ticks, 0)];
+              c.ticks[closest] = ['', label(ticks, closest)];
+              c.ticks[ticks.length-1] = ['', label(ticks, ticks.length-1)];
+              c.ticks[iMin] = label(ticks, iMin).split(' ')[1];
+              c.ticks[iMax] = label(ticks, iMax).split(' ')[1];
             }
 
 
@@ -988,7 +988,11 @@
 
             const ctx = document.getElementById('tideChart');
 
+            if (tideChart) {
+              tideChart.destroy();
+            }
             tideChart = new Chart.Line(ctx, {
+
               data: {
                 labels: labels,
                 datasets: datasets
@@ -997,19 +1001,26 @@
               options: {
 
                 animation: {
+                  duration: 0,
+
                   onComplete: function() {
                     const ctx = this.chart.ctx;
-                    ctx.fillStyle = 'darkorange'
+                    const fillStyle = ctx.fillStyle;
+                    const font = ctx.font;
+                    ctx.fillStyle = 'blue';
                     ctx.font = 'bold 18px calibri';
                     const meta = this.getDatasetMeta(0);
                     for (let i = 0; i != meta.data.length; ++i) {
-                      if (meta.data[i]._model.radius===0) {
+                      if (meta.data[i]._model.radius < 6) {
                         continue;
                       }
                       const data = this.data.datasets[0].data;
-                      const value = data[i] + "'";
-                      ctx.fillText(value, meta.data[i]._model.x + 10, meta.data[i]._model.y + 10);
+                      const value = Math.ceil(10 * data[i]) / 10 + "'";
+                      ctx.fillText(value, 35, 25);
+                      break;
                     }
+                    ctx.fillStyle = fillStyle;
+                    ctx.font = font;
                   }
                 },
                 legend: {
@@ -1017,11 +1028,20 @@
                 },
                 title: {
                   display: true,
-                  fontSize: 10,
+                  fontSize: 12,
                   padding: 0,
                   position: 'bottom',
                   text: stationInfo
                 },
+                tooltips: {
+                  callbacks: {
+                    title: function(items, data) {
+                      const val = tickDate(data.labels[items[0].index])[1];
+                      return val;
+                    }
+                  }
+                },
+
                 scales: {
                   yAxes: [ {
                       gridLines: {
@@ -1032,7 +1052,7 @@
 
                   xAxes: [ {
                       gridLines: {
-                        color: 'lightblue',
+                        color: 'blue',
                       },
 
                       ticks: {
@@ -1107,12 +1127,13 @@
             }
             updateCourseLayer();
             geolocation.start();
+            lastInteraction = null;
           }
           document.getElementById('close-popup').onclick = function() {
             closePopup();
           }
           document.getElementById('set-course').onclick = function() {
-            setDestination(popup.pos);
+            setDestination(popup.getPosition());
             document.getElementById('dest-div').style.visibility = 'visible';
           }
           document.getElementById('cancel-course').onclick = function() {
@@ -1144,7 +1165,6 @@
       }
 
       function updatePopup(pos, place, coord) {
-        popup.pos = pos;
         popup.place = place;
         popup.coord = coord;
 
@@ -1155,7 +1175,12 @@
         //otherwise we should multiply by 3.28084 -- I just checked a few data points
         //against Wikipedia
 
-        let html = '<b>' + place.name + '</b><br>' + convertDMS(coord);
+        let html = '<b>' + place.name + '</b>';
+        if (place.state) {
+          html += ', ' + place.state;
+        }
+        html += '<br>' + convertDMS(coord);
+
         function distance(d) {
           if (d===0) {
             const coord = [ geolocation.coord.lon, geolocation.coord.lat ];
@@ -1201,12 +1226,12 @@
         xmlHttp.onreadystatechange = function() {
           if (xmlHttp.readyState === 4 && xmlHttp.status === 200) {
             const w = JSON.parse(xmlHttp.responseText);
-            html += '<b>Weather</b><image width="15%" src="' + w.image + '"/> ';
+            html += '<b>Weather</b><image width="20%" src="' + w.image + '"/> ';
             html += w.weather + '<br>' + w.temp
               + ' Humidity: ' + w.humidity
-              + ' Wind: ' + w.wind + ' (' + w.wind_degrees + '&deg;)'
-              // + ' Visibility: ' + w.visibility + ' miles'
-              + ' <i>Station: ' + w.station + '</i>';
+              + ' Wind: ' + w.wind + ' (direction ' + w.wind_degrees + '&deg;)'
+              + ' Visibility: ' + w.visibility + ' miles'
+              + '. <i>Station: ' + w.station + '</i>';
 
             $(e).popover('destroy');
             $(e).popover({
@@ -1226,6 +1251,7 @@
 
 
       function searchLocation(name, coord) {
+
         function buildSelection(matches) {
           let selectHtml = '<b>Nearest Matches</b><br>';
           selectHtml += '<select id="searchResults" class="search-results">';
