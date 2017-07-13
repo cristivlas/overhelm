@@ -32,6 +32,7 @@ router.get('/', function(req, res, next) {
 });
 
 let tilesets = {}
+let relatedTilesets = {}
 
 /******************************************************************
  * Return tilesets for a given service, longitude and latitude 
@@ -43,38 +44,43 @@ router.get('/tilesets/:srv/:lon/:lat/:minLon/:minLat/:maxLon/:maxLat',
   if (!tilesets[srv]) {
     tilesets[srv] = require('./' + srv + '-layers.json');
   }
+  const minLon = parseFloat(req.params.minLon);
+  const minLat = parseFloat(req.params.minLat);
+  const maxLon = parseFloat(req.params.maxLon);
+  const maxLat = parseFloat(req.params.maxLat);
   let sets = [];
-  const lon = req.params.lon
-  const lat = req.params.lat;
+  let useBest = false;
   tilesets[srv].map(function(t) {
-    if (t.lower[0] < lon && t.lower[1] < lat && t.upper[0] > lon && t.upper[1] > lat) {
+    if (t.lower[0] <= minLon && t.lower[1] <= minLat && t.upper[0] >= maxLon && t.upper[1] >= maxLat) {
       sets.push({
         ident: t.ident,
         height: t.upper[1] - t.lower[1],
-        lower: t.lower,
-        upper: t.upper
       });
+      useBest = true;
     }
   });
+  if (sets.length===0) {
+    const lon = parseFloat(req.params.lon);
+    const lat = parseFloat(req.params.lat);
+    tilesets[srv].map(function(t) {
+      if (t.lower[0] < lon && t.lower[1] < lat && t.upper[0] > lon && t.upper[1] > lat) {
+        sets.push({
+          ident: t.ident,
+          height: t.upper[1] - t.lower[1],
+        });
+      }
+    });
+  }
   sets.sort(function(a, b) {
     if (a.height > b.height) return -1;
     if (a.height < b.height) return 1;
     return 0;
   });
-
-  // Culling: if the most detailed tileset covers the extent
-  // of the current view, return just that tileset
-
-  for (let i = sets.length-1; i >= 0; --i) {
-    const a = sets[i];
-    if (a.lower[0] <= parseFloat(req.params.minLon)
-      && a.lower[1] <= parseFloat(req.params.minLat)
-      && a.upper[0] >= parseFloat(req.params.maxLon)
-      && a.upper[1] >= parseFloat(req.params.maxLat)) {
-
-      sets = [ a ];
-      break;
+  if (useBest) {
+    for (let i = 0; i != sets.length-1; ++i) {
+      relatedTilesets[sets[i+1].ident] = sets[i].ident;
     }
+    sets = sets.splice(sets.length-1);
   }
   res.end(JSON.stringify(sets));
 });
@@ -116,13 +122,22 @@ var tileService = {
  * Tiles service proxy
  */
 router.get('/tiles/:srv/:set/:z/:x/:y', function(req, res, next) {
+  serveTile(req, res, next);
+});
 
-  const service = tileService[req.params.srv];
-  if (!service) {
-    var err = new Error('Unrecognized tile service: ' + srv);
-    err.status = 503;
-    return next(err);
+
+function handleEmptyTile(req, res, next) {
+  const related = relatedTilesets[req.params.set];
+  if (related) {
+    req.params.set = related;
+    console.log('Trying related tileset: '+ related);
+    return serveTile(req, res, next);
   }
+  return res.sendStatus(204);
+}
+
+
+function serveTile(req, res, next) {
 
   function checkBounds(tilesets, ident, z, x, y) {
     if (!tilesets) {
@@ -141,9 +156,17 @@ router.get('/tiles/:srv/:set/:z/:x/:y', function(req, res, next) {
     }
     return false;
   }
-  const tset = tilesets[req.params.srv];
+
+  const service = tileService[req.params.srv];
+  if (!service) {
+    var err = new Error('Unrecognized tile service: ' + srv);
+    err.status = 503;
+    return next(err);
+  }
+  const tset = tilesets[service];
+
   if (!checkBounds(tset, req.params.set, req.params.z, req.params.x, req.params.y)) {
-    return res.sendStatus(204);
+    return handleEmptyTile(req, res, next);
   }
 
   function formatTileCacheFileName(req, res, next) {
@@ -263,7 +286,7 @@ router.get('/tiles/:srv/:set/:z/:x/:y', function(req, res, next) {
                 catch (err) {
                   console.log([empty, parts, err.message]);
                 }
-                return res.sendStatus(204);
+                return handleEmptyTile(req, res, next);
               }
               fs.rename(tmpFileName, filePath, function(err) {
                 if (err) {
@@ -309,7 +332,7 @@ router.get('/tiles/:srv/:set/:z/:x/:y', function(req, res, next) {
       uploadTile(cachedFilePath, req, res, next);
     }
     else if (!__online || req.query.source === 'local') {
-      res.sendStatus(204);
+      return handleEmptyTile(req, res, next);
     }
     else {
       const emptyList = path.normalize(
@@ -323,7 +346,7 @@ router.get('/tiles/:srv/:set/:z/:x/:y', function(req, res, next) {
         }
         else {
           console.log(cmd, ':', stdout);
-          res.sendStatus(204);
+          return handleEmptyTile(req, res, next);
         }
       });
     }
@@ -332,8 +355,7 @@ router.get('/tiles/:srv/:set/:z/:x/:y', function(req, res, next) {
     console.log(err);
     return nex(err);
   }
-});
-
+}
 
 //
 // https://stackoverflow.com/questions/21279559/geolocation-closest-locationlat-long-from-my-position
