@@ -65,7 +65,8 @@
         opacity: 1;
       }
       .popover-content {
-        min-width: 250px;
+        min-width: 240px;
+        font-size: 12px;
       }
       .ui-keyboard {
         background: white;
@@ -125,11 +126,11 @@
       .tablet .show-tide {
         right: 0px;
       }
-      .re-center {
+      .tracking {
         top: 85px;
         left: .5em;
       }
-      .ol-touch .re-center {
+      .ol-touch .tracking {
         top: 95px;
       }
       .search {
@@ -235,9 +236,9 @@
       }
 
       /**
-       * Custom control for re-centering the map to the current geolocation
+       * Custom control for activating geolocation / gps tracking
        */
-      const recenterControl = function(opt_options) {
+      const trackingControl = function(opt_options) {
         const options = opt_options || {};
 
         const button = document.createElement('button');
@@ -256,7 +257,7 @@
         button.addEventListener('click', handler, false);
 
         var element = document.createElement('div');
-        element.className = 're-center ol-custom ol-unselectable ol-control';
+        element.className = 'tracking ol-custom ol-unselectable ol-control';
         element.appendChild(button);
 
         ol.control.Control.call(this, {
@@ -264,7 +265,7 @@
           target: options.target
         });
       }
-      ol.inherits(recenterControl, ol.control.Control);
+      ol.inherits(trackingControl, ol.control.Control);
       
       /**
        * Custom control for searching for a specific location on the charts
@@ -752,7 +753,7 @@
                 tideChartCtrl,
                 new showTideControl(),
 								new locationControl({coords: coord}),
-                new recenterControl(),
+                new trackingControl(),
                 new searchControl(),
                 new destControl(),
                 new speedControl(),
@@ -1179,8 +1180,8 @@
         //against Wikipedia
 
         let html = '<b>' + place.name + '</b>';
-        if (place.state) {
-          html += ', ' + place.state;
+        if (place.stateName) {
+          html += ', ' + place.stateName;
         }
         html += '<br>' + convertDMS(coord);
 
@@ -1225,11 +1226,13 @@
         popup.visible = true; // popover on map postrender
         map.getView().setCenter(pos);
 
+        const imageUrl = '/images/wu_logo_130x80.png';
+
         const xmlHttp = new XMLHttpRequest();
         xmlHttp.onreadystatechange = function() {
           if (xmlHttp.readyState === 4 && xmlHttp.status === 200) {
             const w = JSON.parse(xmlHttp.responseText);
-            html += '<b>Weather</b><image width="20%" src="' + w.image + '"/> ';
+            html += '<b>Weather</b><image width="18%" src="' + imageUrl + '"/> ';
             html += w.weather + '<br>' + w.temp
               + ' Humidity: ' + w.humidity
               + ' Wind: ' + w.wind + ' (direction ' + w.wind_degrees + '&deg;)'

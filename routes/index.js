@@ -556,13 +556,14 @@ router.get('/search/:name/:lon/:lat', function(req, res, next) {
     state = getState(tokens[1].trim());
   }
   let matches = [];
+  const nearby = name==='nearby';
 
   for (let i = 0; i != geonames.length; ++i) {
     let c = geonames[i];
     if (state && (!c.state || c.state.toLowerCase() !== state)) {
       continue;
     }
-    if (c.name.toLowerCase().includes(name)) {
+    if (nearby || c.name.toLowerCase().includes(name)) {
       c.dist = getDistanceFromLatLong(c.lat, c.lon, req.params.lat, req.params.lon);
       c.dist *= 3440; // nautical miles, for the front-end's convenience
 
@@ -613,8 +614,8 @@ router.get('/weather/:lon/:lat', function(req, res, next) {
       const wu = JSON.parse(data).current_observation;
       try {
         const report = {
-          //image: wu.image.url,
-          image: '/images/wu_logo_130x80.png',
+          image: wu.image.url,
+          //image: '/images/wu_logo_130x80.png',
           time: wu.observation_time_rfc822,
           weather: wu.weather,
           temp: wu.temperature_string,
