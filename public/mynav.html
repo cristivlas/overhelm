@@ -622,22 +622,23 @@
 
             let hMax = null;
             let maxRes = viewMaxRes;
-
+            const extents = JSON.parse(tilesets);
+            const sounding = extents.length===1 ? extents[0].sounding : null;
             //
             // apply new chart layers 
             //
-            JSON.parse(tilesets).map(function(tileset) {
+            extents.map(function(tileset) {
               if (!hMax) {
                 hMax = tileset.height;
               }
               maxRes = Math.ceil((tileset.height * viewMaxRes) / hMax);
 
               const url = 'tiles/noaa/' + tileset.ident + '/{z}/{x}/{y}';
-
+              
               const layer = new ol.layer.Tile({
                 source: new ol.source.XYZ({
                   url: url,
-                  attributions: tileset.ident.split('_')[0]
+                  attributions: tileset.ident.split('_')[0] + (sounding ? ' Soundings in ' + sounding : '')
                 }),
                 maxResolution: maxRes,
                 opacity: .95

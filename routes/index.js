@@ -3,18 +3,19 @@ const bs = require('binarysearch');
 const express = require('express');
 const exec = require('child_process').exec;
 const fs = require('fs');
-const getLocation = require('./serial_gps');
+const getLocation = require(__dirname + '/serial_gps');
 const http = require('http');
 const https = require('https');
 const isOnline = require('is-online');
+const noaa = require(__dirname + '/noaa-metadata.json');
 const path = require('path');
 const PNG = require('pngjs').PNG;
+const states = require(__dirname + '/states');
 const tmp = require('tmp');
 const urlJoin = require('url-join');
-const states = require('./states');
 
-const currentsStations = require('./Currents_Active_Stations.json');
-const waterLevelStations = require('./Waterlevel_Active_Stations.json');
+const currentsStations = require(__dirname + '/Currents_Active_Stations.json');
+const waterLevelStations = require(__dirname + '/Waterlevel_Active_Stations.json');
 
 const router = express.Router();
 
@@ -32,7 +33,17 @@ router.get('/', function(req, res, next) {
 });
 
 let tilesets = {}
-let relatedTilesets = {}
+let alternateTilesets = {}
+
+function tilesetInfo(t) {
+  const md = noaa.metadata[t.ident.split('_')[0]];
+  return {
+    ident: t.ident,
+    height: t.upper[1] - t.lower[1],
+    sounding: md ? md.sounding : null
+  };
+}
+
 
 /******************************************************************
  * Return tilesets for a given service, longitude and latitude 
@@ -42,7 +53,7 @@ router.get('/tilesets/:srv/:lon/:lat/:minLon/:minLat/:maxLon/:maxLat',
 
   const srv = req.params.srv;
   if (!tilesets[srv]) {
-    tilesets[srv] = require('./' + srv + '-layers.json');
+    tilesets[srv] = require(__dirname + '/' + srv + '-layers.json');
   }
   const minLon = parseFloat(req.params.minLon);
   const minLat = parseFloat(req.params.minLat);
@@ -51,11 +62,9 @@ router.get('/tilesets/:srv/:lon/:lat/:minLon/:minLat/:maxLon/:maxLat',
   let sets = [];
   let useBest = false;
   tilesets[srv].map(function(t) {
-    if (t.lower[0] <= minLon && t.lower[1] <= minLat && t.upper[0] >= maxLon && t.upper[1] >= maxLat) {
-      sets.push({
-        ident: t.ident,
-        height: t.upper[1] - t.lower[1],
-      });
+    if (t.lower[0] <= minLon && t.lower[1] <= minLat
+     && t.upper[0] >= maxLon && t.upper[1] >= maxLat) {
+      sets.push(tilesetInfo(t));
       useBest = true;
     }
   });
@@ -63,11 +72,9 @@ router.get('/tilesets/:srv/:lon/:lat/:minLon/:minLat/:maxLon/:maxLat',
     const lon = parseFloat(req.params.lon);
     const lat = parseFloat(req.params.lat);
     tilesets[srv].map(function(t) {
-      if (t.lower[0] < lon && t.lower[1] < lat && t.upper[0] > lon && t.upper[1] > lat) {
-        sets.push({
-          ident: t.ident,
-          height: t.upper[1] - t.lower[1],
-        });
+      if (t.lower[0] < lon && t.lower[1] < lat
+       && t.upper[0] > lon && t.upper[1] > lat) {
+        sets.push(tilesetInfo(t));
       }
     });
   }
@@ -78,7 +85,11 @@ router.get('/tilesets/:srv/:lon/:lat/:minLon/:minLat/:maxLon/:maxLat',
   });
   if (useBest) {
     for (let i = 0; i != sets.length-1; ++i) {
-      relatedTilesets[sets[i+1].ident] = sets[i].ident;
+      const curr = sets[i+1];
+      const next = sets[i];
+      if (curr.sounding===next.sounding) {
+        alternateTilesets[curr.ident] = next.ident;
+      }
     }
     sets = sets.splice(sets.length-1);
   }
@@ -127,7 +138,7 @@ router.get('/tiles/:srv/:set/:z/:x/:y', function(req, res, next) {
 
 
 function handleEmptyTile(req, res, next) {
-  const related = relatedTilesets[req.params.set];
+  const related = alternateTilesets[req.params.set];
   if (related) {
     req.params.set = related;
     console.log('Trying related tileset: '+ related);
