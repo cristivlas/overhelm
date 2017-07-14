@@ -707,6 +707,7 @@
 
         function update(view) {
           if (view.updating) {
+            console.log('view update pending');
             return;
           }
           view.updating = true;
