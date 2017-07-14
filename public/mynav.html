@@ -66,7 +66,7 @@
       }
       .popover-content {
         min-width: 240px;
-        font-size: 12px;
+        font-size: 11px;
       }
       .ui-keyboard {
         background: white;
@@ -706,16 +706,15 @@
         });
 
         function update(view) {
-          if (view.updating) {
-            console.log('view update pending');
-            return;
+          if (!view.updating) {
+            view.updating = true;
+            lastInteraction = new Date();
+            updateChartLayers(selectedLocation, view, function() {
+              updateFeatures(map.pos);
+              map.render();
+              view.updating = false;
+            });
           }
-          view.updating = true;
-          lastInteraction = new Date();
-          updateChartLayers(selectedLocation, view, function() {
-            updateFeatures(map.pos);
-            view.updating = false;
-          });
         }
 
         view.on('change:center', update.bind(this, view));
