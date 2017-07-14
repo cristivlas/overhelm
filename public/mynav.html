@@ -705,19 +705,20 @@
           enableRotation: false,
         });
 
-        view.on('change:center', function() {
+        function update(view) {
+          if (view.updating) {
+            return;
+          }
+          view.updating = true;
           lastInteraction = new Date();
           updateChartLayers(selectedLocation, view, function() {
             updateFeatures(map.pos);
+            view.updating = false;
           });
-        });
-        
-        view.on('change:resolution', function() {
-          lastInteraction = new Date();
-          updateChartLayers(selectedLocation, view, function() {
-            updateFeatures(map.pos); 
-          });
-        });
+        }
+
+        view.on('change:center', update.bind(this, view));
+        view.on('change:resolution', update.bind(this, view));
 
         if (!ol.extent.containsXY(view.calculateExtent(), pos[0], pos[1])) {
           const now = new Date();
@@ -1179,8 +1180,8 @@
         //against Wikipedia
 
         let html = '<b>' + place.name + '</b>';
-        if (place.stateName) {
-          html += ', ' + place.stateName;
+        if (place.state) {
+          html += ', ' + place.state;
         }
         html += '<br>' + convertDMS(coord);
 
