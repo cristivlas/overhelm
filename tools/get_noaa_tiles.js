@@ -122,7 +122,6 @@ function nextTile(tile) {
       if (resp.statusCode===204) {
         console.log([ident, tile.x, tile.y]);
         tile.x = tile.xMax;
-        tile.y = tile.yMax;
         updateStatus(null, tile);
         return nextTile(tile);
       }
