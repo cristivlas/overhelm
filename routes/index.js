@@ -356,7 +356,8 @@ function serveTile(req, res, next) {
           downloadAndUploadTile(cachedFilePath, req, res, next, emptyList)
         }
         else {
-          console.log(cmd, ':', stdout);
+          // console.log(cmd, ':', stdout);
+
           return handleEmptyTile(req, res, next);
         }
       });

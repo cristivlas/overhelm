@@ -204,7 +204,7 @@
     </div>
 
     <script>
-      const defaultZoom = 12;
+      const defaultZoom = 13;
       const locationTimeout = 3000;
 
       var chartTilesets = null; // current tilesets, stringified
@@ -641,7 +641,7 @@
                   attributions: tileset.ident.split('_')[0] + (sounding ? ' Soundings in ' + sounding : '')
                 }),
                 maxResolution: maxRes,
-                opacity: .95
+                opacity: .8
               });
               layer.ident = tileset.ident;
               layer.upper = tileset.upper;
@@ -1232,7 +1232,8 @@
         xmlHttp.onreadystatechange = function() {
           if (xmlHttp.readyState === 4 && xmlHttp.status === 200) {
             const w = JSON.parse(xmlHttp.responseText);
-            html += '<b>Weather</b><image width="18%" src="' + imageUrl + '"/> ';
+
+            html += '<b>Weather</b><image width="15%" src="' + imageUrl + '"/> ';
             html += w.weather + '<br>' + w.temp
               + ' Humidity: ' + w.humidity
               + ' Wind: ' + w.wind + ' (direction ' + w.wind_degrees + '&deg;)'
