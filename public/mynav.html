@@ -7,6 +7,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-title" content="Ragnar [Alpha]">
     <link rel="apple-touch-icon" href="/images/sailboat.png">
+    <ling rel="prefetch" href="/images/wu_logo_130x80.png">
 
     <link rel="stylesheet" href="lib/OpenLayers/4.2.0/ol.css" type="text/css">
     <link rel="stylesheet" href="stylesheets/alertify.core.css" type="text/css">
@@ -65,8 +66,8 @@
         opacity: 1;
       }
       .popover-content {
-        min-width: 240px;
-        font-size: 11px;
+        min-width: 250px;
+        font-size: 12px;
       }
       .ui-keyboard {
         background: white;
@@ -1226,19 +1227,24 @@
         popup.visible = true; // popover on map postrender
         map.getView().setCenter(pos);
 
-        const imageUrl = '/images/wu_logo_130x80.png';
-
         const xmlHttp = new XMLHttpRequest();
         xmlHttp.onreadystatechange = function() {
           if (xmlHttp.readyState === 4 && xmlHttp.status === 200) {
             const w = JSON.parse(xmlHttp.responseText);
 
+            const imageUrl = '/images/wu_logo_130x80.png';
             html += '<b>Weather</b><image width="15%" src="' + imageUrl + '"/> ';
-            html += w.weather + '<br>' + w.temp
+
+            html += w.weather + ' ' + w.temp + ' Feels like: ' + w.feelslike
+              + ' Wind: ' + w.wind 
+              + ' (' + w.wind_degrees + '&deg;, '  + w.wind_mph + ' MPH)'
               + ' Humidity: ' + w.humidity
-              + ' Wind: ' + w.wind + ' (direction ' + w.wind_degrees + '&deg;)'
               + ' Visibility: ' + w.visibility + ' miles'
-              + '. <i>Station: ' + w.station + '</i>';
+              + ' <i>' + w.station + ', ' + w.time + '</i>';
+
+            if (!navigator.platform.match(/armv7/)) { // don't do it on the raspberry PI
+              html += ' <button><a target="_blank" href="' + w.forecast_url + '">More...</button>';
+            }
 
             $(e).popover('destroy');
             $(e).popover({

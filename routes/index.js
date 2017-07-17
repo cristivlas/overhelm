@@ -598,7 +598,7 @@ router.get('/weather/:lon/:lat', function(req, res, next) {
   if (!__online) {
     return res.sendStatus(204);
   }
-  const url = 'http://api.wunderground.com/api/c1537719c680efb0/geolookup/conditions/q/'
+  const url = 'http://api.wunderground.com/api/c1537719c680efb0/conditions/q/'
     + req.params.lat + ',' + req.params.lon + '.json';
 
   let data = '';
@@ -612,22 +612,27 @@ router.get('/weather/:lon/:lat', function(req, res, next) {
       return next(err);
     });
     response.on('end', function() {
+      //console.log(data);
       const wu = JSON.parse(data).current_observation;
       try {
         const report = {
-          image: wu.image.url,
-          //image: '/images/wu_logo_130x80.png',
+          //image: wu.image.url,
+          image: '/images/wu_logo_130x80.png',
           time: wu.observation_time_rfc822,
           weather: wu.weather,
           temp: wu.temperature_string,
+          //feelslike: wu.feelslike_string,
+          feelslike: wu.feelslike_f + ' F',
+          forecast_url: wu.ob_url,
           wind: wu.wind_string,
           wind_degrees: wu.wind_degrees,
           wind_mph: wu.wind_mph,
           humidity: wu.relative_humidity,
           visibility: wu.visibility_mi,
-          station: wu.observation_location.city + ' ' + wu.observation_location.state,
+          station: wu.observation_location.city,
+          time: wu.observation_time
         }
-        res.end(JSON.stringify(report, null, 4));
+        res.end(JSON.stringify(report));
       }
       catch(err) {
         console.log(err);
