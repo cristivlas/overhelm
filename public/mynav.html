@@ -208,31 +208,58 @@
       const defaultZoom = 13;
       const locationTimeout = 3000;
 
-      var chartTilesets = null; // current tilesets, stringified
-      var chartLayers = [];     // current layers
-      var marker = null;        // layer that marks current position
-      var courseLayer = null;
-      var destination = null;
-      var map = null;           // the map object
       var popup = null;
-      var selectedLocation = null;
-      var prevLocationName = 'current location';
-      var savedZoom = defaultZoom;
       var lastInteraction = null;
 
+      var app = {
+        map: null,
+        tileset: null,
+        zoom: defaultZoom,
 
-      /*****************************************************************
-       * Tides information
-       *****************************************************************/
-      var waterLevelStation = null;
-      var tideChart = null;
-      var tideChartTime = new Date();
-      var tideChartVisible = true;
+        layers: {
+          charts: [],
+          course: null,
+          positionMarks: null,
+        },
+        location: {
+          current: null,
+          point: null,
+          prev: {
+            point: null,
+            name: 'current location'
+          }
+        },
+        destination: {
+          coord: null,
+          point: null,
+          place: null,
+        },
+        tide: {
+          station: null,
+          chart: {
+            line: null,
+            lastUpdated: new Date(),
+            visible: true,
+          }
+        }
+      }
+
+      // Raspberry or iPad?
 
       if (navigator.userAgent.match(/armv7/) ||
           navigator.userAgent.match(/ipad/i)) {
         var elem = document.getElementById('map');
         elem.className += ' tablet';
+      }
+
+      function equalPoint(p1, p2) {
+        if (!p1) {
+          return !p2;
+        }
+        if (!p2) {
+          return !p1;
+        }
+        return p1[0]===p2[0] && p1[1]===p2[1];
       }
 
       /**
@@ -248,7 +275,7 @@
         button.title = 'Track current location';
         var handler = function() {
           if (!geolocation.isTracking()) {
-            map.getView().setZoom(savedZoom);
+            app.map.getView().setZoom(app.zoom);
           }
           geolocation.stop();
           geolocation.start();
@@ -304,7 +331,7 @@
           alertify.prompt('', function(valid, value) {
             if (valid) {
               value = value.trim();
-              searchLocation(value, selectedLocation);
+              searchLocation(value, app.location.current);
             }
           });
 
@@ -350,14 +377,14 @@
         button.title = 'Show destination';
         button.id = 'dest';
         var handler = function() {
-          if (popup.place && destination) {
+          if (popup.place && app.destination.point) {
             if (popup.visible) {
               $(popup.getElement()).popover('destroy');
               popup.visible = popup.show = false;  
             }
             geolocation.stop();
-            updateMap(popup.destCoord);
-            updatePopup(destination, popup.destPlace, popup.destCoord);
+            updateMap(app.destination.coord);
+            updatePopup(app.destination.point, app.destination.place, app.destination.coord);
           }
         }
         button.addEventListener('click', handler, false);
@@ -410,7 +437,7 @@
         button.title = 'Hide tide chart';
         var handler = function() {
           var elem = document.getElementById('tideChart').parentElement;
-          if (!tideChartVisible) {
+          if (!app.tide.chart.visible) {
             elem.style.visibility = 'visible';
             icon.src = 'images/right-arrow.png';
             button.title = 'Hide tide chart';
@@ -420,7 +447,7 @@
             icon.src = 'images/left-arrow.png';
             button.title = 'Show tide chart';
           }
-          tideChartVisible ^= true;
+          app.tide.chart.visible ^= true;
         }
         button.addEventListener('click', handler, false);
 
@@ -502,30 +529,27 @@
 
 
       function updateCourseLayer(pos) {
-        if (courseLayer) {
-          map.removeLayer(courseLayer);
-          courseLayer = null;
+        if (app.layers.course) {
+          app.map.removeLayer(app.layers.course);
+          app.layers.course = null;
         }
-        if (destination) {
-          //<hack>
-          if (destination[0]===pos[0] && destination[1]===pos[1]) {
-            pos = popup.prevMapPos;
-            console.log(destination, popup.prevMapPos);
+        if (app.destination.point) {
+          if (equalPoint(app.destination.point, pos)) {
+            pos = app.location.prev.point;
           }
-          //</hack>
 
-          courseLayer = getCourseLayer(pos, destination);
-          map.addLayer(courseLayer);
+          app.layers.course = getCourseLayer(pos, app.destination.point);
+          app.map.addLayer(app.layers.course);
         }
       }
 
 
       function updatePositionLayer(pos) {
-        if (marker) {
-          map.removeLayer(marker);
+        if (app.layers.positionMarks) {
+          app.map.removeLayer(app.layers.positionMarks);
         }
-        marker = getPositionLayer(pos);
-        map.addLayer(marker);
+        app.layers.positionMarks = getPositionLayer(pos);
+        app.map.addLayer(app.layers.positionMarks);
       }
 
 
@@ -556,7 +580,7 @@
 
         features = [iconFeature];
 
-        if (destination && geolocation.coord && !geolocation.isTracking()) {
+        if (app.destination.point && geolocation.coord && !geolocation.isTracking()) {
           xy = ol.proj.fromLonLat([geolocation.coord.lon, geolocation.coord.lat]);
 
           iconFeature = new ol.Feature({
@@ -622,24 +646,24 @@
         const viewMaxRes = view.getMaxResolution();
         const extent = view.calculateExtent();
 
-        getChartTilesets(coord, extent, function(tilesets) {
-          if (tilesets !== chartTilesets) {
-            chartTilesets = tilesets;
-            console.log('----- Chart tilesets changed -----');
+        getChartTilesets(coord, extent, function(tileset) {
+          if (tileset !== app.tileset) {
+            app.tileset = tileset;
+            console.log('--- Tileset changed ---');
             //
             // remove old chart layers
             //
-            if (map) {
-              res = map.getView().getResolution();
-              for (i = 0; i < chartLayers.length; ++i) {
-                map.removeLayer(chartLayers[i]);
+            if (app.map) {
+              res = app.map.getView().getResolution();
+              for (i = 0; i < app.layers.charts.length; ++i) {
+                app.map.removeLayer(app.layers.charts[i]);
               }
-              chartLayers = [];
+              app.layers.charts = [];
             }
 
             let hMax = null;
             let maxRes = viewMaxRes;
-            const extents = JSON.parse(tilesets);
+            const extents = JSON.parse(tileset);
             const sounding = extents.length===1 ? extents[0].sounding : null;
             //
             // apply new chart layers 
@@ -664,12 +688,12 @@
               layer.upper = tileset.upper;
               layer.lower = tileset.lower;
 
-              chartLayers.push(layer);
+              app.layers.charts.push(layer);
             })
 
             let prev = null;
-            for (i = chartLayers.length - 1; i >= 0; --i) {
-              let layer = chartLayers[i];
+            for (i = app.layers.charts.length - 1; i >= 0; --i) {
+              let layer = app.layers.charts[i];
               if (prev) {
                 if (layer.getMaxResolution() / prev.getMaxResolution() > 2) {
                   layer.setMinResolution(prev.getMaxResolution());
@@ -682,10 +706,10 @@
               prev = layer;
             }
 
-            if (map) {
-              for (i = 0; i != chartLayers.length; ++i) {
-                let layer = chartLayers[i];
-                map.addLayer(layer);
+            if (app.map) {
+              for (i = 0; i != app.layers.charts.length; ++i) {
+                let layer = app.layers.charts[i];
+                app.map.addLayer(layer);
               }
             }
           }
@@ -715,7 +739,7 @@
         }
         const pos = ol.proj.fromLonLat(coord);
 
-        const view = map ? map.getView() : new ol.View({
+        const view = app.map ? app.map.getView() : new ol.View({
           center: pos,
           zoom: defaultZoom,
           minZoom: 3,
@@ -727,9 +751,9 @@
           if (!view.updating) {
             view.updating = true;
             lastInteraction = new Date();
-            updateChartLayers(selectedLocation, view, function() {
-              updateFeatures(map.pos);
-              map.render();
+            updateChartLayers(app.location.current, view, function() {
+              updateFeatures(app.location.point);
+              app.map.render();
               view.updating = false;
             });
           }
@@ -761,8 +785,8 @@
         updateChartLayers(coord, view, function() {
           const tideChartCtrl = new tideChartControl();
 
-          if (!map) {
-            map = new ol.Map({
+          if (!app.map) {
+            app.map = new ol.Map({
               controls: ol.control.defaults({
                 attributionOptions: {
                   collapsible: false,
@@ -775,42 +799,25 @@
                 new searchControl(),
                 new destControl(),
                 new speedControl(),
-                /* new ol.control.ScaleLine({units: 'nautical'}) */
+                new ol.control.ScaleLine({units: 'nautical'})
               ]),
               target: 'map',
               layers: [
                 baseLayer(),
-              ].concat(chartLayers),
+              ].concat(app.layers.charts),
               view: view
             });
 
             popup = new ol.Overlay({
               element: document.getElementById('popup')
             });
-            map.addOverlay(popup);
+            app.map.addOverlay(popup);
 
-            map.on('postrender', function() {
+            app.map.on('postrender', function() {
               showPopup();
             });
-
-            //
-            // Use double click to switch from location tracking to viewing mode
-            //
-            map.on('dblclick', function(e) {
-              e.preventDefault();
-              if (geolocation.isTracking()) {
-                geolocation.stop();
-                savedZoom = map.getView().getZoom();
-                alertify.alert('Location tracking paused. Use the arrow button to resume.');
-              }
-              const coord = e.coordinate;
-              const lonLat = ol.proj.transform(coord, 'EPSG:3857', 'EPSG:4326');
-              selectedLocation = lonLat;
-              prevLocationName = 'previous location';
-              updateMap(lonLat);
-            });
           }
-          map.pos = pos;
+          app.location.point = pos;
           updateFeatures(pos);
         });
        
@@ -879,16 +886,16 @@
             let s = JSON.parse(xmlHttp.responseText);
 
             const now = new Date();
-            if (waterLevelStation && s.Id === waterLevelStation.Id) {
+            if (app.tide.station && s.Id === app.tide.station.Id) {
               //
               // same station? update every 30 minutes
               //
-              if (now.getTime() - tideChartTime.getTime() < 30 * 60 * 1000) {
+              if (now.getTime() - app.tide.chart.lastUpdated.getTime() < 30 * 60 * 1000) {
                 return;
               }
             }
-            waterLevelStation = s;
-            tideChartTime = now;
+            app.tide.station = s;
+            app.tide.chart.lastUpdated = now;
 
             const stationInfo = 'Station: ' + s.Id + ' ' + s.Name + ' ' + s.State;
 
@@ -898,10 +905,10 @@
             var url;
             if (useNOAAData) {
               url = 'https://tidesandcurrents.noaa.gov/api/datagetter?product=predictions&datum=MLLW' 
-              + formatRequestRange(now, waterLevelStation.Id);
+              + formatRequestRange(now, app.tide.station.Id);
             } 
             else {
-              url = 'tides/' + waterLevelStation.Id + '/' + currentTime;
+              url = 'tides/' + app.tide.station.Id + '/' + currentTime;
             }
             console.log(url);
 
@@ -1011,10 +1018,10 @@
 
             const ctx = document.getElementById('tideChart');
 
-            if (tideChart) {
-              tideChart.destroy();
+            if (app.tide.chart.line) {
+              app.tide.chart.line.destroy();
             }
-            tideChart = new Chart.Line(ctx, {
+            app.tide.chart.line = new Chart.Line(ctx, {
 
               data: {
                 labels: labels,
@@ -1142,11 +1149,10 @@
           }
           function setDestination(pos) {
             closePopup();
-            destination = pos;
-            if (destination) {
-              // TODO: move these to another namespace
-              popup.destPlace = popup.place;
-              popup.destCoord = popup.coord;
+            app.destination.point = pos;
+            if (app.destination.point) {
+              app.destination.place = popup.place;
+              app.destination.coord = popup.coord;
             }
             geolocation.start();
             lastInteraction = null;
@@ -1209,30 +1215,37 @@
           if (d===0) {
             const coord = [ geolocation.coord.lon, geolocation.coord.lat ];
             d = getDistanceFromLonLat(popup.coord, coord) * 3440;
-            prevLocationName = 'current location';
+            app.location.prev.name = 'current location';
           }
           return '<br>' + Math.floor(d * 100) / 100
-            + ' nautical miles from ' + prevLocationName + '.';
+            + ' nautical miles from ' + app.location.prev.name + '.';
 
         }
         let btn = '';
 
-        if (destination && pos[0]===destination[0] && pos[1]===destination[1]) {
-          const d = getDistanceFromLonLat(popup.destCoord, selectedLocation) * 3440;
+        if (app.destination.point
+          && pos[0]===app.destination.point[0]
+          && pos[1]===app.destination.point[1]) {
+
+          const d = getDistanceFromLonLat(app.destination.coord, app.location.current) * 3440;
           html += distance(d);
           html += '<div id="set-course" display: none></div>';
           btn  += '<button type="button" class="set-course" id="cancel-course">Cancel course</button>';
-          prevLocationName = popup.destPlace.name;
-          if (popup.destPlace.state) prevLocationName += ', ' + popup.destPlace.state;
+          app.location.prev.name = app.destination.place.name;
+          if (app.destination.place.state) {
+            app.location.prev.name += ', ' + app.destination.place.state;
+          }
         }
         else {
           html += distance(place.dist);
           html += '<div id="cancel-course" display: none></div>';
           btn += '<button type="button" class="set-course" id="set-course">Set course</button>';
-          prevLocationName = place.name;
-          if (place.state) prevLocationName += ', ' + place.state;
+          app.location.prev.name = place.name;
+          if (place.state) {
+            app.location.prev.name += ', ' + place.state;
+          }
         }
-        selectedLocation = coord;
+        app.location.current = coord;
 
         $(e).popover({
           'animation': false,
@@ -1241,11 +1254,14 @@
           'content': html,
           'title': btn + '<a href="#" id="close-popup" class="close">&times;</a>'
         });
-        popup.prevMapPos = map.pos; // TODO: move to another namespace
+        if (!equalPoint(app.location.point, app.destination.point)) {
+          console.log(app.location);
+          app.location.prev.point = app.location.point;
+        }
         popup.setPosition(pos);
         popup.shown = false;
         popup.visible = true; // popover on map postrender
-        map.getView().setCenter(pos);
+        app.map.getView().setCenter(pos);
 
         const xmlHttp = new XMLHttpRequest();
         xmlHttp.onreadystatechange = function() {
@@ -1275,7 +1291,7 @@
               'title': btn + '<a href="#" id="close-popup" class="close">&times;</a>'
             });
             popup.shown = false;
-            map.render();
+            app.map.render();
           }
         }
         xmlHttp.open('GET', '/weather/' + coord[0] + '/' + coord[1]);
@@ -1321,8 +1337,8 @@
                 if (geolocation.isTracking()) {
                   geolocation.stop();
                 }
-                if (map && map.getView().getZoom() < defaultZoom) {
-                    map.getView().setZoom(defaultZoom);
+                if (app.map && app.map.getView().getZoom() < defaultZoom) {
+                    app.map.getView().setZoom(defaultZoom);
                 }
                 const pos = updateMap(coord);
                 updatePopup(pos, matches[elem.selectedIndex], coord);
@@ -1344,20 +1360,20 @@
 
 
       function updateDefault() {
-        if (!selectedLocation) {
-          selectedLocation = [-122.4049, 47.6810] // Shilshole Bay
-          prevLocationName = 'Shilshole Bay';
+        if (!app.location.current) {
+          app.location.current = [-122.4049, 47.6810] // Shilshole Bay
+          app.location.prev.name = 'Shilshole Bay';
         }
-        updateMap(selectedLocation);
+        updateMap(app.location.current);
       }
 
 
       var geolocation = new Geolocation({
         onSuccess: function(coord) {
           if (coord.lon && coord.lat) {
-            selectedLocation = [ coord.lon, coord.lat ];
-            prevLocationName = 'current location';
-            updateMap(selectedLocation);
+            app.location.current = [ coord.lon, coord.lat ];
+            app.location.prev.name = 'current location';
+            updateMap(app.location.current);
           }
         },
         onError: function(err) {
