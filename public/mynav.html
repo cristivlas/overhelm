@@ -130,6 +130,7 @@
       .tracking {
         top: 85px;
         left: .5em;
+        background: green;
       }
       .ol-touch .tracking {
         top: 95px;
@@ -279,12 +280,14 @@
           }
           geolocation.stop();
           geolocation.start();
+          document.getElementById('tracking').style.background = 'green';
           lastInteraction = null;
         }
         button.addEventListener('click', handler, false);
         button.addEventListener('touchstart', handler, false);
 
         var element = document.createElement('div');
+        element.id = 'tracking';
         element.className = 'tracking ol-custom ol-unselectable ol-control';
         element.appendChild(button);
 
@@ -383,6 +386,7 @@
               popup.visible = popup.show = false;  
             }
             geolocation.stop();
+            document.getElementById('tracking').style.background = 'brown';
             updateMap(app.destination.coord);
             updatePopup(app.destination.point, app.destination.place, app.destination.coord);
           }
@@ -799,7 +803,7 @@
                 new searchControl(),
                 new destControl(),
                 new speedControl(),
-                new ol.control.ScaleLine({units: 'nautical'})
+                // new ol.control.ScaleLine({units: 'nautical'})
               ]),
               target: 'map',
               layers: [
@@ -1155,6 +1159,7 @@
               app.destination.coord = popup.coord;
             }
             geolocation.start();
+            document.getElementById('tracking').style.background = 'green';
             lastInteraction = null;
           }
           const closeBtn = document.getElementById('close-popup');
@@ -1336,6 +1341,7 @@
                 const coord = JSON.parse(elem.options[elem.selectedIndex].value);
                 if (geolocation.isTracking()) {
                   geolocation.stop();
+                  document.getElementById('tracking').style.background = 'brown';
                 }
                 if (app.map && app.map.getView().getZoom() < defaultZoom) {
                     app.map.getView().setZoom(defaultZoom);
