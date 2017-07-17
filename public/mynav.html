@@ -208,18 +208,43 @@
       const defaultZoom = 13;
       const locationTimeout = 3000;
 
-      var chartTilesets = null; // current tilesets, stringified
-      var chartLayers = [];     // current layers
       var marker = null;        // layer that marks current position
-      var courseLayer = null;
       var destination = null;
-      var map = null;           // the map object
       var popup = null;
       var selectedLocation = null;
       var prevLocationName = 'current location';
       var savedZoom = defaultZoom;
       var lastInteraction = null;
 
+      var app = {
+        map: null,
+        tileset: null,
+        zoom: defaultZoom,
+        layers: {
+          charts: [],
+          course: null,
+          positionMarks: null,
+        },
+        location: {
+          current: null,
+          point: null,
+          prevPoint: null,
+          prevName: 'current location',
+        },
+        destination: {
+          coord: null,
+          point: null,
+          place: null,
+        },
+        tide: {
+          station: null,
+          chart: {
+            chart: null,
+            lastUpdated: null,
+            visible: true,
+          }
+        }
+      }
 
       /*****************************************************************
        * Tides information
@@ -248,7 +273,7 @@
         button.title = 'Track current location';
         var handler = function() {
           if (!geolocation.isTracking()) {
-            map.getView().setZoom(savedZoom);
+            app.map.getView().setZoom(savedZoom);
           }
           geolocation.stop();
           geolocation.start();
@@ -502,9 +527,9 @@
 
 
       function updateCourseLayer(pos) {
-        if (courseLayer) {
-          map.removeLayer(courseLayer);
-          courseLayer = null;
+        if (app.layers.course) {
+          app.map.removeLayer(app.layers.course);
+          app.layers.course = null;
         }
         if (destination) {
           //<hack>
@@ -514,18 +539,18 @@
           }
           //</hack>
 
-          courseLayer = getCourseLayer(pos, destination);
-          map.addLayer(courseLayer);
+          app.layers.course = getCourseLayer(pos, destination);
+          app.map.addLayer(app.layers.course);
         }
       }
 
 
       function updatePositionLayer(pos) {
         if (marker) {
-          map.removeLayer(marker);
+          app.map.removeLayer(marker);
         }
         marker = getPositionLayer(pos);
-        map.addLayer(marker);
+        app.map.addLayer(marker);
       }
 
 
@@ -622,24 +647,24 @@
         const viewMaxRes = view.getMaxResolution();
         const extent = view.calculateExtent();
 
-        getChartTilesets(coord, extent, function(tilesets) {
-          if (tilesets !== chartTilesets) {
-            chartTilesets = tilesets;
-            console.log('----- Chart tilesets changed -----');
+        getChartTilesets(coord, extent, function(tileset) {
+          if (tileset !== app.tileset) {
+            app.tileset = tileset;
+            console.log('--- Tileset changed ---');
             //
             // remove old chart layers
             //
-            if (map) {
-              res = map.getView().getResolution();
-              for (i = 0; i < chartLayers.length; ++i) {
-                map.removeLayer(chartLayers[i]);
+            if (app.map) {
+              res = app.map.getView().getResolution();
+              for (i = 0; i < app.layers.charts.length; ++i) {
+                app.map.removeLayer(app.layers.charts[i]);
               }
-              chartLayers = [];
+              app.layers.charts = [];
             }
 
             let hMax = null;
             let maxRes = viewMaxRes;
-            const extents = JSON.parse(tilesets);
+            const extents = JSON.parse(tileset);
             const sounding = extents.length===1 ? extents[0].sounding : null;
             //
             // apply new chart layers 
@@ -664,12 +689,12 @@
               layer.upper = tileset.upper;
               layer.lower = tileset.lower;
 
-              chartLayers.push(layer);
+              app.layers.charts.push(layer);
             })
 
             let prev = null;
-            for (i = chartLayers.length - 1; i >= 0; --i) {
-              let layer = chartLayers[i];
+            for (i = app.layers.charts.length - 1; i >= 0; --i) {
+              let layer = app.layers.charts[i];
               if (prev) {
                 if (layer.getMaxResolution() / prev.getMaxResolution() > 2) {
                   layer.setMinResolution(prev.getMaxResolution());
@@ -682,10 +707,10 @@
               prev = layer;
             }
 
-            if (map) {
-              for (i = 0; i != chartLayers.length; ++i) {
-                let layer = chartLayers[i];
-                map.addLayer(layer);
+            if (app.map) {
+              for (i = 0; i != app.layers.charts.length; ++i) {
+                let layer = app.layers.charts[i];
+                app.map.addLayer(layer);
               }
             }
           }
@@ -715,7 +740,7 @@
         }
         const pos = ol.proj.fromLonLat(coord);
 
-        const view = map ? map.getView() : new ol.View({
+        const view = app.map ? app.map.getView() : new ol.View({
           center: pos,
           zoom: defaultZoom,
           minZoom: 3,
@@ -728,8 +753,8 @@
             view.updating = true;
             lastInteraction = new Date();
             updateChartLayers(selectedLocation, view, function() {
-              updateFeatures(map.pos);
-              map.render();
+              updateFeatures(app.map.pos);
+              app.map.render();
               view.updating = false;
             });
           }
@@ -761,8 +786,8 @@
         updateChartLayers(coord, view, function() {
           const tideChartCtrl = new tideChartControl();
 
-          if (!map) {
-            map = new ol.Map({
+          if (!app.map) {
+            app.map = new ol.Map({
               controls: ol.control.defaults({
                 attributionOptions: {
                   collapsible: false,
@@ -780,27 +805,27 @@
               target: 'map',
               layers: [
                 baseLayer(),
-              ].concat(chartLayers),
+              ].concat(app.layers.charts),
               view: view
             });
 
             popup = new ol.Overlay({
               element: document.getElementById('popup')
             });
-            map.addOverlay(popup);
+            app.map.addOverlay(popup);
 
-            map.on('postrender', function() {
+            app.map.on('postrender', function() {
               showPopup();
             });
 
             //
             // Use double click to switch from location tracking to viewing mode
             //
-            map.on('dblclick', function(e) {
+            app.map.on('dblclick', function(e) {
               e.preventDefault();
               if (geolocation.isTracking()) {
                 geolocation.stop();
-                savedZoom = map.getView().getZoom();
+                savedZoom = app.map.getView().getZoom();
                 alertify.alert('Location tracking paused. Use the arrow button to resume.');
               }
               const coord = e.coordinate;
@@ -810,7 +835,7 @@
               updateMap(lonLat);
             });
           }
-          map.pos = pos;
+          app.map.pos = pos;
           updateFeatures(pos);
         });
        
@@ -1241,11 +1266,11 @@
           'content': html,
           'title': btn + '<a href="#" id="close-popup" class="close">&times;</a>'
         });
-        popup.prevMapPos = map.pos; // TODO: move to another namespace
+        popup.prevMapPos = app.map.pos; // TODO: move to another namespace
         popup.setPosition(pos);
         popup.shown = false;
         popup.visible = true; // popover on map postrender
-        map.getView().setCenter(pos);
+        app.map.getView().setCenter(pos);
 
         const xmlHttp = new XMLHttpRequest();
         xmlHttp.onreadystatechange = function() {
@@ -1275,7 +1300,7 @@
               'title': btn + '<a href="#" id="close-popup" class="close">&times;</a>'
             });
             popup.shown = false;
-            map.render();
+            app.map.render();
           }
         }
         xmlHttp.open('GET', '/weather/' + coord[0] + '/' + coord[1]);
@@ -1321,8 +1346,8 @@
                 if (geolocation.isTracking()) {
                   geolocation.stop();
                 }
-                if (map && map.getView().getZoom() < defaultZoom) {
-                    map.getView().setZoom(defaultZoom);
+                if (app.map && app.map.getView().getZoom() < defaultZoom) {
+                    app.map.getView().setZoom(defaultZoom);
                 }
                 const pos = updateMap(coord);
                 updatePopup(pos, matches[elem.selectedIndex], coord);
