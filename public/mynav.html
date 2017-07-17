@@ -255,6 +255,7 @@
           lastInteraction = null;
         }
         button.addEventListener('click', handler, false);
+        button.addEventListener('touchstart', handler, false);
 
         var element = document.createElement('div');
         element.className = 'tracking ol-custom ol-unselectable ol-control';
@@ -323,6 +324,7 @@
           }
         }
         button.addEventListener('click', handler, false);
+        button.addEventListener('touchstart', handler, false);
 
         var element = document.createElement('div');
         element.className = 'search ol-custom ol-unselectable ol-control';
@@ -359,6 +361,7 @@
           }
         }
         button.addEventListener('click', handler, false);
+        button.addEventListener('touchstart', handler, false);
 
         var element = document.createElement('div');
         element.id = 'dest-div';
@@ -421,6 +424,9 @@
         }
         button.addEventListener('click', handler, false);
 
+        //this results in the button being way too trigger-happy
+        //button.addEventListener('touchstart', handler, false);
+
         var element = document.createElement('div');
         element.className = 'show-tide ol-custom ol-unselectable ol-control';
         element.appendChild(button);
@@ -482,7 +488,7 @@
           style: new ol.style.Style({
             stroke: new ol.style.Stroke({
               color: 'green',
-              width: 3
+              width: 5
             }),
             image: new ol.style.Icon({
               anchor: [0.5, 1],
@@ -495,10 +501,20 @@
       }
 
 
-      function updateCourseLayer() {
-        map.removeLayer(courseLayer);
+      function updateCourseLayer(pos) {
+        if (courseLayer) {
+          map.removeLayer(courseLayer);
+          courseLayer = null;
+        }
         if (destination) {
-          courseLayer = getCourseLayer(map.pos, destination);
+          //<hack>
+          if (destination[0]===pos[0] && destination[1]===pos[1]) {
+            pos = popup.prevMapPos;
+            console.log(destination, popup.prevMapPos);
+          }
+          //</hack>
+
+          courseLayer = getCourseLayer(pos, destination);
           map.addLayer(courseLayer);
         }
       }
@@ -679,9 +695,10 @@
 
 
       function updateFeatures(pos) {
-        updateCourseLayer();
+        updateCourseLayer(pos);
         updatePositionLayer(pos);
       }
+
 
       /**
        * Construct / update the map object
@@ -1134,9 +1151,10 @@
             geolocation.start();
             lastInteraction = null;
           }
-          document.getElementById('close-popup').onclick = function() {
-            closePopup();
-          }
+          const closeBtn = document.getElementById('close-popup');
+          closeBtn.onclick = closePopup;
+          closeBtn.ontouchstart = closePopup;
+
           document.getElementById('set-course').onclick = function() {
             setDestination(popup.getPosition());
             document.getElementById('dest-div').style.visibility = 'visible';
@@ -1184,6 +1202,7 @@
         if (place.state) {
           html += ', ' + place.state;
         }
+
         html += '<br>' + convertDMS(coord);
 
         function distance(d) {
@@ -1222,6 +1241,7 @@
           'content': html,
           'title': btn + '<a href="#" id="close-popup" class="close">&times;</a>'
         });
+        popup.prevMapPos = map.pos; // TODO: move to another namespace
         popup.setPosition(pos);
         popup.shown = false;
         popup.visible = true; // popover on map postrender
@@ -1243,7 +1263,7 @@
               + ' <i>' + w.station + ', ' + w.time + '</i>';
 
             if (!navigator.platform.match(/armv7/)) { // don't do it on the raspberry PI
-              html += ' <button><a target="_blank" href="' + w.forecast_url + '">More...</button>';
+              html += ' <a target="_blank" href="' + w.forecast_url + '">More weather...</a>';
             }
 
             $(e).popover('destroy');
