@@ -754,11 +754,11 @@
         function update(view) {
           if (!view.updating) {
             view.updating = true;
-            lastInteraction = new Date();
             updateChartLayers(app.location.current, view, function() {
               updateFeatures(app.location.point);
               app.map.render();
               view.updating = false;
+              lastInteraction = new Date();
             });
           }
         }
@@ -768,8 +768,11 @@
 
         if (!ol.extent.containsXY(view.calculateExtent(), pos[0], pos[1])) {
           const now = new Date();
-          if (!lastInteraction || now.getTime() - lastInteraction.getTime() > 3 * 60 * 1000) {
+          if (!lastInteraction || now.getTime() > lastInteraction.getTime() + 3 * 60 * 1000) {
+            view.updating = true;
             view.setCenter(pos);
+            view.updating = false;
+            lastInteraction = null;
           }
         }
        
@@ -1274,17 +1277,19 @@
             const w = JSON.parse(xmlHttp.responseText);
 
             const imageUrl = '/images/wu_logo_130x80.png';
-            html += '<b>Weather</b><image width="15%" src="' + imageUrl + '"/> ';
+            html += '<b>Weather Underground</b><image width="15%" src="' + imageUrl + '"/> ';
 
             html += w.weather + ' ' + w.temp + ' Feels like: ' + w.feelslike
               + ' Wind: ' + w.wind 
               + ' (' + w.wind_degrees + '&deg;, '  + w.wind_mph + ' MPH)'
               + ' Humidity: ' + w.humidity
               + ' Visibility: ' + w.visibility + ' miles'
-              + ' <i>' + w.station + ', ' + w.time + '</i>';
-
+              // + ' <i>' + w.station + ', ' + w.time + '</i>';
             if (!navigator.platform.match(/armv7/)) { // don't do it on the raspberry PI
-              html += ' <a target="_blank" href="' + w.forecast_url + '">More weather...</a>';
+               //const forecast = 'https://forecast-v3.weather.gov/point/' + coord[1] + ',' + coord[0];
+               const forecast = 'http://marine.weather.gov/MapClick.php?lat=' + coord[1] + '&lon=' + coord[0];
+               html += ' <a class="btn btn-primary btn-xs" target="_blank" href="'
+                + forecast + '">National Weather Service</a>';
             }
 
             $(e).popover('destroy');
