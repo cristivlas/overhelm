@@ -518,7 +518,8 @@
           }),
           style: new ol.style.Style({
             stroke: new ol.style.Stroke({
-              color: 'green',
+              // color: 'green',
+              color: '#00D700',
               width: 5
             }),
             image: new ol.style.Icon({
@@ -768,7 +769,7 @@
 
         if (!ol.extent.containsXY(view.calculateExtent(), pos[0], pos[1])) {
           const now = new Date();
-          if (!lastInteraction || now.getTime() > lastInteraction.getTime() + 3 * 60 * 1000) {
+          if (!lastInteraction || now.getTime() > lastInteraction.getTime() + 60 * 1000) {
             view.updating = true;
             view.setCenter(pos);
             view.updating = false;
@@ -1343,6 +1344,9 @@
                   return;
                 }
                 const elem = document.getElementById('searchResults');
+                if (!elem) {
+                  return;
+                }
                 const coord = JSON.parse(elem.options[elem.selectedIndex].value);
                 if (geolocation.isTracking()) {
                   geolocation.stop();
