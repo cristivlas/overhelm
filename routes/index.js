@@ -22,15 +22,16 @@ const router = express.Router();
 /* are we connected to the internets? */
 let __online = false;
 
-isOnline({timeout:5000}).then(function(online) {
-  console.log('online:', online);
-  __online = online;
-});
+checkConnection();
 
-/* GET home page. */
-router.get('/', function(req, res, next) {
-  res.render('index', { title: 'Express' });
-});
+
+function checkConnection() {
+  isOnline({timeout:5000}).then(function(online) {
+    console.log('online:', online);
+    __online = online;
+  });
+}
+
 
 let tilesets = {}
 let alternateTilesets = {}
@@ -595,6 +596,9 @@ router.get('/search/:name/:lon/:lat', function(req, res, next) {
  *
  */
 router.get('/weather/:lon/:lat', function(req, res, next) {
+  
+  checkConnection();
+
   if (!__online) {
     return res.sendStatus(204);
   }
