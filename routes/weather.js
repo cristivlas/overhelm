@@ -73,9 +73,13 @@ function xmlWeather(opt) {
 xmlWeather({
   lon: -122.4049,
   lat: 47.6810,
+  windGusts: true,
   windSpeed: true,
   windDirection: true,
+  minTemp: true,
   maxTemp: true,
+  waveHeights: true,
+  skyCover: true,
 
   callback: function(resp, xml) {
     console.log([resp.statusCode, resp.statusMessage]);

@@ -1285,13 +1285,12 @@
               + ' (' + w.wind_degrees + '&deg;, '  + w.wind_mph + ' MPH)'
               + ' Humidity: ' + w.humidity
               + ' Visibility: ' + w.visibility + ' miles'
-              // + ' <i>' + w.station + ', ' + w.time + '</i>';
-            if (!navigator.platform.match(/armv7/)) { // don't do it on the raspberry PI
-               //const forecast = 'https://forecast-v3.weather.gov/point/' + coord[1] + ',' + coord[0];
-               const forecast = 'http://marine.weather.gov/MapClick.php?lat=' + coord[1] + '&lon=' + coord[0];
-               html += ' <a class="btn btn-primary btn-xs" target="_blank" href="'
-                + forecast + '">National Weather Service</a>';
-            }
+
+            const forecast = 
+              'http://marine.weather.gov/MapClick.php?lat=' + coord[1] + '&lon=' + coord[0];
+
+            html += ' <a class="btn btn-primary btn-xs" target="_blank" href="'
+              + forecast + '">National Weather Service</a>';
 
             $(e).popover('destroy');
             $(e).popover({
