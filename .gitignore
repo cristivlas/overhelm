@@ -3,6 +3,7 @@ tools/tides
 tiles/
 **/*.png
 log.*
+*.tar.gz
 *.tgz
 *.zip
 
