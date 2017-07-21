@@ -253,6 +253,13 @@
         elem.className += ' tablet';
       }
 
+      //
+      // Utilities
+      //
+      function isFullScreen() {
+        return window.innerHeight===screen.height;
+      }
+
       function equalPoint(p1, p2) {
         if (!p1) {
           return !p2;
@@ -1288,7 +1295,7 @@
               + ' Humidity: ' + w.humidity
               + ' Visibility: ' + w.visibility + ' miles'
 
-            if (!document.webkitIsFullScreen) {
+            if (!isFullScreen()) {
               const forecastUrl = 
                 'http://marine.weather.gov/MapClick.php?lat=' + coord[1] + '&lon=' + coord[0];
               html += ' <a class="btn btn-primary btn-xs forecast" target="_blank" href="'
