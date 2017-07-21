@@ -285,10 +285,10 @@
           if (!geolocation.isTracking()) {
             app.map.getView().setZoom(app.zoom);
           }
+          lastInteraction = null;
           geolocation.stop();
           geolocation.start();
           document.getElementById('tracking').style.background = 'green';
-          lastInteraction = null;
         }
         button.addEventListener('click', handler, false);
         button.addEventListener('touchstart', handler, false);
@@ -364,7 +364,6 @@
           }
         }
         button.addEventListener('click', handler, false);
-        button.addEventListener('touchstart', handler, false);
 
         var element = document.createElement('div');
         element.className = 'search ol-custom ol-unselectable ol-control';
@@ -1172,9 +1171,9 @@
               app.destination.place = popup.place;
               app.destination.coord = popup.coord;
             }
+            lastInteraction = null;
             geolocation.start();
             document.getElementById('tracking').style.background = 'green';
-            lastInteraction = null;
           }
           const closeBtn = document.getElementById('close-popup');
           closeBtn.onclick = closePopup;
