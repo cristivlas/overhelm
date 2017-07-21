@@ -13,6 +13,7 @@
     "bootstrap": "^3.3.7",
     "child_process": "^1.0.2",
     "cookie-parser": "~1.4.3",
+    "date-and-time": "^0.5.0",
     "debug": "~2.6.3",
     "express": "~4.15.2",
     "gps": "^0.3.0",

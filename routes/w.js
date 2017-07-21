@@ -1,21 +1,22 @@
 const w = require('./w.json');
+const date = require('date-and-time')
 
 let series = {}
+let datasets = {}
 console.assert(w.dwml);
 console.assert(w.dwml.data);
 console.assert(w.dwml.data[0]);
 
 const data = w.dwml.data[0];
 processLayouts(data);
-processParam(data, 'cloud-amount');
-processParam(data, 'direction');
+//processParam(data, 'cloud-amount');
+//processParam(data, 'direction');
 processParam(data, 'temperature');
 processParam(data, 'wind-speed');
-processWeather(data);
+//processWeather(data);
 
 //TODO:
-//processParam(w.dwml.data[0], 'water-state');
-
+//processParam(data, 'water-state');
 
 
 function processLayouts(data) {
@@ -42,7 +43,6 @@ function processLayouts(data) {
         t[i].end = new Date(end[i]);
       }
     }
-    
     series[key] = t;
   }
 }
@@ -56,11 +56,12 @@ function processParam(data, name) {
       const p = param[i];
       const type = p.type[0];
       const key = p['time-layout'][0];
+      const idx = name + '.' + type;
 
       for (let j = 0; j != p.value.length; ++j) {
         const v = p.value[j];
-        series[key][j][name] = series[key][j][name] || {}
-        series[key][j][name][type] = parseFloat(v);
+        series[key][j][idx] = parseFloat(v);
+        datasets[idx] = []
       }
     }
   }
@@ -91,12 +92,9 @@ function processWeather(data) {
 }
 
 
-console.log(JSON.stringify(series, null, 4));
-
-
-let report = {}
-
 function consolidate() {
+  let report = {}
+
   for (let prop in series) {
     let entries = series[prop];
     for (let j = 0; j != entries.length; ++j) {
@@ -110,8 +108,68 @@ function consolidate() {
       }
     }
   }
+  let weather = []
+  for (const prop in report) {
+    weather.push(report[prop]);
+  }
+  weather.sort(function(a, b) {
+   return a.start.getTime() - b.start.getTime();
+  })
+
+  return weather;
 }
-//consolidate()
-//console.log(JSON.stringify(report, null, 4));
+
+//console.log(JSON.stringify(series, null, 4));
+//console.log(datasets);
+
+
+let chart = {
+  labels: [],
+  datasets: [],
+  options: {
+    scales: {
+      yAxes: [{
+        id: 'temperature'
+      }, {
+        id: 'wind-speed'
+      }]
+    }
+  }
+}
+
+
+let end = null;
+let prev = { };
+
+consolidate().forEach(function(elem) {
+  if (elem.end) {
+    end = elem.end;
+  }
+  chart.labels.push(date.format(elem.start, 'YYYY-MM-DD HH:mm'));
+
+  for (let param in datasets) {
+    let val = elem[param];
+    if (val) {
+      prev[param] = val;
+    }
+    else if (end && end.getTime() >= elem.start.getTime()) {
+      val = prev[param];
+    }
+    datasets[param].push(val);
+  }
+
+});
+
+
+for (let param in datasets) {
+  chart.datasets.push({
+    label: param,
+    data: datasets[param],
+    yAxisID: param.split('.')[0]
+  })
+}
+
+
+console.log(JSON.stringify(chart, null, 2));
 
 

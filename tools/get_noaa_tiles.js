@@ -3,7 +3,9 @@ const https = require('https');
 
 // Load all chart metadata
 const charts = require(__dirname + '/../routes/noaa-layers.json');
-
+charts.forEach(function(chart) {
+  chart.path = '/tiles/noaa/' + chart.ident + '/';
+});
 
 const start = new Date();
 
@@ -95,22 +97,26 @@ function updateStatus(err, tile, done=false) {
 }
 
 
-function nextTile(tile) {
-  ++tile.x;
-  if (tile.x > tile.xMax) {
-    ++tile.y;
-    if (tile.y > tile.yMax) {
-      if (!nextChart(tile)) {
-        updateStatus(null, tile, true);
-        return false;
+function nextTile(tile, marine=true) {
+  if (marine) {
+    ++tile.x;
+    if (tile.x > tile.xMax) {
+      ++tile.y;
+      if (tile.y > tile.yMax) {
+        if (!nextChart(tile)) {
+          updateStatus(null, tile, true);
+          return false;
+        }
+        tile.y = tile.yMin;
       }
-      tile.y = tile.yMin;
+      tile.x = tile.xMin;
     }
-    tile.x = tile.xMin;
   }
-  const ident = charts[tile.i].ident;
-  const path = '/tiles/noaa/' + ident + '/' + zoom + '/' + tile.x + '/' + tile.y;
 
+  const path = (marine ? charts[tile.i].path : '/tiles/wikimedia/osm-intl/')
+    + zoom + '/' + tile.x + '/' + tile.y;
+
+  marine ^= true;
   const options = {
     host: 'localhost',
     path: path,
@@ -120,10 +126,10 @@ function nextTile(tile) {
   try {
     var req = https.get(options, function(resp) {
       if (resp.statusCode===204) {
-        console.log([ident, tile.x, tile.y]);
+        console.log([path, tile.x, tile.y]);
         tile.x = tile.xMax;
         updateStatus(null, tile);
-        return nextTile(tile);
+        return nextTile(tile, marine);
       }
       resp.on('end', function(err) {
         console.log([resp.statusCode, resp.statusMessage, path]);

@@ -899,9 +899,9 @@
             const now = new Date();
             if (app.tide.station && s.Id === app.tide.station.Id) {
               //
-              // same station? update every 30 minutes
+              // same station? update every 5 minutes
               //
-              if (now.getTime() - app.tide.chart.lastUpdated.getTime() < 30 * 60 * 1000) {
+              if (now.getTime() - app.tide.chart.lastUpdated.getTime() < 5 * 60 * 1000) {
                 return;
               }
             }
