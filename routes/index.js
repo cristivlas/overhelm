@@ -593,7 +593,7 @@ router.get('/search/:name/:lon/:lat', function(req, res, next) {
 
 
 /******************************************************************
- *
+ * Get current weather conditions from Weather Underground
  */
 router.get('/weather/:lon/:lat', function(req, res, next) {
   

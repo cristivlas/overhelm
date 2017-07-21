@@ -330,11 +330,14 @@
         icon.src = 'images/magnifier.png';
         button.appendChild(icon);
         button.title = 'Search';
+
         var handler = function() {
           alertify.prompt('', function(valid, value) {
             if (valid) {
               value = value.trim();
-              searchLocation(value, app.location.current);
+              if (value) {
+                searchLocation(value, app.location.current);
+              }
             }
           });
 
@@ -1264,7 +1267,6 @@
           'title': btn + '<a href="#" id="close-popup" class="close">&times;</a>'
         });
         if (!equalPoint(app.location.point, app.destination.point)) {
-          console.log(app.location);
           app.location.prev.point = app.location.point;
         }
         popup.setPosition(pos);
@@ -1286,12 +1288,12 @@
               + ' Humidity: ' + w.humidity
               + ' Visibility: ' + w.visibility + ' miles'
 
-            const forecast = 
-              'http://marine.weather.gov/MapClick.php?lat=' + coord[1] + '&lon=' + coord[0];
-
-            html += ' <a class="btn btn-primary btn-xs" target="_blank" href="'
-              + forecast + '">National Weather Service</a>';
-
+            if (!document.webkitIsFullScreen) {
+              const forecastUrl = 
+                'http://marine.weather.gov/MapClick.php?lat=' + coord[1] + '&lon=' + coord[0];
+              html += ' <a class="btn btn-primary btn-xs forecast" target="_blank" href="'
+                + forecastUrl + '">National Weather Service</a>';
+            }
             $(e).popover('destroy');
             $(e).popover({
               'animation': false,
@@ -1310,7 +1312,7 @@
 
 
       function searchLocation(name, coord) {
-
+ 
         function buildSelection(matches) {
           let selectHtml = '<b>Nearest Matches</b><br>';
           selectHtml += '<select id="searchResults" class="search-results">';
@@ -1367,7 +1369,7 @@
         xmlHttp.send();
       }
       
-      
+
       function convertDMS(coords) {
         return ol.coordinate.toStringHDMS(coords);
       }
