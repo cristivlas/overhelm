@@ -22,8 +22,8 @@ function lat2tile(lat,zoom)  {
     + 1/Math.cos(lat*Math.PI/180))/Math.PI)/2 *Math.pow(2,zoom));
 }
 
-const minZoom = 3;
-const maxZoom = 16;
+const minZoom = 13;
+const maxZoom = 18;
 
 let tile = { 
   i: -1,
