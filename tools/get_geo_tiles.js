@@ -1,15 +1,19 @@
+const fs = require('fs');
 const https = require('https');
 const geonames = require(__dirname + '/../routes/geonames.json');
 
 const start = new Date();
 
-function showETA(nFile) {
+function getETA(i, n) {
+  if (i > n) {
+    i = n;
+  }
   const now = new Date();
-  const speed = nFile / (now.getTime() - start.getTime());
-  const timeLeft = (geonames.length - nFile) / speed;
+  const speed = i / (now.getTime() - start.getTime());
+  const timeLeft = (n - i) / speed;
   let eta = new Date();
   eta.setTime(eta.getTime() + timeLeft);
-  console.log('***** ETA: ' + eta.toLocaleString() + ' *****');
+  return eta;
 }
 
 // http://wiki.openstreetmap.org/wiki/Slippy_map_tilenames
@@ -30,6 +34,28 @@ let tile = {
   zoom: maxZoom,
   nChart: -1,
   charts: []
+}
+
+let nTiles = 0;
+
+function updateStatus(done=false) {
+  const html = '<html><meta http-equiv="refresh" content="5">'
+    + '<body>Process '
+    + process.pid + '<div id="start"></div>'
+    + '<br>Locations: ' + tile.i + ' out of ' + geonames.length
+    + '<br>Current: ' + geonames[tile.i].ascii + ', ' + geonames[tile.i].state
+    + '<br>Tiles: ' + nTiles
+    + '<br><div id="eta"></div>'
+    + '</body>'
+    + '<script>document.getElementById("start").innerHTML="Started: " + new Date('
+    + start.getTime() + ').toLocaleString();document.getElementById("eta").innerHTML='
+    + '"ETA: " + new Date('
+    + getETA(tile.i, geonames.length).getTime() + ').toLocaleString()</script><br>'
+    + (done ? '<br>Completed.': '')
+    + '</html>';
+
+  const path = __dirname + '/../public/status-geo.html';
+  fs.writeFileSync(path, html);
 }
 
 
@@ -54,14 +80,14 @@ function nextTileAsync(callback) {
 
 
 function nextTile() {
-  showETA(tile.i);
-
   if (++tile.zoom > maxZoom) {
     tile.zoom = minZoom;
     if (++tile.nChart >= tile.charts.length) {
       if (++tile.i >= geonames.lenght) {
+        updateStatus(true);
         return false;
       }
+      updateStatus();
       tile.nChart = 0;
       tile.charts = geonames[tile.i].charts || [];
       if (!tile.charts.length) {
@@ -89,6 +115,9 @@ function nextTile() {
   }
   try {
     var req = https.get(options, function(resp) {
+      if (resp.statusCode===200) {
+        ++nTiles;
+      }
       resp.on('end', function(err) {
         console.log(path);
         if (err) {
