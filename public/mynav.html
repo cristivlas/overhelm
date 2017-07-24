@@ -125,9 +125,6 @@
       .ol-touch .show-tide {
         right: 0px;
       }
-      //.tablet .show-tide {
-      //  right: 0px;
-      //}
       .clock {
         top: 20em;
         right: .5em;
@@ -138,7 +135,11 @@
       }
       .ol-touch .clock {
         top: 150px;
+        //width: 95%;
         right: 0px;
+      }
+      .tablet .clock {
+        top: 160px;
       }
       .show-clock {
         top: 20em;
@@ -148,7 +149,9 @@
         top: 150px;
         right: 0px;
       }
-
+      .tablet .show-clock {
+        top: 160px;
+      }
       .tracking {
         top: 85px;
         left: .5em;
@@ -510,7 +513,10 @@
         const canvas = document.createElement('canvas');
         canvas.id = 'clock';
         canvas.width = canvas.height = 268; // best for iPhone
-        var element = document.createElement('div');
+        if (navigator.userAgent.match(/armv7/)) {
+          canvas.width = canvas.height = 278
+        }
+        let element = document.createElement('div');
         element.className = 'clock ol-unselectable ol-control';
         element.appendChild(canvas);
 
