@@ -103,6 +103,7 @@
         background: lightblue;
       }
       .tide-chart {
+        position: absolute;
         top: .5em;
         right: .5em;
         background: rgb(255,255,235);
@@ -126,6 +127,7 @@
         right: 0px;
       }
       .clock {
+        position: absolute;
         top: 20em;
         right: .5em;
         background: rgb(255,255,235);
@@ -135,7 +137,6 @@
       }
       .ol-touch .clock {
         top: 150px;
-        //width: 95%;
         right: 0px;
       }
       .tablet .clock {
@@ -266,7 +267,8 @@
           }
         },
         clock: {
-          visible: true
+          visible: true,
+          positioned: false
         }
       }
 
@@ -536,6 +538,7 @@
         icon.src = 'images/right-arrow.png';
         button.appendChild(icon);
         button.title = 'Hide clock';
+        button.id = 'showClock';
         var handler = function() {
           var elem = document.getElementById('clock').parentElement;
           if (!app.clock.visible) {
@@ -885,8 +888,6 @@
         }
 
         updateChartLayers(coord, view, function() {
-          const tideChartCtrl = new tideChartControl();
-
           if (!app.map) {
             app.map = new ol.Map({
               controls: ol.control.defaults({
@@ -894,7 +895,7 @@
                   collapsible: false,
                 }}
               ).extend([
-                tideChartCtrl,
+                new tideChartControl(),
                 new showTideControl(),
                 new clockControl(),
                 new showClockControl(),
@@ -903,7 +904,6 @@
                 new searchControl(),
                 new destControl(),
                 new speedControl(),
-                // new ol.control.ScaleLine({units: 'nautical'})
               ]),
               target: 'map',
               layers: [
@@ -919,8 +919,14 @@
 
             app.map.on('postrender', function() {
               showPopup();
+              if (!app.clock.positioned) {
+                app.clock.positione = true;
+                positionClock();
+              }
             });
+
             startClock();
+
           }
           app.location.point = pos;
           updateFeatures(pos);
@@ -937,6 +943,23 @@
 
         return pos;
 			}
+
+      /**
+       * Position the clock/compass widget relative to tide graph
+       */
+      function positionClock() {
+        let elem = document.getElementById('tideChart').parentElement;
+        const rect = elem.getBoundingClientRect();
+        console.log(rect);
+        elem = document.getElementById('clock');
+        elem.style.width = elem.style.height = rect.width + 'px';
+        elem = elem.parentElement;
+        elem.style.left = rect.left + 'px';
+        elem.style.top = (rect.bottom + 4) + 'px';
+        elem.style.width = elem.style.height = rect.width + 'px';
+        elem = document.getElementById('showClock').parentElement;
+        elem.style.top = (rect.bottom + 4) + 'px';
+      }
 
 
       function dateHelper(val) {

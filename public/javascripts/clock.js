@@ -142,15 +142,18 @@ function drawDegrees(ctx, radius) {
     ctx.strokeStyle='white';
     ctx.lineWidth = 1;
     if (num===180) {
-      ctx.strokeStyle=ctx.fillStyle='red';
+      ctx.strokeStyle='black';
+      ctx.fillStyle='red';
       //triangle/arrow
       ctx.beginPath();
-      ctx.lineWidth = 1;
-      ctx.moveTo(0, -radius*1.1);
-      ctx.lineTo(-radius*.05, -radius*.9);
-      ctx.lineTo( radius*.05, -radius*.9);
-      ctx.lineTo(0, -radius*1.1);
+      ctx.lineWidth = 2;
+      ctx.moveTo(0, -radius*1.05);
+      ctx.lineTo(-radius*.06, -radius*.875);
+      ctx.lineTo( radius*.06, -radius*.875);
+      ctx.lineTo(0, -radius*1.05);
       ctx.fill();
+      ctx.stroke();
+      ctx.strokeStyle=ctx.fillStyle='red';
       ctx.beginPath();
       ctx.font = radius*0.2 + "px arial";
       ctx.translate(0, -radius*.3);
