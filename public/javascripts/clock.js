@@ -140,17 +140,26 @@ function drawDegrees(ctx, radius) {
   const length = 0.45 * radius;
   for(let num = 0; num < 360 ; num += 6) {
     ctx.strokeStyle='white';
-    ctx.beginPath();
     ctx.lineWidth = 1;
     if (num===180) {
+      ctx.strokeStyle=ctx.fillStyle='red';
+      //triangle/arrow
+      ctx.beginPath();
+      ctx.lineWidth = 1;
+      ctx.moveTo(0, -radius*1.1);
+      ctx.lineTo(-radius*.05, -radius*.9);
+      ctx.lineTo( radius*.05, -radius*.9);
+      ctx.lineTo(0, -radius*1.1);
+      ctx.fill();
+      ctx.beginPath();
       ctx.font = radius*0.2 + "px arial";
       ctx.translate(0, -radius*.3);
-      ctx.lineWidth = 10;
-      ctx.strokeStyle=ctx.fillStyle='red';
+      ctx.lineWidth = 8;
       ctx.fillText('N', 0, 0);
       ctx.translate(0, radius*.3);
       ctx.stroke();
     }
+    ctx.beginPath();
     const ang = num * Math.PI / 180;
     ctx.moveTo(0,0);
     ctx.rotate(ang);
@@ -183,3 +192,4 @@ function drawCompass(ctx, radius) {
   drawDegrees(ctx, radius);
   ctx.rotate(-heading);
 }
+
