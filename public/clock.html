@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+<body>
+
+<canvas id="clock" width="900px" height="900px">
+</canvas>
+
+<script src="javascripts/clock.js"></script>
+<script src="javascripts/geolocation.js"></script>
+<script>
+  const geolocation = new Geolocation({
+    onSuccess: function(coord) {
+    },
+    onError: function(err) {
+    }
+  });
+  startClock();
+</script>
+</body>
+</html>

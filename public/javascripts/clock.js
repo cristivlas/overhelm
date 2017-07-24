@@ -15,9 +15,9 @@ function startClock() {
 
 function drawClock(ctx, radius) {
   drawFace(ctx, radius);
-  const heading = -geolocation.rotation;
+  drawDegrees2(ctx, radius);
+  const heading = geolocation.rotation;
   ctx.rotate(heading);
-  [w, h] = [clock.canvas.width, clock.canvas.height]
   drawDegrees(ctx, radius);
   ctx.rotate(-heading);
   drawMinutes(ctx, radius);
@@ -42,12 +42,16 @@ function drawFace(ctx, radius) {
   ctx.strokeStyle = 'lightblue';
   ctx.arc(0, 0, radius * 0.725, 0, 2*Math.PI);
   ctx.stroke(); 
-  
+
+  //compass reference lines 
   ctx.lineWidth = 1;
   ctx.strokeStyle = 'red';
   ctx.beginPath();
-  ctx.moveTo(0,-radius * .55);
+  ctx.moveTo(0,-radius * 1.1);
   ctx.lineTo(0,radius * .35);
+  ctx.stroke();
+  ctx.moveTo(-radius * 0.75, 0);
+  ctx.lineTo(radius * 0.75, 0);
   ctx.stroke();
 }
 
@@ -137,38 +141,46 @@ function drawHand(ctx, pos, length, width) {
 }
 
 function drawDegrees(ctx, radius) {
-  ctx.strokeStyle = 'white';
-  ctx.textBaseline="middle";
-  ctx.textAlign="center";
-  for(let num = 0; num < 12; ++num){
-    const ang = num * Math.PI / 6;
-    ctx.rotate(ang);
-    ctx.translate(0, -radius*0.625);
-    ctx.rotate(-ang);
-    ctx.font = radius*0.08 + "px arial";
-    ctx.fillStyle = 'white';
-    ctx.fillText((num * 30).toString(), 0, 0);
-    if (num===0) {
-      ctx.font = radius*0.2 + "px arial";
-      ctx.fillStyle = 'red';
-      ctx.translate(0, radius*.3);
-      ctx.fillText('N', 0, 0);
-      ctx.translate(0, -radius*.3);
-    }
-    ctx.rotate(ang);
-    ctx.translate(0, radius*0.625);
-    ctx.rotate(-ang);
-  }
   const length = 0.45 * radius;
-  ctx.lineWidth = 1;
-  for(let num = 0; num < 360; num += 6){
-    const ang = num * Math.PI / 180;
+  for(let num = 0; num < 12 ; ++num) {
     ctx.beginPath();
+    ctx.strokeStyle='white';
+    ctx.lineWidth = 1;
+    if (num===6) {
+      ctx.font = radius*0.2 + "px arial";
+      ctx.translate(0, -radius*.3);
+      ctx.lineWidth = 10;
+      //ctx.strokeStyle=ctx.fillStyle='red';
+      ctx.fillText('N', 0, 0);
+      ctx.translate(0, radius*.3);
+      ctx.stroke();
+    }
+    const ang = num * 30 * Math.PI / 180;
     ctx.moveTo(0,0);
     ctx.rotate(ang);
     ctx.moveTo(0, 0.55 * radius);
     ctx.lineTo(0, length);
     ctx.stroke();
+    ctx.rotate(-ang);
+  }
+}
+
+function drawDegrees2(ctx, radius) {
+  ctx.strokeStyle='white';
+  ctx.textBaseline='middle';
+  ctx.textAlign='center';
+  const head = geolocation.rotation;
+  for(let num = 0; num < 12; ++num) {
+    const ang = num * Math.PI / 6 + head;
+    ctx.rotate(ang);
+    ctx.translate(0, -radius*0.625);
+    ctx.rotate(-ang);
+    ctx.font = radius*0.08 + "px arial";
+    ctx.fillStyle = 'white';
+    const deg = num * 30
+    ctx.fillText(deg.toString(), 0, 0);
+    ctx.rotate(ang);
+    ctx.translate(0, radius*0.625);
     ctx.rotate(-ang);
   }
 }
