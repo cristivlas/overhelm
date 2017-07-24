@@ -513,8 +513,9 @@
         const canvas = document.createElement('canvas');
         canvas.id = 'clock';
         canvas.width = canvas.height = 268; // best for iPhone
+        // hack for the Raspberry PI
         if (navigator.userAgent.match(/armv7/)) {
-          canvas.width = canvas.height = 278
+          canvas.width = canvas.height = 277;
         }
         let element = document.createElement('div');
         element.className = 'clock ol-unselectable ol-control';

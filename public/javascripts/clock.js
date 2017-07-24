@@ -15,14 +15,11 @@ function startClock() {
 
 function drawClock(ctx, radius) {
   drawFace(ctx, radius);
-  const heading = 2 * Math.PI - geolocation.rotation;
-  drawDegrees2(ctx, radius, heading);
-  ctx.rotate(heading);
-  drawDegrees(ctx, radius);
-  ctx.rotate(-heading);
   drawMinutes(ctx, radius);
   drawNumbers(ctx, radius);
   drawTime(ctx, radius);
+  const heading = 2 * Math.PI - geolocation.rotation;
+  drawCompass(ctx, radius, heading);
 }
 
 function drawFace(ctx, radius) {
@@ -151,7 +148,6 @@ function drawDegrees(ctx, radius) {
       ctx.translate(0, -radius*.3);
       ctx.lineWidth = 10;
       ctx.strokeStyle=ctx.fillStyle='red';
-      //ctx.strokeStyle=ctx.fillStyle='lightblue';
       ctx.fillText('N', 0, 0);
       ctx.translate(0, radius*.3);
       ctx.stroke();
@@ -166,12 +162,12 @@ function drawDegrees(ctx, radius) {
   }
 }
 
-function drawDegrees2(ctx, radius, head) {
+function drawCompass(ctx, radius, heading) {
   ctx.strokeStyle='white';
   ctx.textBaseline='middle';
   ctx.textAlign='center';
   for(let num = 0; num < 12; ++num) {
-    const ang = num * Math.PI / 6 + head;
+    const ang = num * Math.PI / 6 + heading;
     ctx.rotate(ang);
     ctx.translate(0, -radius*0.625);
     ctx.rotate(-ang);
@@ -183,4 +179,7 @@ function drawDegrees2(ctx, radius, head) {
     ctx.translate(0, radius*0.625);
     ctx.rotate(-ang);
   }
+  ctx.rotate(heading);
+  drawDegrees(ctx, radius);
+  ctx.rotate(-heading);
 }
