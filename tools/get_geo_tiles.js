@@ -44,6 +44,7 @@ function updateStatus(done=false) {
     + process.pid + '<div id="start"></div>'
     + '<br>Locations: ' + tile.i + ' out of ' + geonames.length
     + '<br>Current: ' + geonames[tile.i].ascii + ', ' + geonames[tile.i].state
+    + '<br>Charts: ' + geonames[tile.i].charts
     + '<br>Tiles: ' + nTiles
     + '<br><div id="eta"></div>'
     + '</body>'

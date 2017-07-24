@@ -16,6 +16,7 @@
     <link rel="stylesheet" href="stylesheets/keyboard.min.css" type="text/css">
 
     <script src="javascripts/geolocation.js"></script>
+    <script src="javascripts/clock.js"></script>
 
     <script src="lib/alertify.min.js"></script>
     <script src="lib/OpenLayers/4.2.0/ol.js"></script>
@@ -124,9 +125,30 @@
       .ol-touch .show-tide {
         right: 0px;
       }
-      .tablet .show-tide {
+      //.tablet .show-tide {
+      //  right: 0px;
+      //}
+      .clock {
+        top: 20em;
+        right: .5em;
+        background: rgb(255,255,235);
+        opacity: .95;
+        border-radius: 8px;
+        box-shadow: 3px 3px 4px rgba(50,50,50,.5);
+      }
+      .ol-touch .clock {
+        top: 150px;
         right: 0px;
       }
+      .show-clock {
+        top: 20em;
+        right: .5em;
+      }
+      .ol-touch .show-clock {
+        top: 150px;
+        right: 0px;
+      }
+
       .tracking {
         top: 85px;
         left: .5em;
@@ -183,9 +205,6 @@
         position: absolute;
         left: .5em;
         top: .4em;
-        color: white;
-        background:rgba(0,65,135,.5);
-        border-radius: 6px;
       }
     </style>
     <style type="text/css">
@@ -207,7 +226,7 @@
 
     <script>
       const defaultZoom = 13;
-      const locationTimeout = 3000;
+      const locationTimeout = 1000;
 
       var popup = null;
       var lastInteraction = null;
@@ -242,6 +261,9 @@
             lastUpdated: new Date(),
             visible: true,
           }
+        },
+        clock: {
+          visible: true
         }
       }
 
@@ -477,6 +499,62 @@
         });
       }
       ol.inherits(showTideControl, ol.control.Control);
+
+
+      /**
+       * Custom control for clock / compass
+       */
+      const clockControl = function(opt_options) {
+        const options = opt_options || {};
+
+        const canvas = document.createElement('canvas');
+        canvas.id = 'clock';
+        canvas.width = canvas.height = 268; // best for iPhone
+        var element = document.createElement('div');
+        element.className = 'clock ol-unselectable ol-control';
+        element.appendChild(canvas);
+
+        ol.control.Control.call(this, {
+          element: element,
+          target: options.target
+        });
+      }
+      ol.inherits(clockControl, ol.control.Control);
+      
+      const showClockControl = function(opt_options) {
+        const options = opt_options || {};
+
+        const button = document.createElement('button');
+        const icon = document.createElement('img');
+        icon.src = 'images/right-arrow.png';
+        button.appendChild(icon);
+        button.title = 'Hide clock';
+        var handler = function() {
+          var elem = document.getElementById('clock').parentElement;
+          if (!app.clock.visible) {
+            elem.style.visibility = 'visible';
+            icon.src = 'images/right-arrow.png';
+            button.title = 'Hide clock';
+          }
+          else {
+            elem.style.visibility = 'hidden';
+            icon.src = 'images/left-arrow.png';
+            button.title = 'Show clock';
+          }
+          app.clock.visible ^= true;
+        }
+        button.addEventListener('click', handler, false);
+
+        var element = document.createElement('div');
+        element.className = 'show-clock ol-custom ol-unselectable ol-control';
+        element.appendChild(button);
+
+        ol.control.Control.call(this, {
+          element: element,
+          target: options.target
+        });
+      }
+      ol.inherits(showClockControl, ol.control.Control);
 
 
 		  /**
@@ -811,6 +889,8 @@
               ).extend([
                 tideChartCtrl,
                 new showTideControl(),
+                new clockControl(),
+                new showClockControl(),
 								new locationControl({coords: coord}),
                 new trackingControl(),
                 new searchControl(),
@@ -833,6 +913,7 @@
             app.map.on('postrender', function() {
               showPopup();
             });
+            startClock();
           }
           app.location.point = pos;
           updateFeatures(pos);
@@ -1248,7 +1329,7 @@
           const d = getDistanceFromLonLat(app.destination.coord, app.location.current) * 3440;
           html += distance(d);
           html += '<div id="set-course" display: none></div>';
-          btn  += '<button type="button" class="set-course" id="cancel-course">Cancel course</button>';
+          btn  += '<button class="set-course btn btn-primary btn-xs" id="cancel-course">Cancel course</button>';
           app.location.prev.name = app.destination.place.name;
           if (app.destination.place.state) {
             app.location.prev.name += ', ' + app.destination.place.state;
@@ -1257,7 +1338,7 @@
         else {
           html += distance(place.dist);
           html += '<div id="cancel-course" display: none></div>';
-          btn += '<button type="button" class="set-course" id="set-course">Set course</button>';
+          btn += '<button class="set-course btn btn-primary btn-xs" id="set-course">Set course</button>';
           app.location.prev.name = place.name;
           if (place.state) {
             app.location.prev.name += ', ' + place.state;
