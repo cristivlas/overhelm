@@ -15,8 +15,8 @@ function startClock() {
 
 function drawClock(ctx, radius) {
   drawFace(ctx, radius);
-  drawDegrees2(ctx, radius);
   const heading = geolocation.rotation;
+  drawDegrees2(ctx, radius, heading);
   ctx.rotate(heading);
   drawDegrees(ctx, radius);
   ctx.rotate(-heading);
@@ -142,20 +142,21 @@ function drawHand(ctx, pos, length, width) {
 
 function drawDegrees(ctx, radius) {
   const length = 0.45 * radius;
-  for(let num = 0; num < 12 ; ++num) {
-    ctx.beginPath();
+  for(let num = 0; num < 360 ; num += 6) {
     ctx.strokeStyle='white';
+    ctx.beginPath();
     ctx.lineWidth = 1;
-    if (num===6) {
+    if (num===180) {
       ctx.font = radius*0.2 + "px arial";
       ctx.translate(0, -radius*.3);
       ctx.lineWidth = 10;
       //ctx.strokeStyle=ctx.fillStyle='red';
+      ctx.strokeStyle=ctx.fillStyle='lightblue';
       ctx.fillText('N', 0, 0);
       ctx.translate(0, radius*.3);
       ctx.stroke();
     }
-    const ang = num * 30 * Math.PI / 180;
+    const ang = num * Math.PI / 180;
     ctx.moveTo(0,0);
     ctx.rotate(ang);
     ctx.moveTo(0, 0.55 * radius);
@@ -165,11 +166,10 @@ function drawDegrees(ctx, radius) {
   }
 }
 
-function drawDegrees2(ctx, radius) {
+function drawDegrees2(ctx, radius, head) {
   ctx.strokeStyle='white';
   ctx.textBaseline='middle';
   ctx.textAlign='center';
-  const head = geolocation.rotation;
   for(let num = 0; num < 12; ++num) {
     const ang = num * Math.PI / 6 + head;
     ctx.rotate(ang);
