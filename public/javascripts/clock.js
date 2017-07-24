@@ -15,7 +15,7 @@ function startClock() {
 
 function drawClock(ctx, radius) {
   drawFace(ctx, radius);
-  const heading = geolocation.rotation;
+  const heading = 2 * Math.PI - geolocation.rotation;
   drawDegrees2(ctx, radius, heading);
   ctx.rotate(heading);
   drawDegrees(ctx, radius);
@@ -150,8 +150,8 @@ function drawDegrees(ctx, radius) {
       ctx.font = radius*0.2 + "px arial";
       ctx.translate(0, -radius*.3);
       ctx.lineWidth = 10;
-      //ctx.strokeStyle=ctx.fillStyle='red';
-      ctx.strokeStyle=ctx.fillStyle='lightblue';
+      ctx.strokeStyle=ctx.fillStyle='red';
+      //ctx.strokeStyle=ctx.fillStyle='lightblue';
       ctx.fillText('N', 0, 0);
       ctx.translate(0, radius*.3);
       ctx.stroke();
