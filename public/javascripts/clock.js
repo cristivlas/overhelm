@@ -18,8 +18,7 @@ function drawClock(ctx, radius) {
   drawMinutes(ctx, radius);
   drawNumbers(ctx, radius);
   drawTime(ctx, radius);
-  const heading = 2 * Math.PI - geolocation.rotation;
-  drawCompass(ctx, radius, heading);
+  drawCompass(ctx, radius);
 }
 
 function drawFace(ctx, radius) {
@@ -162,7 +161,8 @@ function drawDegrees(ctx, radius) {
   }
 }
 
-function drawCompass(ctx, radius, heading) {
+function drawCompass(ctx, radius) {
+  const heading = 2 * Math.PI - geolocation.rotation;
   ctx.strokeStyle='white';
   ctx.textBaseline='middle';
   ctx.textAlign='center';
