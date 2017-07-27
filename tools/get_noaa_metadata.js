@@ -3,6 +3,9 @@ const fs = require('fs');
 const xml2js = require('xml2js');
 
 const parser = new xml2js.Parser();
+//
+// TODO: download this from NOAA on the fly and remove from GIT
+//
 const file = 'RNCProdCat_19115.xml';
 
 let metadata = {}

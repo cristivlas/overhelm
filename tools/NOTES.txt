@@ -1,0 +1,12 @@
+
+Thu Jul 27 09:00:56 PDT 2017
+
+1) The 5" display is crap (doesn't do pinch gestures, hard to read).
+   TODO: instead of a "tablet" style based on platform (e.g. arm7)
+   the screen size should (also) be used.
+
+2) When the device / computer has not changed timezone, the clock and
+   tide times show in the old timezone. I will try and modify the 
+   mkgeonames scripts to include the timezone in the geonames "database"
+   and adjust based on the current location.
+ 

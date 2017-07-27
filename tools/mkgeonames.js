@@ -1,3 +1,8 @@
+//
+// This script is driven by the mkgeonames.sh shell script,
+// which takes a country code (CA or US) and expects a ${country}.txt
+// file to exist (downloaded from geonames.org) in the tools directory
+//
 const fs = require('fs');
 const https = require('https');
 const parse = require('csv-parse');
@@ -200,8 +205,9 @@ function processRecord(data, i) {
       ascii: parts[2],
       lat: parts[4],
       lon: parts[5],
-      elevation: parts[16],
       code: parts[7],
+      elevation: parts[16],
+      timezone: parts[18]
     }
 
     if (filter(loc)) {
@@ -225,7 +231,7 @@ function processRecord(data, i) {
   let req = https.get(httpsOpt, function(resp) {
     resp.on('end', function(err) {
       if (err) {
-        return;
+        return processRecord(data, ++i);
       }
       charts = JSON.parse(charts);
       const len = charts.length;
