@@ -4,8 +4,6 @@
 
 (echo [
 tail -n +2 timeZones.txt | cut -f1-4 | while read country tz gmt dst; do
-  if [ "$country" = "US" -o "$country" = "CA" ]; then
-    echo { '"tz:"':'"'$tz'"','"gmt"':'"'$gmt'"','"dst"':'"'$dst'"','"cntry"':'"'$country'"' },
-  fi
+    echo { '"id"':'"'$tz'"','"gmt"':'"'$gmt'"','"dst"':'"'$dst'"' },
 done | sed -e ' $s/.$//'
 echo ]) > tz.json

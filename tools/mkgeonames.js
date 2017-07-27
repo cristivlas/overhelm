@@ -6,6 +6,7 @@
 const fs = require('fs');
 const https = require('https');
 const parse = require('csv-parse');
+const tz = require(__dirname + '/tz.json');
 
 const maxElevation = 50;
 const filename = process.argv[2];
@@ -190,6 +191,16 @@ function filter(loc) {
 }
 
 
+function tzOffs(timezone) {
+  for (let i=0; i != tz.length; ++i) {
+    if (tz[i].id===timezone) {
+      return [tz[i].gmt, tz[i].dst];
+    }
+  }
+  return 0
+}
+
+
 function processRecord(data, i) {
   if (i >= data.length) {
     return false;
@@ -207,7 +218,7 @@ function processRecord(data, i) {
       lon: parts[5],
       code: parts[7],
       elevation: parts[16],
-      timezone: parts[18]
+      tz: tzOffs(parts[17])
     }
 
     if (filter(loc)) {
@@ -226,13 +237,19 @@ function processRecord(data, i) {
 
   let charts = '';
 
-  httpsOpt.path = '/tilesets/noaa/' + loc.lon + '/' + loc.lat;
+  httpsOpt.path = '/tilesets/noaa/' + loc.lon + '/' + loc.lat + '/0/0/0/0';
 
   let req = https.get(httpsOpt, function(resp) {
+    if (resp.statusCode !== 200) {
+      console.log(resp.statusMessage);
+      throw new Error(resp.statusCode);
+    }
+
     resp.on('end', function(err) {
       if (err) {
         return processRecord(data, ++i);
       }
+
       charts = JSON.parse(charts);
       const len = charts.length;
       if (len) {

@@ -1,4 +1,4 @@
-#!/usr/bin/bash
+#!/usr/bin/env bash
 
 prefix=geonames-
 country=${1:-US}
@@ -6,7 +6,7 @@ echo $country
 
 rm -f ${prefix}*
 
-split --lines=20000 --suffix-length=2 ${country}.txt $prefix
+split -l 20000 -a 2 ${country}.txt $prefix
 
 rm -rf ${country}
 mkdir -p ${country}
