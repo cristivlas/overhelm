@@ -716,6 +716,7 @@
             if (matches && matches.length) {
               app.tzOffset = -matches[0].tz[1] * 3600 * 1000;
               app.tide.chart.lastUpdated.setTime(0);
+              updateWaterLevel(coord);
             }
           }
         }
@@ -1141,6 +1142,8 @@
                     const fillStyle = ctx.fillStyle;
                     const font = ctx.font;
                     ctx.fillStyle = 'navy';
+                    ctx.textBaseline='middle';
+                    ctx.textAlign='left';
                     ctx.font = 'bold 18px calibri';
                     const meta = this.getDatasetMeta(0);
                     for (let i = 0; i != meta.data.length; ++i) {

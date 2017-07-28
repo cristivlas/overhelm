@@ -17,9 +17,9 @@ function drawClock(ctx, radius) {
   drawFace(ctx, radius);
   drawMinutes(ctx, radius);
   drawNumbers(ctx, radius);
+  drawSpeed(ctx, radius);
   drawTime(ctx, radius);
   drawCompass(ctx, radius);
-  drawSpeed(ctx, radius);
 }
 
 function drawFace(ctx, radius) {
@@ -54,9 +54,9 @@ function drawFace(ctx, radius) {
 
 function drawNumbers(ctx, radius) {
   ctx.fillStyle = 'white';
-  ctx.font = radius*0.15 + "px arial";
-  ctx.textBaseline="middle";
-  ctx.textAlign="center";
+  ctx.font = radius*0.15 + 'px arial';
+  ctx.textBaseline='middle';
+  ctx.textAlign='center';
   for(let num = 1; num < 13; num++){
     const ang = num * Math.PI / 6;
     ctx.rotate(ang);
@@ -207,11 +207,15 @@ function drawCompass(ctx, radius) {
 }
 
 function drawSpeed(ctx, radius) {
-  ctx.translate(0, radius * .25);
+  ctx.translate(0, radius * .2);
+  const x = -radius * 0.3;
+  const y = -radius * 0.1;
   ctx.beginPath();
-  ctx.font = radius*0.15 + "px arial";
-  ctx.fillStyle = 'lime';
-  ctx.fillText(Math.floor(geolocation.speed * 100) / 100 + ' kts', 0, 0);
+  ctx.fillStyle = 'lightblue';
+  ctx.fillRect(x, y, -2*x, -2*y);
+  ctx.font = radius*0.12 + 'px arial black';
+  ctx.fillStyle = 'black';
+  ctx.fillText(Math.floor(geolocation.speed * 10) / 10 + ' kts', 0, 0);
   ctx.stroke();
-  ctx.translate(0, -radius * .25);
+  ctx.translate(0, -radius * .2);
 }
