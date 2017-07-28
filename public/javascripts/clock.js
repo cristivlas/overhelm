@@ -19,6 +19,7 @@ function drawClock(ctx, radius) {
   drawNumbers(ctx, radius);
   drawTime(ctx, radius);
   drawCompass(ctx, radius);
+  drawSpeed(ctx, radius);
 }
 
 function drawFace(ctx, radius) {
@@ -205,3 +206,12 @@ function drawCompass(ctx, radius) {
   ctx.rotate(-heading);
 }
 
+function drawSpeed(ctx, radius) {
+  ctx.translate(0, radius * .25);
+  ctx.beginPath();
+  ctx.font = radius*0.15 + "px arial";
+  ctx.fillStyle = 'lime';
+  ctx.fillText(Math.floor(geolocation.speed * 100) / 100 + ' kts', 0, 0);
+  ctx.stroke();
+  ctx.translate(0, -radius * .25);
+}

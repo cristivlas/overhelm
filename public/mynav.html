@@ -189,22 +189,6 @@
 				left: .5em;
         opacity: .95;
       }
-      .speed {
-        bottom: 4em;
-        left: .5em;
-        width: 120px;
-        height: 25px;
-        text-align: center;
-        font-size: 120%;
-        font-weight: bold;
-        font-family: monospace;
-        color: white;
-        background:rgba(0,65,135,.9);
-        opacity: 0.8;
-      }
-      .speed:hover {
-        color: black;
-      }
       .set-course {
         position: absolute;
         left: .5em;
@@ -584,23 +568,6 @@
 			ol.inherits(locationControl, ol.control.Control);
 
 
-      /**
-			 * Custom control for displaying speed in knots
-			 */
-			const speedControl = function(opt_options) {
-				const options = opt_options || {};
-				var element = document.createElement('div');
-			  element.className = 'speed ol-unselectable ol-control';
-				element.id = 'speed';
-        element.innerHTML = '0 kts';
-				ol.control.Control.call(this, {
-					element: element,
-					target: options.target
-				});
-			}
-			ol.inherits(speedControl, ol.control.Control);
-				
-
       function getCourseLayer(pos, dest) {
         return new ol.layer.Vector({
           source: new ol.source.Vector({
@@ -851,11 +818,6 @@
           $(popup.getElement()).popover('destroy');
           popup.visible = popup.shown = false;
         }
-
-        let elem = document.getElementById('speed');
-        if (elem) {
-          elem.innerHTML = Math.floor(geolocation.speed * 100) / 100 + ' kts';
-        }
         const pos = ol.proj.fromLonLat(coord);
 
         const view = app.map ? app.map.getView() : new ol.View({
@@ -920,7 +882,6 @@
                 new trackingControl(),
                 new searchControl(),
                 new destControl(),
-                new speedControl(),
               ]),
               target: 'map',
               layers: [
