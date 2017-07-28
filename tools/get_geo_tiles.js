@@ -27,7 +27,7 @@ function lat2tile(lat,zoom)  {
 }
 
 const minZoom = 13;
-const maxZoom = 18;
+const maxZoom = 17;
 
 let tile = { 
   i: -1,
