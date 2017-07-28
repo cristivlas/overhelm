@@ -108,7 +108,7 @@
         right: .5em;
         background: rgb(255,255,235);
         opacity: .95;
-        width: 30%;
+        width: 25%;
         border-radius: 8px;
         box-shadow: 3px 3px 4px rgba(50,50,50,.5);
       }
@@ -1039,8 +1039,6 @@
             app.tide.station = s;
             app.tide.chart.lastUpdated = now;
 
-            now.setTime(now.getTime() + now.getTimezoneOffset() * 60000 - app.tzOffset);
-
             const stationInfo = 'Station: ' + s.Id + ' ' + s.Name + ' ' + s.State;
             const currentTime = now.toISOString();
 
@@ -1053,7 +1051,6 @@
             else {
               url = 'tides/' + app.tide.station.Id + '/' + currentTime;
             }
-            console.log(url);
 
             xmlHttp.onreadystatechange = processWaterLevelRequest.bind(null, stationInfo);
             xmlHttp.open("GET", url);
@@ -1265,7 +1262,6 @@
           console.log(xmlHttp.responseText);
           const station = JSON.parse(xmlHttp.responseText);
           const now = new Date();            
-          now.setTime(now.getTime() + now.getTimezoneOffset() * 60000 - app.tzOffset);
 
           const url = 
               'https://tidesandcurrents.noaa.gov/api/datagetter?product=currents'
