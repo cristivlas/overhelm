@@ -94,6 +94,7 @@ function drawMinutes(ctx, radius) {
 
 function drawTime(ctx, radius){
     var now = new Date();
+    now.setTime(now.getTime() + now.getTimezoneOffset() * 60000 - app.tzOffset);
     var hour = now.getHours();
     var minute = now.getMinutes();
     var second = now.getSeconds();

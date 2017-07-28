@@ -52,7 +52,8 @@ for (let i = 0; i != geonames.length; ) {
     lat: g.lat,
     lon: g.lon,
     state: g.state,
-    code: g.code
+    code: g.code,
+    tz: g.tz
   });
   i = j;
 }

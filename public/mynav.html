@@ -108,7 +108,7 @@
         right: .5em;
         background: rgb(255,255,235);
         opacity: .95;
-        width: 20%;
+        width: 30%;
         border-radius: 8px;
         box-shadow: 3px 3px 4px rgba(50,50,50,.5);
       }
@@ -117,7 +117,7 @@
         right: 0px;
       }
       .tablet .tide-chart {
-        width: 15%;
+        width: 35%;
       }
       .show-tide {
         top: .5em;
@@ -239,6 +239,7 @@
         map: null,
         tileset: null,
         zoom: defaultZoom,
+        tzOffset: (new Date()).getTimezoneOffset() * 60000,
 
         layers: {
           charts: [],
@@ -268,7 +269,6 @@
         },
         clock: {
           visible: true,
-          positioned: false
         }
       }
 
@@ -740,6 +740,22 @@
       }
 
 
+      function getTimezoneOffset(coord) {
+        const url = 'search/nearby/' + coord[0] + '/' + coord[1];
+        const xmlHttp = new XMLHttpRequest();
+        xmlHttp.onreadystatechange = function() {
+          if (xmlHttp.readyState === 4 && xmlHttp.status === 200) {
+            const matches = JSON.parse(xmlHttp.responseText);
+            if (matches && matches.length) {
+              app.tzOffset = -matches[0].tz[1] * 3600 * 1000;
+              app.tide.chart.lastUpdated.setTime(0);
+            }
+          }
+        }
+        xmlHttp.open('GET', url);
+        xmlHttp.send();
+      }
+
       /**
        * Ask the backend for the best chart tilesets for the given coordinates
        * and recompute the chart layers if necessary (if tilesets changed).
@@ -750,6 +766,7 @@
 
         getChartTilesets(coord, extent, function(tileset) {
           if (tileset !== app.tileset) {
+            getTimezoneOffset(coord);
             app.tileset = tileset;
             console.log('--- Tileset changed ---');
             //
@@ -919,10 +936,7 @@
 
             app.map.on('postrender', function() {
               showPopup();
-              if (!app.clock.positioned) {
-                app.clock.positione = true;
-                positionClock();
-              }
+              positionClock();
             });
 
             startClock();
@@ -950,7 +964,6 @@
       function positionClock() {
         let elem = document.getElementById('tideChart').parentElement;
         const rect = elem.getBoundingClientRect();
-        console.log(rect);
         elem = document.getElementById('clock');
         elem.style.width = elem.style.height = rect.width + 'px';
         elem = elem.parentElement;
@@ -1014,6 +1027,7 @@
             let s = JSON.parse(xmlHttp.responseText);
 
             const now = new Date();
+
             if (app.tide.station && s.Id === app.tide.station.Id) {
               //
               // same station? update every 5 minutes
@@ -1025,8 +1039,9 @@
             app.tide.station = s;
             app.tide.chart.lastUpdated = now;
 
-            const stationInfo = 'Station: ' + s.Id + ' ' + s.Name + ' ' + s.State;
+            now.setTime(now.getTime() + now.getTimezoneOffset() * 60000 - app.tzOffset);
 
+            const stationInfo = 'Station: ' + s.Id + ' ' + s.Name + ' ' + s.State;
             const currentTime = now.toISOString();
 
             const useNOAAData = location.search == '?noaa';
@@ -1056,7 +1071,8 @@
             const arr = t.split(/[- :]/);
             const date = new Date(arr[0], arr[1]-1, arr[2], arr[3], arr[4]);
             // Convert to local time
-            date.setTime(date.getTime() - date.getTimezoneOffset() * 60000);
+            date.setTime(date.getTime() - app.tzOffset);
+
             const a = date.toString().split(' ');
             const timeString = a[0]
               + ' ' + dateHelper(date.getHours())
@@ -1081,8 +1097,9 @@
               pointRadius: new Array(predictions.length).fill(0),
             } ]
 
-            const now = new Date();
             const data = datasets[0].data;
+            const now = new Date();
+            now.setTime(now.getTime() + now.getTimezoneOffset() * 60000 - app.tzOffset);
 
             let closest = 0;
             for (let i = 0; i < predictions.length; ++i) {
@@ -1248,6 +1265,8 @@
           console.log(xmlHttp.responseText);
           const station = JSON.parse(xmlHttp.responseText);
           const now = new Date();            
+          now.setTime(now.getTime() + now.getTimezoneOffset() * 60000 - app.tzOffset);
+
           const url = 
               'https://tidesandcurrents.noaa.gov/api/datagetter?product=currents'
               + formatRequestRange(now, station.Id);

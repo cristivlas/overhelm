@@ -1,20 +1,35 @@
 <!DOCTYPE html>
 <html>
-<body>
-
-<canvas id="clock" width="900px" height="900px">
-</canvas>
-
+<link rel="stylesheet" href="stylesheets/alertify.core.css" type="text/css">
+<link rel="stylesheet" href="stylesheets/alertify.bootstrap.css" type="text/css">
+<script src="lib/alertify.min.js"></script>
 <script src="javascripts/clock.js"></script>
 <script src="javascripts/geolocation.js"></script>
+<body>
+
+<canvas id="clock" width="600px" height="600px">
+</canvas>
+
 <script>
+
+  app = {
+    tzOffset: (new Date()).getTimezoneOffset() * 60000,
+  }
   const geolocation = new Geolocation({
     onSuccess: function(coord) {
     },
     onError: function(err) {
-    }
+    },
   });
-  startClock();
+  
+  onload = function() {
+    var elem = document.getElementById('clock');
+    var size = Math.min(window.innerWidth, window.innerHeight);
+    elem.style.height = elem.style.width = size + 'px';
+  
+    geolocation.start();
+    startClock();
+  }
 </script>
 </body>
 </html>
