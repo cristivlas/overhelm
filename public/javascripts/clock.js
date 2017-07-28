@@ -160,7 +160,7 @@ function drawDegrees(ctx, radius) {
       ctx.font = radius*0.2 + "px arial";
       ctx.translate(0, -radius*.3);
       ctx.lineWidth = 8;
-      ctx.fillText('N', 0, 0);
+      //ctx.fillText('N', 0, 0);
       ctx.translate(0, radius*.3);
       ctx.stroke();
     }
@@ -213,7 +213,7 @@ function drawSpeed(ctx, radius) {
   ctx.beginPath();
   ctx.fillStyle = 'lightblue';
   ctx.fillRect(x, y, -2*x, -2*y);
-  ctx.font = radius*0.12 + 'px arial black';
+  ctx.font = radius*0.125 + 'px arial black';
   ctx.fillStyle = 'black';
   ctx.fillText(Math.floor(geolocation.speed * 10) / 10 + ' kts', 0, 0);
   ctx.stroke();
