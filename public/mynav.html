@@ -188,6 +188,8 @@
         font-family: monospace;
 				bottom: 2em;
         opacity: .95;
+        text-align: center;
+        box-shadow: 2px 2px 2px rgba(50,50,50,.5);
       }
       .set-course {
         position: absolute;
@@ -934,6 +936,17 @@
         elem.style.width = elem.style.height = rect.width + 'px';
         elem = document.getElementById('showClock').parentElement;
         elem.style.top = (rect.bottom + 4) + 'px';
+
+        positionLocation();
+      }
+
+
+      function positionLocation() {
+        let elem = document.getElementById('tideChart').parentElement;
+        const rect = elem.getBoundingClientRect();
+        elem = document.getElementById('location');
+        elem.style.left = rect.left + 'px';
+        elem.style.width = rect.width + 'px';
       }
 
 
