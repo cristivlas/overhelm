@@ -17,8 +17,8 @@ function drawClock(ctx, radius) {
   drawFace(ctx, radius);
   drawMinutes(ctx, radius);
   drawNumbers(ctx, radius);
-  drawSpeed(ctx, radius);
   drawTime(ctx, radius);
+  drawSpeed(ctx, radius);
   drawCompass(ctx, radius);
 }
 
@@ -213,9 +213,12 @@ function drawSpeed(ctx, radius) {
   ctx.beginPath();
   ctx.fillStyle = 'lightblue';
   ctx.fillRect(x, y, -2*x, -2*y);
-  ctx.font = radius*0.125 + 'px arial black';
+  ctx.lineWidth=2;
+  ctx.rect(x+2, y+2, -2*x-4, -2*y-4);
   ctx.fillStyle = 'black';
+  ctx.font = radius*0.125 + 'px arial black';
   ctx.fillText(Math.floor(geolocation.speed * 10) / 10 + ' kts', 0, 0);
   ctx.stroke();
   ctx.translate(0, -radius * .2);
 }
+
