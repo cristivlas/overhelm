@@ -635,7 +635,7 @@
         let rotation = 0;
         let iconUrl = 'images/view.png';
         if (geolocation.isTracking()) {
-          iconUrl = 'images/marker.png';
+          iconUrl = 'images/compass.png';
           rotation = geolocation.rotation;
         }
         let iconStyle = new ol.style.Style({
@@ -663,7 +663,7 @@
               anchor: [0.5, 0.5],
               anchorXUnits: 'fraction',
               anchorYUnits: 'fraction',
-              src: 'images/marker.png',
+              src: 'images/compass.png',
               rotateWithView: true,
               rotation: geolocation.rotation
             })
