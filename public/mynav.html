@@ -608,7 +608,9 @@
           if (equalPoint(app.destination.point, pos)) {
             pos = app.location.prev.point;
           }
-
+          else if (!geolocation.isTracking()) {
+            return;
+          }
           app.layers.course = getCourseLayer(pos, app.destination.point);
           app.map.addLayer(app.layers.course);
         }
