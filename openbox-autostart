@@ -1,5 +1,6 @@
 xset -dpms
 xset s off
+@unclutter -idle 0
 /usr/local/ragnar/start_chrome.sh
 sudo killall -9 lightdm
 

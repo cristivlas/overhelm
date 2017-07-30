@@ -18,8 +18,8 @@ function drawClock(ctx, radius) {
   drawMinutes(ctx, radius);
   drawNumbers(ctx, radius);
   drawTime(ctx, radius);
-  drawSpeed(ctx, radius);
   drawCompass(ctx, radius);
+  drawSpeed(ctx, radius);
 }
 
 function drawFace(ctx, radius) {
@@ -139,7 +139,7 @@ function drawHand(ctx, pos, length, width) {
 }
 
 function drawDegrees(ctx, radius) {
-  const length = 0.45 * radius;
+  const length = 0.4 * radius;
   for(let num = 0; num < 360 ; num += 6) {
     ctx.strokeStyle='white';
     ctx.lineWidth = 1;
@@ -160,7 +160,6 @@ function drawDegrees(ctx, radius) {
       ctx.font = radius*0.2 + "px arial";
       ctx.translate(0, -radius*.3);
       ctx.lineWidth = 8;
-      //ctx.fillText('N', 0, 0);
       ctx.translate(0, radius*.3);
       ctx.stroke();
     }
@@ -168,7 +167,7 @@ function drawDegrees(ctx, radius) {
     const ang = num * Math.PI / 180;
     ctx.moveTo(0,0);
     ctx.rotate(ang);
-    ctx.moveTo(0, 0.55 * radius);
+    ctx.moveTo(0, 0.5 * radius);
     ctx.lineTo(0, length);
     ctx.stroke();
     ctx.rotate(-ang);
@@ -191,14 +190,14 @@ function drawCompass(ctx, radius) {
   for(let num = 0; num < 12; ++num) {
     const ang = num * Math.PI / 6 + heading;
     ctx.rotate(ang);
-    ctx.translate(0, -radius*0.625);
+    ctx.translate(0, -radius*0.6);
     ctx.rotate(-ang);
-    ctx.font = radius*0.08 + "px arial";
+    ctx.font = radius*0.1 + "px arial";
     ctx.fillStyle = 'white';
     const deg = num * 30
     ctx.fillText(deg.toString(), 0, 0);
     ctx.rotate(ang);
-    ctx.translate(0, radius*0.625);
+    ctx.translate(0, radius*0.6);
     ctx.rotate(-ang);
   }
   ctx.rotate(heading);
@@ -208,14 +207,18 @@ function drawCompass(ctx, radius) {
 
 function drawSpeed(ctx, radius) {
   ctx.translate(0, radius * .2);
-  const x = -radius * 0.3;
-  const y = -radius * 0.1;
+  const x = -radius * 0.35;
+  const y = -radius * 0.125;
   ctx.beginPath();
   ctx.fillStyle = 'lightblue';
   ctx.fillRect(x, y, -2*x, -2*y);
-  ctx.lineWidth=2;
-  ctx.rect(x+2, y+2, -2*x-4, -2*y-4);
   ctx.fillStyle = 'black';
+  ctx.strokeStyle = 'white';
+  ctx.lineWidth=2;
+  ctx.moveTo(-x,y+1);
+  ctx.lineTo(-x,-y);
+  ctx.moveTo(x+1,-y);
+  ctx.lineTo(-x,-y);
   ctx.font = radius*0.125 + 'px arial black';
   ctx.fillText(Math.floor(geolocation.speed * 10) / 10 + ' kts', 0, 0);
   ctx.stroke();
