@@ -207,8 +207,8 @@ function drawCompass(ctx, radius) {
 
 function drawSpeed(ctx, radius) {
   ctx.translate(0, radius * .2);
-  const x = -radius * 0.35;
-  const y = -radius * 0.125;
+  const x = -radius * 0.3;
+  const y = -radius * 0.095;
   ctx.beginPath();
   ctx.fillStyle = 'lightblue';
   ctx.fillRect(x, y, -2*x, -2*y);
@@ -219,7 +219,7 @@ function drawSpeed(ctx, radius) {
   ctx.lineTo(-x,-y);
   ctx.moveTo(x+1,-y);
   ctx.lineTo(-x,-y);
-  ctx.font = radius*0.125 + 'px arial black';
+  ctx.font = 'bold ' + radius*0.125 + 'px arial black';
   ctx.fillText(Math.floor(geolocation.speed * 10) / 10 + ' kts', 0, 0);
   ctx.stroke();
   ctx.translate(0, -radius * .2);
