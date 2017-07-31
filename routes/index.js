@@ -33,6 +33,11 @@ function checkConnection() {
 }
 
 
+router.get('/', function(req, res, next) {
+  res.redirect('mynav.html');
+});
+
+
 let tilesets = {}
 let alternateTilesets = {}
 
