@@ -8,6 +8,7 @@ const http = require('http');
 const https = require('https');
 const isOnline = require('is-online');
 const noaa = require(__dirname + '/noaa-metadata.json');
+const os = require('os');
 const path = require('path');
 const PNG = require('pngjs').PNG;
 const states = require(__dirname + '/states');
@@ -656,6 +657,34 @@ router.get('/weather/:lon/:lat', function(req, res, next) {
   .end();
 });
 
+
+router.get('/shutdown/:arg', function(req, res, next) {
+
+  const interfaces = os.networkInterfaces();
+  for (let k in interfaces) {
+    const iface = interfaces[k]
+    for (let k in iface) {
+      const a = iface[k];
+      if (a.address===req.connection.remoteAddress) {
+        if (req.params.arg==='supported') {
+          return res.send(true);
+        }
+        else if (req.params.arg==='now') {
+          exec('sudo shutdown now', function(err, stdout, stderr) {
+            console.log(stdout);
+            console.log(stderr);
+            if (err) {
+              return next(err);
+            }
+          });
+        }
+      }
+    }
+  }
+
+  res.send(false);
+
+});
 
 module.exports = router;
 

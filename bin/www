@@ -95,3 +95,15 @@ function onListening() {
     : 'port ' + addr.port;
   debug('Listening on ' + bind);
 }
+
+
+function shutdown() {
+  console.log('Received signal, shutting down.');
+  server.close();
+  process.exit();
+}
+
+process.on('SIGTERM', shutdown);
+process.on('SIGINT', shutdown);
+
+
