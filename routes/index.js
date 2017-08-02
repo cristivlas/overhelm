@@ -676,14 +676,15 @@ router.get('/shutdown/:arg', function(req, res, next) {
             if (err) {
               return next(err);
             }
+            return res.send(true);
           });
+          return;
         }
       }
     }
   }
 
   res.send(false);
-
 });
 
 module.exports = router;

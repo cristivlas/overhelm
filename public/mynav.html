@@ -233,6 +233,20 @@
         margin: 0 auto;
       }
 
+      .shutdown {
+        bottom: 2em;
+        left: .5em;
+        visibility: hidden;
+      }
+      .tablet .shutdown {
+        width: 44px;
+        height: 44px;
+      }
+      .tablet .shutdown-img.center {
+        display: block;
+        margin: 0 auto;
+      }
+
       .chart {
         background-color: white;
         opacity: 0.7;
@@ -494,6 +508,45 @@
       }
       ol.inherits(destControl, ol.control.Control);
 
+      /**
+       * Shutdown button
+       */
+      const shutdownControl = function(opt_options) {
+        const options = opt_options || {};
+
+        const button = document.createElement('button');
+        const icon = document.createElement('img');
+        icon.src = 'images/shutdown.png';
+        icon.className = 'shutdown-img';
+        button.appendChild(icon);
+        button.title = 'Shutdown system';
+        button.className = 'shutdown-btn';
+
+        var handler = function() {
+          alertify.confirm('Do you really want to shutdown the system?',
+            function(accept) {
+              if (accept) {
+                const xmlHttp = new XMLHttpRequest();
+                xmlHttp.open('GET', '/shutdown/now');
+                xmlHttp.send();
+              }
+            }
+          );
+        }
+        button.addEventListener('click', handler, false);
+        button.addEventListener('touchstart', handler, false);
+
+        var element = document.createElement('div');
+        element.className = 'shutdown ol-custom ol-unselectable ol-control';
+        element.appendChild(button);
+        element.id = 'shutdown';
+
+        ol.control.Control.call(this, {
+          element: element,
+          target: options.target
+        });
+      }
+      ol.inherits(shutdownControl, ol.control.Control);
 
       /**
        * Custom control for drawing water levels
@@ -922,43 +975,60 @@
             lastInteraction = null;
           }
         }
-       
-        /**
-         * Construct the base layer using map tiles from wikimedia
-         * (or alternatively: use OpenStreetMaps, etc.) 
-         */
-        function baseLayer() {
-          return new ol.layer.Tile({
-            source: new ol.source.XYZ({url:'tiles/wikimedia/osm-intl/{z}/{x}/{y}'})
-            
-            //could use OpenStreetMaps too
-            //source: new ol.source.XYZ({url:'tiles/osm/{a-c}/{z}/{x}/{y}.png'})
-          });
+
+        function enableShutdown() {
+          const xmlHttp = new XMLHttpRequest();
+          xmlHttp.onreadystatechange = function() {
+            if (xmlHttp.readyState === 4 && xmlHttp.status === 200) {
+              if (JSON.parse(xmlHttp.responseText)) {
+                let elem = document.getElementById('shutdown');
+                  elem.style.visibility = 'visible';
+              }
+            }
+          }
+          xmlHttp.open('GET', 'shutdown/supported');
+          xmlHttp.send();
         }
 
         updateChartLayers(coord, view, function() {
           if (!app.map) {
+            /**
+             * Construct the base layer (using map tiles from wikimedia)
+             */
+            function baseLayer() {
+              return new ol.layer.Tile({
+                source: new ol.source.XYZ({url:'tiles/wikimedia/osm-intl/{z}/{x}/{y}'})
+
+                //could use OpenStreetMaps here, too:
+                //source: new ol.source.XYZ({url:'tiles/osm/{a-c}/{z}/{x}/{y}.png'})
+              });
+            }
+
+            const controls = [
+              new tideChartControl(),
+              new showTideControl(),
+              new clockControl(),
+              new showClockControl(),
+              new locationControl({coords: coord}),
+              new trackingControl(),
+              new searchControl(),
+              new destControl(),
+              new shutdownControl()
+            ];
+
             app.map = new ol.Map({
               controls: ol.control.defaults({
                 attributionOptions: {
                   collapsible: false,
                 }}
-              ).extend([
-                new tideChartControl(),
-                new showTideControl(),
-                new clockControl(),
-                new showClockControl(),
-								new locationControl({coords: coord}),
-                new trackingControl(),
-                new searchControl(),
-                new destControl(),
-              ]),
+              ).extend(controls),
               target: 'map',
               layers: [
                 baseLayer(),
               ].concat(app.layers.charts),
               view: view
             });
+            enableShutdown();
 
             popup = new ol.Overlay({
               element: document.getElementById('popup')
@@ -971,7 +1041,6 @@
             });
 
             startClock();
-
           }
           app.location.point = pos;
           updateFeatures(pos);
@@ -1095,7 +1164,7 @@
             }
 
             xmlHttp.onreadystatechange = processWaterLevelRequest.bind(null, stationInfo);
-            xmlHttp.open("GET", url);
+            xmlHttp.open('GET', url);
             xmlHttp.send();
           }
         }
@@ -1287,7 +1356,7 @@
         }
         const xmlHttp = new XMLHttpRequest();
         xmlHttp.onreadystatechange = processWaterLevelStation;
-        xmlHttp.open("GET", 'nearestWaterLevelStation/' + coord[1] + '/' + coord[0]);
+        xmlHttp.open('GET', 'nearestWaterLevelStation/' + coord[1] + '/' + coord[0]);
         xmlHttp.send();
       }
 
