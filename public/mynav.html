@@ -298,6 +298,7 @@
         tileset: null,
         zoom: defaultZoom,
         tzOffset: (new Date()).getTimezoneOffset() * 60000,
+        rotateView: false,
 
         layers: {
           charts: [],
@@ -365,6 +366,7 @@
         const icon = document.createElement('img');
         icon.src = 'images/location-arrow.png';
         icon.className = 'tracking-img';
+        icon.id  = 'tracking-img';
         button.appendChild(icon);
         button.title = 'Track current location';
         button.className = 'tracking-btn';
@@ -376,10 +378,18 @@
           lastInteraction = null;
           geolocation.stop();
           geolocation.start();
+          app.rotateView ^= true;
+          if (app.rotateView) {
+            document.getElementById('tracking-img').src = 'images/navigation-arrow.png';
+          }
+          else {
+            app.map.getView().setRotation(0);
+            document.getElementById('tracking-img').src = 'images/location-arrow.png';
+          }
           document.getElementById('tracking').style.background = 'green';
         }
         button.addEventListener('click', handler, false);
-        button.addEventListener('touchstart', handler, false);
+        //button.addEventListener('touchstart', handler, false);
 
         var element = document.createElement('div');
         element.id = 'tracking';
@@ -755,7 +765,13 @@
         let iconUrl = 'images/view.png';
         if (geolocation.isTracking()) {
           iconUrl = positionImg;
-          rotation = geolocation.rotation;
+          if (app.rotateView) {
+            const v = app.map.getView();
+            v.setRotation(2 * Math.PI - geolocation.rotation);
+          }
+          else {
+            rotation = geolocation.rotation;
+          }
         }
         let iconStyle = new ol.style.Style({
           image: new ol.style.Icon({
@@ -763,7 +779,7 @@
             anchorXUnits: 'fraction',
             anchorYUnits: 'fraction',
             src: iconUrl,
-            rotateWithView: true,
+            rotateWithView: !app.rotateView,
             rotation: rotation,
           })
         });
@@ -956,6 +972,9 @@
             view.updating = true;
             updateChartLayers(app.location.current, view, function() {
               updateFeatures(app.location.point);
+              if (app.rotateView) {
+                view.setRotation(2 * Math.PI - geolocation.rotation);
+              }
               app.map.render();
               view.updating = false;
               lastInteraction = new Date();
@@ -1004,6 +1023,7 @@
               });
             }
 
+            // custom controls
             const controls = [
               new tideChartControl(),
               new showTideControl(),
@@ -1018,6 +1038,7 @@
 
             app.map = new ol.Map({
               controls: ol.control.defaults({
+                rotate: false,
                 attributionOptions: {
                   collapsible: false,
                 }}
