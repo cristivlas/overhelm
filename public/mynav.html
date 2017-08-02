@@ -303,6 +303,7 @@
         zoom: defaultZoom,
         tzOffset: (new Date()).getTimezoneOffset() * 60000,
         rotateView: false,
+        powerClick: 0,
 
         layers: {
           charts: [],
@@ -384,6 +385,7 @@
           geolocation.start();
           app.rotateView ^= true;
           if (app.rotateView) {
+            app.map.getView().setCenter(app.location.point);
             document.getElementById('tracking-img').src = 'images/navigation-arrow.png';
           }
           else {
@@ -393,7 +395,6 @@
           document.getElementById('tracking').style.background = 'green';
         }
         button.addEventListener('click', handler, false);
-        //button.addEventListener('touchstart', handler, false);
 
         var element = document.createElement('div');
         element.id = 'tracking';
@@ -536,8 +537,8 @@
         button.title = 'Shutdown system';
         button.className = 'shutdown-btn';
 
-        var handler = function() {
-          alertify.confirm('Do you really want to shutdown the system?',
+        const shutdown = function() {
+          alertify.confirm('Do you really want to <b>shutdown</b> the system?',
             function(accept) {
               if (accept) {
                 const xmlHttp = new XMLHttpRequest();
@@ -547,8 +548,31 @@
             }
           );
         }
-        button.addEventListener('click', handler, false);
-        button.addEventListener('touchstart', handler, false);
+        const reboot = function() {
+          alertify.confirm('Do you really want to <b>reboot</b> the system?',
+            function(accept) {
+              if (accept) {
+                const xmlHttp = new XMLHttpRequest();
+                xmlHttp.open('GET', '/shutdown/reboot');
+                xmlHttp.send();
+              }
+            }
+          );
+        }
+        button.addEventListener('click', function() {
+          if (app.powerClick===0) {
+            setTimeout(function() {
+              if (app.powerClick > 1) {
+                reboot();
+              }
+              else {
+                shutdown();
+              }
+              app.powerClick = 0;
+            }, 250);
+          }
+          ++app.powerClick;
+        }, false);
 
         var element = document.createElement('div');
         element.className = 'shutdown ol-custom ol-unselectable ol-control';

@@ -669,8 +669,12 @@ router.get('/shutdown/:arg', function(req, res, next) {
         if (req.params.arg==='supported') {
           return res.send(true);
         }
-        else if (req.params.arg==='now') {
-          exec('sudo shutdown now', function(err, stdout, stderr) {
+        else if (req.params.arg==='now' || req.params.arg==='reboot') {
+          let cmd = 'sudo shutdown now';
+          if (req.params.arg==='reboot') {
+            cmd += ' -r';
+          }
+          exec(cmd, function(err, stdout, stderr) {
             console.log(stdout);
             console.log(stderr);
             if (err) {
