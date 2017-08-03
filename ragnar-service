@@ -20,7 +20,7 @@ case "$1" in
     pushd /usr/local/ragnar
     user=`ls -l app.js | cut -d' ' -f3`
     mv log.txt log.`date +%Y%m%d%H%M`.txt 2>/dev/null
-    sudo -u $user npm start > log.txt 2>&1 & 
+    sudo -u $user npm start | /usr/local/ragnar/writelog.sh 2>&1 & 
     popd
     log_end_msg $?
     exit 0
