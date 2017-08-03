@@ -4,6 +4,21 @@ const geonames = require(__dirname + '/../routes/geonames.json');
 
 const start = new Date();
 
+let status = {
+  nTiles: 0,
+  nCurrent: -1 
+}
+const statusPath = __dirname + '/status-geo.json';
+try {
+  status = require(statusPath);
+}
+catch (err) {
+  if (err.code==='MODULE_NOT_FOUND') {
+    console.log('status not found');
+  }
+  else throw err;
+}
+
 function getETA(i, n) {
   if (i > n) {
     i = n;
@@ -30,13 +45,12 @@ const minZoom = 13;
 const maxZoom = 17;
 
 let tile = { 
-  i: -1,
+  i: status.nCurrent,
   zoom: maxZoom,
   nChart: -1,
   charts: []
 }
 
-let nTiles = 0;
 
 function updateStatus(done=false) {
   const html = '<html><meta http-equiv="refresh" content="5">'
@@ -45,7 +59,7 @@ function updateStatus(done=false) {
     + '<br>Locations: ' + tile.i + ' out of ' + geonames.length
     + '<br>Current: ' + geonames[tile.i].ascii + ', ' + geonames[tile.i].state
     + '<br>Charts: ' + geonames[tile.i].charts
-    + '<br>Tiles: ' + nTiles
+    + '<br>Tiles: ' + status.nTiles
     + '<br><div id="eta"></div>'
     + '</body>'
     + '<script>document.getElementById("start").innerHTML="Started: " + new Date('
@@ -57,6 +71,9 @@ function updateStatus(done=false) {
 
   const path = __dirname + '/../public/status-geo.html';
   fs.writeFileSync(path, html);
+
+  status.nCurrent = tile.i - 1;
+  fs.writeFileSync(statusPath, JSON.stringify(status));
 }
 
 
@@ -117,7 +134,7 @@ function nextTile() {
   try {
     var req = https.get(options, function(resp) {
       if (resp.statusCode===200) {
-        ++nTiles;
+        ++status.nTiles;
       }
       resp.on('end', function(err) {
         console.log(path);
