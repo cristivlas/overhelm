@@ -8,6 +8,8 @@ log.*
 *.zip
 
 geonames.json
+status-geo.json
+
 US
 US.txt
 CA
