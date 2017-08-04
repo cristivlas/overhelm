@@ -1,0 +1,5 @@
+#! /usr/bin/env bash
+
+sudo /etc/init.d/ragnar-service stop
+sudo /etc/init.d/ragnar-service start
+sudo killall -TERM lightdm

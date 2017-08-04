@@ -7,10 +7,13 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-title" content="Ragnar [Alpha]">
     <link rel="apple-touch-icon" href="/images/sailboat.png">
-    <link rel="prefetch" href="/images/wu_logo_130x80.png">
-    <link rel="prefetch" href="/images/left-arrow.png">
-    <link rel="prefetch" href="/images/right-arrow.png">
-    <link rel="prefetch" href="/images/compass4.png">
+    <link rel="prefetch" href="images/wu_logo_130x80.png">
+    <link rel="prefetch" href="images/left-arrow.png">
+    <link rel="prefetch" href="images/right-arrow.png">
+    <link rel="prefetch" href="images/compass4.png">
+    <link rel="prefetch" href="images/location-arrow.png">
+    <link rel="prefetch" href="images/navigation-arrow.png">
+    <link rel="prefetch" href="images/magnifier.png">
 
     <link rel="stylesheet" href="lib/OpenLayers/4.2.0/ol.css" type="text/css">
     <link rel="stylesheet" href="stylesheets/alertify.core.css" type="text/css">
@@ -862,9 +865,18 @@
           + '/' + minLonLat[0] + '/' + minLonLat[1]
           + '/' + maxLonLat[0] + '/' + maxLonLat[1];
 
+        const start = new Date();
         const xmlHttp = new XMLHttpRequest();
         xmlHttp.onreadystatechange = function() {
           if (xmlHttp.readyState === 4 && xmlHttp.status === 200) {
+            const now = new Date();
+            const elapsed = now.getTime() - start.getTime();
+            if (elapsed > app.locationTimeout) {
+              console.log('resetting locationTimeout to: ' + elapsed);
+              geolocation._timeout = app.locationTimeout = elapsed;
+              geolocation.stop();
+              geolocation.start();
+            }
             callback(xmlHttp.responseText);
           }
         }
@@ -1688,7 +1700,8 @@
         },
         onError: function(err) {
           updateDefault();
-        }
+        },
+        timeout: locationTimeout
       });
 
 

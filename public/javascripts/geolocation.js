@@ -5,7 +5,7 @@ class Geolocation {
     this._timeout = options.timeout ? options.timeout : 3000;
     this._errorCallback = options.onError;
     this._successCallback = options.onSuccess;
-    this._ios = (navigator.platform == 'iPad' || navigator.platform == 'iPhone');
+    this._ios = (navigator.platform === 'iPad' || navigator.platform === 'iPhone');
     this.speed = 0;
     this.rotation = 0;
   }
@@ -48,7 +48,7 @@ class Geolocation {
 
   _processLocationRequest(e) {
     var xmlHttp = e.currentTarget;
-    if (xmlHttp.readyState == 4 && xmlHttp.status == 200) {
+    if (xmlHttp.readyState === 4 && xmlHttp.status === 200) {
       var loc = JSON.parse(xmlHttp.responseText);
       if (loc) {
         if (!this._intervalId) {
