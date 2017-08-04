@@ -7,7 +7,7 @@ let i=0
 echo Running since: $date > $log
 
 while read line; do
-  lcount=`wc -l ${log} | cut -f1 -d' '`
+  lcount=`wc -l ${log} | sed -e 's/^ *//g' | cut -f1 -d' '`
   if [ $lcount -ge 5000 ]; then
     let i=$i+1
     let i=`expr $i % 10`

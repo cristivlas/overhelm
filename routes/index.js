@@ -147,8 +147,8 @@ router.get('/tiles/:srv/:set/:z/:x/:y', function(req, res, next) {
 function handleEmptyTile(req, res, next) {
   const related = alternateTilesets[req.params.set];
   if (related) {
+    console.log(req.params.set + ': trying related tileset: '+ related);
     req.params.set = related;
-    console.log('Trying related tileset: '+ related);
     return serveTile(req, res, next);
   }
   return res.sendStatus(204);

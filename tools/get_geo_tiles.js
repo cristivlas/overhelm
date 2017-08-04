@@ -48,7 +48,8 @@ let tile = {
   i: status.nCurrent,
   zoom: maxZoom,
   nChart: -1,
-  charts: []
+  charts: [],
+  last: '',
 }
 
 
@@ -61,6 +62,7 @@ function updateStatus(done=false) {
     + '<br>Charts: ' + geonames[tile.i].charts
     + '<br>Tiles: ' + status.nTiles
     + '<br><div id="eta"></div>'
+    + tile.last
     + '</body>'
     + '<script>document.getElementById("start").innerHTML="Started: " + new Date('
     + start.getTime() + ').toLocaleString();document.getElementById("eta").innerHTML='
@@ -101,8 +103,8 @@ function nextTile() {
   if (++tile.zoom > maxZoom) {
     tile.zoom = minZoom;
     if (++tile.nChart >= tile.charts.length) {
-      if (++tile.i >= geonames.lenght) {
-        updateStatus(true);
+      if (++tile.i >= geonames.length) {
+        updateStatus();
         return false;
       }
       updateStatus();
@@ -114,7 +116,7 @@ function nextTile() {
       for (let i = 0; i != tile.charts.length; ++i) {
         tile.charts[i] = 'noaa/' + tile.charts[i];
       }
-      tile.charts.push('wikimedia/osm-intl');
+      // tile.charts.push('wikimedia/osm-intl');
     }
   }
   const ident = tile.charts[tile.nChart];
@@ -131,32 +133,41 @@ function nextTile() {
     port: 3443,
     rejectUnauthorized: false
   }
-  try {
-    var req = https.get(options, function(resp) {
-      if (resp.statusCode===200) {
-        ++status.nTiles;
+  const handleResponse = function (resp) {
+    if (resp.statusCode===204) {
+      path = '/tiles/wikimedia/osm-intl/' + tile.zoom + '/' + x + '/' + y;
+      console.log(path);
+      sendRequest();
+    }
+    else if (resp.statusCode===200) {
+      ++status.nTiles;
+      tile.last='<br><img src="' + path + '">';
+    }
+
+    resp.on('end', function(err) {
+      console.log(path);
+      if (err) {
+        console.log(err);
       }
-      resp.on('end', function(err) {
-        console.log(path);
-        if (err) {
-          console.log(err);
-        }
-        nextTile();
-      });
-
-      resp.on('data', function(chunk) {
-      });
+      nextTile();
     });
 
+    resp.on('data', function(chunk) {
+    });
+  };
+
+  function sendRequest() {
+    let req = https.get(options, handleResponse);
     req.on('error', function(err) {
-      console.log(err);
+      console.log(err.code);
+      if (err.code==='ECONNRESET') {
+        sendRequest();
+      }
     });
-
     req.end();
   }
-  catch (err) {
-    console.log (err);
-  }
+
+  sendRequest();
   return true;
 }
 
