@@ -78,7 +78,7 @@ class Geolocation {
   _useHTML5Geolocation() {
     if (this._ios && !this._once) {
       this._once = true;
-      this._timeout = 60000;
+      this._timeout = 5000;
       window.addEventListener('deviceorientation', function(e) {
         this._heading = e.webkitCompassHeading;
         navigator.geolocation.getCurrentPosition(this._onSuccess);

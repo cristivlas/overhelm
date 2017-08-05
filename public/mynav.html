@@ -1025,7 +1025,8 @@
         view.on('change:center', update.bind(this, view));
         view.on('change:resolution', update.bind(this, view));
 
-        if (!ol.extent.containsXY(view.calculateExtent(), pos[0], pos[1])) {
+        //if (!ol.extent.containsXY(view.calculateExtent(), pos[0], pos[1])) 
+        {
           const now = new Date();
           if (!lastInteraction || now.getTime() > lastInteraction.getTime() + 60 * 1000) {
             view.updating = true;
