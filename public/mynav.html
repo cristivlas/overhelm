@@ -871,7 +871,7 @@
           if (xmlHttp.readyState === 4 && xmlHttp.status === 200) {
             const now = new Date();
             const elapsed = now.getTime() - start.getTime();
-            if (elapsed > app.locationTimeout) {
+            if (elapsed > geolocation._timeout) {
               console.log('resetting locationTimeout to: ' + elapsed);
               geolocation._timeout = app.locationTimeout = elapsed;
               geolocation.stop();

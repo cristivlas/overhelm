@@ -76,9 +76,15 @@ class Geolocation {
   }
 
   _useHTML5Geolocation() {
-    //
-    // Fail over to HTML5 geolocation
-    //
+    if (this._ios && !this._once) {
+      this._once = true;
+      this._timeout = 60000;
+      window.addEventListener('deviceorientation', function(e) {
+        this._heading = e.webkitCompassHeading;
+        navigator.geolocation.getCurrentPosition(this._onSuccess);
+      }.bind(this));
+    }
+
     this._watchId = navigator.geolocation.watchPosition(
       this._onSuccess.bind(this),
       this._onError.bind(this),
@@ -87,13 +93,6 @@ class Geolocation {
         timeout: this._timeout,
         maximumAge: 0
       });
-
-    if (this._ios && !this._once) {
-      this._once = true;
-      window.addEventListener('deviceorientation', function(e) {
-        this._heading = e.webkitCompassHeading;
-      }.bind(this));
-    }
   }
 
   _onSuccess(pos) {
