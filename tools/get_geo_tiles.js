@@ -18,13 +18,14 @@ catch (err) {
   }
   else throw err;
 }
+const nFirst = status.nCurrent < 0 ? 0 : status.nCurrent;
 
 function getETA(i, n) {
   if (i > n) {
     i = n;
   }
   const now = new Date();
-  const speed = i / (now.getTime() - start.getTime());
+  const speed = (i - nFirst) / (now.getTime() - start.getTime());
   const timeLeft = (n - i) / speed;
   let eta = new Date();
   eta.setTime(eta.getTime() + timeLeft);
@@ -135,9 +136,8 @@ function nextTile() {
   }
   const handleResponse = function (resp) {
     if (resp.statusCode===204) {
-      path = '/tiles/wikimedia/osm-intl/' + tile.zoom + '/' + x + '/' + y;
-      console.log(path);
-      sendRequest();
+      // path = '/tiles/wikimedia/osm-intl/' + tile.zoom + '/' + x + '/' + y;
+      // sendRequest();
     }
     else if (resp.statusCode===200) {
       ++status.nTiles;
