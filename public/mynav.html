@@ -1110,6 +1110,9 @@
        
         elem = document.getElementById('location');
 				if (elem) {
+          if (geolocation.coord) {
+            coord = [geolocation.coord.lon, geolocation.coord.lat];
+          }
         	elem.innerHTML = convertDMS(coord);
 				}
         updateWaterLevel(coord);
