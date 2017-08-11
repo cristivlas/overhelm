@@ -175,7 +175,7 @@
       .tracking {
         top: 85px;
         left: .5em;
-        background: green;
+        background: brown;
       }
       .ol-touch .tracking {
         top: 95px;
@@ -765,7 +765,7 @@
           app.map.removeLayer(app.layers.course);
           app.layers.course = null;
         }
-        if (app.destination.point) {
+        if (app.destination.point && geolocation.coord) {
           pos = ol.proj.fromLonLat([geolocation.coord.lon, geolocation.coord.lat]);
           app.layers.course = getCourseLayer(pos, app.destination.point);
           app.map.addLayer(app.layers.course);
@@ -1202,7 +1202,7 @@
             //
             // same station? update every 5 minutes
             //
-            if (now.getTime() - app.tide.chart.lastUpdated.getTime() < 5 * 60 * 1000) {
+            if (now.getTime() < app.tide.chart.lastUpdated.getTime() + 5 * 60 * 1000) {
               return;
             }
           }
@@ -1542,7 +1542,7 @@
         html += '<br>' + convertDMS(coord);
 
         function distance(d) {
-          if (d===0) {
+          if (d===0 && geolocation.coord) {
             const coord = [ geolocation.coord.lon, geolocation.coord.lat ];
             d = getDistanceFromLonLat(popup.coord, coord) * 3440;
             app.location.prev.name = 'current location';
@@ -1669,7 +1669,6 @@
                 const coord = JSON.parse(elem.options[elem.selectedIndex].value);
                 if (geolocation.isTracking()) {
                   geolocation.stop();
-                  document.getElementById('tracking').style.background = 'brown';
                 }
                 if (app.map && app.map.getView().getZoom() < defaultZoom) {
                     app.map.getView().setZoom(defaultZoom);
@@ -1705,13 +1704,19 @@
       var geolocation = new Geolocation({
         onSuccess: function(coord) {
           if (coord.lon && coord.lat) {
+            document.getElementById('tracking').style.background = 'green';
             app.location.current = [ coord.lon, coord.lat ];
             app.location.prev.name = 'current location';
             updateMap(app.location.current);
           }
         },
         onError: function(err) {
+          document.getElementById('tracking').style.background = 'brown';
           updateDefault();
+        },
+        onStop: function() {
+          app.tide.station = null;
+          document.getElementById('tracking').style.background = 'brown';
         },
         timeout: locationTimeout
       });

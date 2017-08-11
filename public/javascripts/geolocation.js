@@ -5,6 +5,8 @@ class Geolocation {
     this._timeout = options.timeout ? options.timeout : 3000;
     this._errorCallback = options.onError;
     this._successCallback = options.onSuccess;
+    this._startCallback = options.onStart;
+    this._stopCallback = options.onStop;
     this._ios = (navigator.platform === 'iPad' || navigator.platform === 'iPhone');
     this.speed = 0;
     this.rotation = 0;
@@ -19,6 +21,9 @@ class Geolocation {
       else {
         this._sendLocationRequest();
       }
+      if (this._startCallback) {
+        this._startCallback();
+      } 
     }
   }
 
@@ -28,10 +33,16 @@ class Geolocation {
     if (this._watchId) {
       navigator.geolocation.clearWatch(this._watchId);
       this._watchId = null;
+      if (this._stopCallback) {
+        this._stopCallback();
+      }
     }
     else if (this._intervalId) {
       clearInterval(this._intervalId);
       this._intervalId = null;
+      if (this._stopCallback) {
+        this._stopCallback();
+      }
     }
   }
 
