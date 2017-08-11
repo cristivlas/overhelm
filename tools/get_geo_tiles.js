@@ -55,12 +55,13 @@ let tile = {
 
 
 function updateStatus(done=false) {
+  const n = tile.i >= geonames.length ? geonames.length-1 : tile.i;
   const html = '<html><meta http-equiv="refresh" content="5">'
     + '<body>Process '
     + process.pid + '<div id="start"></div>'
     + '<br>Locations: ' + tile.i + ' out of ' + geonames.length
-    + '<br>Current: ' + geonames[tile.i].ascii + ', ' + geonames[tile.i].state
-    + '<br>Charts: ' + geonames[tile.i].charts
+    + '<br>Current: ' + geonames[n].ascii + ', ' + geonames[n].state
+    + '<br>Charts: ' + geonames[n].charts
     + '<br>Tiles: ' + status.nTiles
     + '<br><div id="eta"></div>'
     + tile.last
@@ -105,7 +106,7 @@ function nextTile() {
     tile.zoom = minZoom;
     if (++tile.nChart >= tile.charts.length) {
       if (++tile.i >= geonames.length) {
-        updateStatus();
+        updateStatus(true);
         return false;
       }
       updateStatus();

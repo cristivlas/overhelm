@@ -302,6 +302,7 @@
 
       var app = {
         map: null,
+        extent: [0, 0, 0, 0],
         tileset: null,
         zoom: defaultZoom,
         tzOffset: (new Date()).getTimezoneOffset() * 60000,
@@ -315,7 +316,7 @@
         },
         location: {
           current: null,
-          point: null,
+          point: [0, 0],
           prev: {
             point: null,
             name: 'current location'
@@ -332,7 +333,8 @@
             line: null,
             lastUpdated: new Date(),
             visible: true,
-          }
+          },
+          lastCoord: null,
         },
         clock: {
           visible: true,
@@ -388,7 +390,7 @@
           geolocation.start();
           app.rotateView ^= true;
           if (app.rotateView) {
-            app.map.getView().setCenter(app.location.point);
+            lastInteraction = null;
             document.getElementById('tracking-img').src = 'images/navigation-arrow.png';
           }
           else {
@@ -764,12 +766,7 @@
           app.layers.course = null;
         }
         if (app.destination.point) {
-          if (equalPoint(app.destination.point, pos)) {
-            pos = app.location.prev.point;
-          }
-          else if (!geolocation.isTracking()) {
-            return;
-          }
+          pos = ol.proj.fromLonLat([geolocation.coord.lon, geolocation.coord.lat]);
           app.layers.course = getCourseLayer(pos, app.destination.point);
           app.map.addLayer(app.layers.course);
         }
@@ -909,6 +906,13 @@
       function updateChartLayers(coord, view, callback) {
         const viewMaxRes = view.getMaxResolution();
         const extent = view.calculateExtent();
+        if (ol.extent.equals(extent, app.extent)) {
+          return callback();
+        }
+        app.extent = extent;
+        if (ol.extent.containsXY(extent, app.location.point[0], app.location.point[1])) {
+          return callback();
+        }
 
         getChartTilesets(coord, extent, function(tileset) {
           if (tileset !== app.tileset) {
@@ -1025,15 +1029,12 @@
         view.on('change:center', update.bind(this, view));
         view.on('change:resolution', update.bind(this, view));
 
-        //if (!ol.extent.containsXY(view.calculateExtent(), pos[0], pos[1])) 
-        {
-          const now = new Date();
-          if (!lastInteraction || now.getTime() > lastInteraction.getTime() + 60 * 1000) {
-            view.updating = true;
-            view.setCenter(pos);
-            view.updating = false;
-            lastInteraction = null;
-          }
+        const now = new Date();
+        if (!lastInteraction || now.getTime() > lastInteraction.getTime() + 60 * 1000) {
+          view.updating = true;
+          view.setCenter(pos);
+          view.updating = false;
+          lastInteraction = null;
         }
 
         function enableShutdown() {
@@ -1116,7 +1117,6 @@
         	elem.innerHTML = convertDMS(coord);
 				}
         updateWaterLevel(coord);
-
         //todo:
         // updateCurrents(coord);
 
@@ -1188,6 +1188,45 @@
        */
       function updateWaterLevel(coord) {
 
+        const lastCoord = coord;
+        roundPoint(lastCoord, 10000);
+        if (app.tide.station && equalPoint(lastCoord, app.tide.lastCoord)) {
+          return getWaterLevel(app.tide.station);
+        }
+        app.tide.lastCoord = lastCoord;
+
+        function getWaterLevel(station) {
+          const now = new Date();
+
+          if (app.tide.station && station.Id === app.tide.station.Id) {
+            //
+            // same station? update every 5 minutes
+            //
+            if (now.getTime() - app.tide.chart.lastUpdated.getTime() < 5 * 60 * 1000) {
+              return;
+            }
+          }
+          app.tide.station = station;
+          app.tide.chart.lastUpdated = now;
+
+          const stationInfo = 'Station: ' + station.Id + ' ' + station.Name + ' ' + station.State;
+          const currentTime = now.toISOString();
+
+          const useNOAAData = location.search == '?noaa';
+          var url;
+          if (useNOAAData) {
+            url = 'https://tidesandcurrents.noaa.gov/api/datagetter?product=predictions&datum=MLLW' 
+            + formatRequestRange(now, app.tide.station.Id);
+          } 
+          else {
+            url = 'tides/' + app.tide.station.Id + '/' + currentTime;
+          }
+        const xmlHttp = new XMLHttpRequest();
+          xmlHttp.onreadystatechange = processWaterLevelRequest.bind(null, stationInfo);
+          xmlHttp.open('GET', url);
+          xmlHttp.send();
+        }
+
         /**
          * Process response from backend.
          */
@@ -1195,45 +1234,14 @@
           const xmlHttp = event.currentTarget;
           
           if (xmlHttp.readyState === 4) {
-            if (xmlHttp.status !== 200) {
-              console.log(xmlHttp.response.text);
-              return;
+            if (xmlHttp.status === 200) {
+              getWaterLevel(JSON.parse(xmlHttp.responseText));
             }
-
-            let s = JSON.parse(xmlHttp.responseText);
-
-            const now = new Date();
-
-            if (app.tide.station && s.Id === app.tide.station.Id) {
-              //
-              // same station? update every 5 minutes
-              //
-              if (now.getTime() - app.tide.chart.lastUpdated.getTime() < 5 * 60 * 1000) {
-                return;
-              }
-            }
-            app.tide.station = s;
-            app.tide.chart.lastUpdated = now;
-
-            const stationInfo = 'Station: ' + s.Id + ' ' + s.Name + ' ' + s.State;
-            const currentTime = now.toISOString();
-
-            const useNOAAData = location.search == '?noaa';
-            var url;
-            if (useNOAAData) {
-              url = 'https://tidesandcurrents.noaa.gov/api/datagetter?product=predictions&datum=MLLW' 
-              + formatRequestRange(now, app.tide.station.Id);
-            } 
             else {
-              url = 'tides/' + app.tide.station.Id + '/' + currentTime;
+              console.log(xmlHttp.response.text);
             }
-
-            xmlHttp.onreadystatechange = processWaterLevelRequest.bind(null, stationInfo);
-            xmlHttp.open('GET', url);
-            xmlHttp.send();
           }
         }
-
         
         /**
          * Process response from NOAA
