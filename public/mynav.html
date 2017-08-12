@@ -23,6 +23,7 @@
 
     <script src="javascripts/geolocation.js"></script>
     <script src="javascripts/clock.js"></script>
+    <script src="javascripts/swipedetect.js"></script>
 
     <script src="lib/alertify.min.js"></script>
     <script src="lib/OpenLayers/4.2.0/ol.js"></script>
@@ -335,6 +336,7 @@
             visible: true,
           },
           lastCoord: null,
+          offset: 0
         },
         clock: {
           visible: true,
@@ -1219,6 +1221,7 @@
           app.tide.station = station;
           app.tide.chart.lastUpdated = now;
 
+          now.setTime(now.getTime() + app.tide.offset * 24 * 3600 * 1000);
           const stationInfo = 'Station: ' + station.Id + ' ' + station.Name + ' ' + station.State;
           const currentTime = now.toISOString();
 
@@ -1265,7 +1268,11 @@
             date.setTime(date.getTime() - app.tzOffset);
 
             const a = date.toString().split(' ');
-            const timeString = a[0]
+            //const timeString = a[0]
+            //  + ' ' + dateHelper(date.getHours())
+            //  + ':' + dateHelper(date.getMinutes());
+            const timeString = (date.getMonth() + 1)
+              + '/' + date.getDate()
               + ' ' + dateHelper(date.getHours())
               + ':' + dateHelper(date.getMinutes());
                                   
@@ -1290,7 +1297,7 @@
 
             const data = datasets[0].data;
             const now = new Date();
-            now.setTime(now.getTime() + now.getTimezoneOffset() * 60000 - app.tzOffset);
+            now.setTime(now.getTime() + now.getTimezoneOffset() * 60000 - app.tzOffset + app.tide.offset * 24 * 3600 * 1000);
 
             let closest = 0;
             for (let i = 0; i < predictions.length; ++i) {
@@ -1357,6 +1364,22 @@
             if (app.tide.chart.line) {
               app.tide.chart.line.destroy();
             }
+            else {
+              swipedetect(ctx, function(dir) {
+                if (dir==='right') {
+                  --app.tide.offset;
+                }
+                else if (dir==='left') {
+                  ++app.tide.offset;
+                }
+                else {
+                  return;
+                }
+                app.tide.chart.lastUpdated.setTime(0);
+                updateWaterLevel(app.location.current);
+              });
+            }
+
             app.tide.chart.line = new Chart.Line(ctx, {
 
               data: {
@@ -1414,6 +1437,7 @@
                   yAxes: [ {
                       gridLines: {
                         color: 'lightblue',
+                        borderDash: app.tide.offset ? [8, 4] : [0, 0]
                       },
                     }
                   ],
@@ -1421,6 +1445,7 @@
                   xAxes: [ {
                       gridLines: {
                         color: 'blue',
+                        borderDash: app.tide.offset ? [8, 4] : [0, 0]
                       },
 
                       ticks: {
