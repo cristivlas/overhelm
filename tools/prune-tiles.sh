@@ -5,7 +5,8 @@ count=0
 for path in tiles/wikimedia/osm-intl/*; do
   file=`basename $path` 
   parts=(${file//./ })
-  pat="${parts[2]} ${parts[3]}"
+  pat="\"${parts[2]} ${parts[3]}\""
+  echo $pat
   lkup=`grep "$pat" tiles-index/${parts[1]} 2>/dev/null | head -1`
   if [ "$lkup" ]; then
     echo "$lkup" $path
