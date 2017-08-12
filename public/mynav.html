@@ -366,6 +366,16 @@
         return p1[0]===p2[0] && p1[1]===p2[1];
       }
 
+      function updateTracking(active) {
+        let elem = document.getElementById('tracking');
+        if (active) {
+          elem.style.background = 'green';
+        }
+        else {
+          elem.style.background = 'brown';
+        }
+      }
+
       /**
        * Custom control for activating geolocation / gps tracking
        */
@@ -373,13 +383,17 @@
         const options = opt_options || {};
 
         const button = document.createElement('button');
-        const icon = document.createElement('img');
-        icon.src = 'images/location-arrow.png';
-        icon.className = 'tracking-img';
-        icon.id  = 'tracking-img';
-        button.appendChild(icon);
+        const iconLoc = document.createElement('img');
+        iconLoc.src = 'images/location-arrow.png';
+        iconLoc.className = 'tracking-img';
+
+        button.appendChild(iconLoc);
         button.title = 'Track current location';
         button.className = 'tracking-btn';
+
+        const iconNav = document.createElement('img');
+        iconNav.src = 'images/navigation-arrow.png';
+        iconNav.className = 'tracking-img';
 
         var handler = function() {
           if (!geolocation.isTracking()) {
@@ -391,13 +405,14 @@
           app.rotateView ^= true;
           if (app.rotateView) {
             lastInteraction = null;
-            document.getElementById('tracking-img').src = 'images/navigation-arrow.png';
+            button.removeChild(iconLoc);
+            button.appendChild(iconNav);
           }
           else {
             app.map.getView().setRotation(0);
-            document.getElementById('tracking-img').src = 'images/location-arrow.png';
+            button.removeChild(iconNav);
+            button.appendChild(iconLoc);
           }
-          document.getElementById('tracking').style.background = 'green';
         }
         button.addEventListener('click', handler, false);
 
@@ -611,30 +626,31 @@
       ol.inherits(tideChartControl, ol.control.Control);
 
 
-      /**
-       * Button for showing / hiding water levels (tide charts)
-       */
-      const showTideControl = function(opt_options) {
-        const options = opt_options || {};
-
+      function newOpenCloseWidget(titleOpen, titleClosed, elemName, elemClass, flag) {
         const button = document.createElement('button');
-        const icon = document.createElement('img');
-        icon.src = 'images/right-arrow.png';
-        button.appendChild(icon);
-        button.title = 'Hide tide chart';
+        const iconClose = document.createElement('img');
+        const iconOpen = document.createElement('img');
+        iconClose.src = 'images/right-arrow.png';
+        iconOpen.src = 'images/left-arrow.png';
+        button.appendChild(iconClose);
+        button.title = titleOpen;
+        button.id = elemClass;
+
         var handler = function() {
-          var elem = document.getElementById('tideChart').parentElement;
-          if (!app.tide.chart.visible) {
+          var elem = document.getElementById(elemName).parentElement;
+          if (!flag) {
             elem.style.visibility = 'visible';
-            icon.src = 'images/right-arrow.png';
-            button.title = 'Hide tide chart';
+            button.title = titleOpen;
+            button.appendChild(iconClose);
+            button.removeChild(iconOpen);
           }
           else {
             elem.style.visibility = 'hidden';
-            icon.src = 'images/left-arrow.png';
-            button.title = 'Show tide chart';
+            button.title = titleClosed;
+            button.appendChild(iconOpen);
+            button.removeChild(iconClose);
           }
-          app.tide.chart.visible ^= true;
+          flag ^= true;
         }
         button.addEventListener('click', handler, false);
 
@@ -642,8 +658,20 @@
         //button.addEventListener('touchstart', handler, false);
 
         var element = document.createElement('div');
-        element.className = 'show-tide ol-custom ol-unselectable ol-control';
+        element.className = elemClass + ' ol-custom ol-unselectable ol-control';
         element.appendChild(button);
+
+        return element;
+      }
+
+
+      /**
+       * Button for showing / hiding water levels (tide charts)
+       */
+      const showTideControl = function(opt_options) {
+        const options = opt_options || {};
+        const element = newOpenCloseWidget(
+          'Hide tide info', 'Show tide info', 'tideChart', 'show-tide', app.tide.chart.visible);
 
         ol.control.Control.call(this, {
           element: element,
@@ -679,32 +707,7 @@
       
       const showClockControl = function(opt_options) {
         const options = opt_options || {};
-
-        const button = document.createElement('button');
-        const icon = document.createElement('img');
-        icon.src = 'images/right-arrow.png';
-        button.appendChild(icon);
-        button.title = 'Hide clock';
-        button.id = 'showClock';
-        var handler = function() {
-          var elem = document.getElementById('clock').parentElement;
-          if (!app.clock.visible) {
-            elem.style.visibility = 'visible';
-            icon.src = 'images/right-arrow.png';
-            button.title = 'Hide clock';
-          }
-          else {
-            elem.style.visibility = 'hidden';
-            icon.src = 'images/left-arrow.png';
-            button.title = 'Show clock';
-          }
-          app.clock.visible ^= true;
-        }
-        button.addEventListener('click', handler, false);
-
-        var element = document.createElement('div');
-        element.className = 'show-clock ol-custom ol-unselectable ol-control';
-        element.appendChild(button);
+        const element = newOpenCloseWidget('Hide clock', 'Show clock', 'clock', 'show-clock', app.clock.visible);
 
         ol.control.Control.call(this, {
           element: element,
@@ -745,7 +748,6 @@
           }),
           style: new ol.style.Style({
             stroke: new ol.style.Stroke({
-              // color: 'green',
               color: '#00D700',
               width: 5
             }),
@@ -1135,7 +1137,7 @@
         elem.style.left = rect.left + 'px';
         elem.style.top = (rect.bottom + 4) + 'px';
         elem.style.width = elem.style.height = rect.width + 'px';
-        elem = document.getElementById('showClock').parentElement;
+        elem = document.getElementById('show-clock').parentElement;
         elem.style.top = (rect.bottom + 4) + 'px';
 
         positionLocation();
@@ -1485,7 +1487,6 @@
             }
             lastInteraction = null;
             geolocation.start();
-            document.getElementById('tracking').style.background = 'green';
           }
           const closeBtn = document.getElementById('close-popup');
           closeBtn.onclick = closePopup;
@@ -1704,19 +1705,19 @@
       var geolocation = new Geolocation({
         onSuccess: function(coord) {
           if (coord.lon && coord.lat) {
-            document.getElementById('tracking').style.background = 'green';
+            updateTracking(true);
             app.location.current = [ coord.lon, coord.lat ];
             app.location.prev.name = 'current location';
             updateMap(app.location.current);
           }
         },
         onError: function(err) {
-          document.getElementById('tracking').style.background = 'brown';
+          updateTracking(false);
           updateDefault();
         },
         onStop: function() {
           app.tide.station = null;
-          document.getElementById('tracking').style.background = 'brown';
+          updateTracking(false);
         },
         timeout: locationTimeout
       });
