@@ -338,6 +338,7 @@
         },
         clock: {
           visible: true,
+          positioned: false
         }
       }
 
@@ -1104,6 +1105,9 @@
               showPopup();
               positionClock();
             });
+            app.map.on('change:size', function() {
+              app.clock.positioned = false;
+            });
 
             startClock();
           }
@@ -1129,6 +1133,9 @@
        * Position the clock/compass widget relative to tide graph
        */
       function positionClock() {
+        if (app.clock.positioned) {
+          return;
+        }
         let elem = document.getElementById('tideChart').parentElement;
         const rect = elem.getBoundingClientRect();
         elem = document.getElementById('clock');
@@ -1141,6 +1148,7 @@
         elem.style.top = (rect.bottom + 4) + 'px';
 
         positionLocation();
+        app.clock.positioned = true;
       }
 
 
