@@ -5,7 +5,6 @@ const PNG = require('pngjs').PNG;
 
 
 function crawl(dir, action) {
-  // console.log(dir);
   const emptyList = dir + '/emptyTiles.txt';
   if (0) try {
     fs.unlinkSync(emptyList);
@@ -42,6 +41,16 @@ function crawl(dir, action) {
 
 
 const start = path.normalize(__dirname + '/../tiles');
+const index = path.normalize(__dirname + '/../tiles-index');
+
+try {
+  fs.mkdirSync(index);
+}
+catch(err) {
+  if (err.code!=='EEXIST') {
+    throw new Error(err);
+  }
+}
 
 crawl(start, function(err, filePath, emptyList) {
   if (err) {
@@ -67,8 +76,8 @@ crawl(start, function(err, filePath, emptyList) {
     isEmpty = false;
   }
 
+  const parts = path.basename(filePath).split('.');
   if (isEmpty) {
-    const parts = path.basename(filePath).split('.');
     const entry = parts[1] + ' ' + parts[2] + ' ' + parts[3] + '\n';
     fs.appendFileSync(emptyList, entry);
     console.log(filePath);
@@ -78,7 +87,11 @@ crawl(start, function(err, filePath, emptyList) {
         console.log(err);
       }
     });
-
+  }
+  else if (parts[0] !== 'osm-intl') {
+    const indexPath = path.normalize(index + '/' + parts[1]);
+    const entry = parts[2] + ' ' + parts[3] + ' ' + parts[0] + '\n';
+    fs.appendFileSync(indexPath, entry);
   }
 });
  
