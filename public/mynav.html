@@ -720,21 +720,21 @@
       ol.inherits(showClockControl, ol.control.Control);
 
 
-		  /**
-			 * Custom control for displaying current location
-			 */
-			const locationControl = function(opt_options) {
-				const options = opt_options || {};
-				var element = document.createElement('div');
-			  element.className = 'location ol-unselectable ol-control';
-				element.id = 'location';
-				element.innerHTML = convertDMS(options.coords);
-				ol.control.Control.call(this, {
-					element: element,
-					target: options.target
-				});
-			}
-			ol.inherits(locationControl, ol.control.Control);
+      /**
+       * Custom control for displaying current location
+       */
+      const locationControl = function(opt_options) {
+        const options = opt_options || {};
+        var element = document.createElement('div');
+        element.className = 'location ol-unselectable ol-control';
+        element.id = 'location';
+        element.innerHTML = convertDMS(options.coords);
+        ol.control.Control.call(this, {
+          element: element,
+          target: options.target
+        });
+      }
+      ol.inherits(locationControl, ol.control.Control);
 
 
       function getCourseLayer(pos, dest) {
@@ -1118,18 +1118,18 @@
         });
        
         elem = document.getElementById('location');
-				if (elem) {
+        if (elem) {
           if (geolocation.coord) {
             coord = [geolocation.coord.lon, geolocation.coord.lat];
           }
-        	elem.innerHTML = convertDMS(coord);
-				}
+          elem.innerHTML = convertDMS(coord);
+        }
         updateWaterLevel(coord);
         //todo:
         // updateCurrents(coord);
 
         return pos;
-			}
+      }
 
       /**
        * Position the clock/compass widget relative to tide graph
