@@ -1136,7 +1136,8 @@
        * Position the clock/compass widget relative to tide graph
        */
       function positionClock() {
-        if (++app.clock.positioned > 3) {
+        // give it a few frames to stabilize
+        if (++app.clock.positioned > 9) {
           return;
         }
         let elem = document.getElementById('tideChart').parentElement;
