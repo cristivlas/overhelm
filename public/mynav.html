@@ -371,11 +371,13 @@
 
       function updateTracking(active) {
         let elem = document.getElementById('tracking');
-        if (active) {
-          elem.style.background = 'green';
-        }
-        else {
-          elem.style.background = 'brown';
+        if (elem) {
+          if (active) {
+            elem.style.background = 'green';
+          }
+          else {
+            elem.style.background = 'brown';
+          }
         }
       }
 
@@ -525,7 +527,6 @@
               popup.visible = popup.show = false;  
             }
             geolocation.stop();
-            document.getElementById('tracking').style.background = 'brown';
             updateMap(app.destination.coord);
             updatePopup(app.destination.point, app.destination.place, app.destination.coord);
           }
@@ -1734,9 +1735,15 @@
       }
 
 
+      let updateTimeout = setInterval(updateDefault, locationTimeout);
+
       var geolocation = new Geolocation({
         onSuccess: function(coord) {
           if (coord.lon && coord.lat) {
+            if (updateTimeout) {
+              clearInterval(updateTimeout);
+              updateTimeout = null;
+            }
             updateTracking(true);
             app.location.current = [ coord.lon, coord.lat ];
             app.location.prev.name = 'current location';
@@ -1754,8 +1761,6 @@
         timeout: locationTimeout
       });
 
-
-      updateDefault();
       geolocation.start();
 
     </script>
