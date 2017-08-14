@@ -145,12 +145,20 @@ router.get('/tiles/:srv/:set/:z/:x/:y', function(req, res, next) {
 
 
 function handleEmptyTile(req, res, next) {
+/* 
   const related = alternateTilesets[req.params.set];
   if (related) {
     console.log(req.params.set + ': trying related tileset: '+ related);
     req.params.set = related;
     return serveTile(req, res, next);
   }
+  else if (req.params.srv !== 'wikimedia') {
+    console.log(req.params.set + ': failing over to wikimedia');
+    req.params.set = 'osm-intl';
+    req.params.srv = 'wikimedia';
+    return serveTile(req, res, next);
+  }
+*/
   return res.sendStatus(204);
 }
 
