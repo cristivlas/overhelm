@@ -1113,6 +1113,9 @@
             });
 
             startClock();
+            swipedetect(clock.canvas, function(dir) {
+              geolocation.changeSpeedUnit();
+            }, true);
           }
           app.location.point = pos;
           updateFeatures(pos);
@@ -1132,24 +1135,52 @@
         return pos;
       }
 
+      const handleDeviceOrientation = function() {
+        if (!navigator.userAgent.match(/iphone/i)) {
+          return 'default';
+        }
+        let elem = document.getElementById('tideChart');
+        if (!elem) return;
+        elem = elem.parentElement;
+        switch (window.orientation) {
+        case 90 || -90:
+          elem.style.width = '45%';
+          return 'landscape';
+        default:
+          elem.style.width = '85%';
+          return 'portrait';
+        }
+      };
+
       /**
        * Position the clock/compass widget relative to tide graph
        */
       function positionClock() {
         // give it a few frames to stabilize
-        if (++app.clock.positioned > 9) {
+        if (++app.clock.positioned >= 5) {
           return;
         }
+        const orientation = handleDeviceOrientation();
+
         let elem = document.getElementById('tideChart').parentElement;
         const rect = elem.getBoundingClientRect();
-        elem = document.getElementById('clock');
-        elem.style.width = elem.style.height = rect.width + 'px';
-        elem = elem.parentElement;
-        elem.style.left = rect.left + 'px';
-        elem.style.top = (rect.bottom + 4) + 'px';
-        elem.style.width = elem.style.height = rect.width + 'px';
+        const canvas = document.getElementById('clock');
+        elem = canvas.parentElement;
+        if (orientation!=='landscape') {
+          canvas.width = canvas.height = rect.width;
+          elem.style.top = (rect.bottom + 4) + 'px';
+          elem.style.left = rect.left + 'px';
+        }
+        else {
+          canvas.width = canvas.height = Math.max(rect.height, rect.width * .65);
+          elem.style.top = rect.top + 'px';
+          elem.style.left = (rect.left - rect.width - 4) + 'px';
+        }
+        elem.style.width = elem.style.height = canvas.height + 'px';
         elem = document.getElementById('show-clock').parentElement;
         elem.style.top = (rect.bottom + 4) + 'px';
+
+        startClock();
 
         positionLocation();
       }
@@ -1764,20 +1795,6 @@
       
       geolocation.start();
 
-      const handleDeviceOrientation = function() {
-        let elem = document.getElementById('tideChart');
-        if (!elem) return;
-        elem = elem.parentElement;
-        switch (window.orientation) {
-        case 90 || -90:
-          elem.style.width = '40%';
-          break;
-        default:
-          elem.style.width = '85%';
-          break;
-        }
-      };
-      handleDeviceOrientation();
       window.addEventListener('orientationchange', handleDeviceOrientation);
 
     </script>

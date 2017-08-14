@@ -1,19 +1,23 @@
 var clock = {
   canvas: null,
   ctx: null,
-  radius: null,
+  radius: 0,
+  interval: null,
 }
 
 function startClock() {
   clock.canvas = document.getElementById('clock');
-  clock.canvas.addEventListener('dblclick', function() {
-    geolocation.changeSpeedUnit();
-  }, false);
-  clock.ctx = clock.canvas.getContext('2d');
-  clock.radius = clock.canvas.height / 2;
+  if (!clock.ctx) {
+    clock.ctx = clock.canvas.getContext('2d');
+  }
+  if (clock.interval) {
+    clearInterval(clock.interval);
+    clock.interval = null;
+  }
+  clock.radius = Math.min(clock.canvas.height, clock.canvas.width) / 2;
   clock.ctx.translate(clock.radius, clock.radius);
-  clock.radius *= 0.90
-  setInterval(drawClock.bind(this, clock.ctx, clock.radius), 1000);
+  clock.radius *= 0.90;
+  clock.interval = setInterval(drawClock.bind(this, clock.ctx, clock.radius), 1000);
 }
 
 function drawClock(ctx, radius) {
