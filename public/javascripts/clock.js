@@ -6,6 +6,9 @@ var clock = {
 
 function startClock() {
   clock.canvas = document.getElementById('clock');
+  clock.canvas.addEventListener('dblclick', function() {
+    geolocation.changeSpeedUnit();
+  }, false);
   clock.ctx = clock.canvas.getContext('2d');
   clock.radius = clock.canvas.height / 2;
   clock.ctx.translate(clock.radius, clock.radius);
@@ -220,7 +223,8 @@ function drawSpeed(ctx, radius) {
   ctx.moveTo(x+1,-y);
   ctx.lineTo(-x,-y);
   ctx.font = 'bold ' + radius*0.125 + 'px arial black';
-  ctx.fillText(Math.floor(geolocation.speed * 10) / 10 + ' kts', 0, 0);
+  const units = geolocation.getSpeedUnit();
+  ctx.fillText(Math.floor(geolocation.speed * 10) / 10 + ' ' + units, 0, 0);
   ctx.stroke();
   ctx.translate(0, -radius * .2);
 }

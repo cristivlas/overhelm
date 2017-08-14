@@ -8,8 +8,19 @@ class Geolocation {
     this._startCallback = options.onStart;
     this._stopCallback = options.onStop;
     this._ios = (navigator.platform === 'iPad' || navigator.platform === 'iPhone');
+    this._iunit = 0;
+    this._units = [ 'kts', 'mph', 'km/h' ];
+    this._speedConversion = [ 1.943844, 2.236936, 3.6 ];
     this.speed = 0;
     this.rotation = 0;
+  }
+
+  changeSpeedUnit() {
+    this._iunit = (this._iunit + 1) % this._units.length;
+  }
+
+  getSpeedUnit() {
+    return this._units[this._iunit];
   }
 
   start() {
@@ -110,7 +121,8 @@ class Geolocation {
     var coord = {
       lon: pos.coords.longitude,
       lat: pos.coords.latitude,
-      speed: pos.coords.speed * 1.943844, // meters per second -> knots
+      //speed: pos.coords.speed * 1.943844, // meters per second -> knots
+      speed: pos.coords.speed * this._speedConversion[this._iunit],
       heading: pos.coords.heading
     }
     this._update(coord);
