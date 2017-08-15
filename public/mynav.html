@@ -163,6 +163,7 @@
         top: 160px;
       }
       .show-clock {
+        position: absolute;
         top: 20em;
         right: .5em;
       }
@@ -1143,8 +1144,9 @@
         if (!elem) return;
         elem = elem.parentElement;
         switch (window.orientation) {
-        case 90 || -90:
-          elem.style.width = '45%';
+        case 90:
+        case -90:
+          elem.style.width = '60%';
           return 'landscape';
         default:
           elem.style.width = '85%';
@@ -1157,7 +1159,7 @@
        */
       function positionClock() {
         // give it a few frames to stabilize
-        if (++app.clock.positioned >= 5) {
+        if (++app.clock.positioned >= 10) {
           return;
         }
         const orientation = handleDeviceOrientation();
@@ -1166,19 +1168,25 @@
         const rect = elem.getBoundingClientRect();
         const canvas = document.getElementById('clock');
         elem = canvas.parentElement;
+        let top = 0;
+        let right = 0;
         if (orientation!=='landscape') {
           canvas.width = canvas.height = rect.width;
           elem.style.top = (rect.bottom + 4) + 'px';
           elem.style.left = rect.left + 'px';
+          top = rect.bottom + 4;
         }
         else {
-          canvas.width = canvas.height = Math.max(rect.height, rect.width * .65);
+          canvas.width = canvas.height = rect.height;
           elem.style.top = rect.top + 'px';
-          elem.style.left = (rect.left - rect.width - 4) + 'px';
+          elem.style.left = (rect.left - rect.height - 4) + 'px';
+          right = window.innerWidth -rect.left + 4;
+          top = rect.top;
         }
         elem.style.width = elem.style.height = canvas.height + 'px';
         elem = document.getElementById('show-clock').parentElement;
-        elem.style.top = (rect.bottom + 4) + 'px';
+        elem.style.top = top + 'px';
+        elem.style.right = right + 'px';
 
         startClock();
 

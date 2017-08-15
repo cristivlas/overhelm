@@ -18,6 +18,7 @@ function startClock() {
   clock.ctx.translate(clock.radius, clock.radius);
   clock.radius *= 0.90;
   clock.interval = setInterval(drawClock.bind(this, clock.ctx, clock.radius), 1000);
+  drawClock(clock.ctx, clock.radius);
 }
 
 function drawClock(ctx, radius) {
