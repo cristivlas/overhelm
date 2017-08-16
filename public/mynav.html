@@ -1120,6 +1120,7 @@
           }
           app.location.point = pos;
           updateFeatures(pos);
+          updateTracking(geolocation.coord && geolocation.coord.lon && geolocation.coord.lat);
         });
        
         elem = document.getElementById('location');
@@ -1170,7 +1171,8 @@
         const canvas = document.getElementById('clock');
         elem = canvas.parentElement;
         let top = 0;
-        let right = 0;
+        let right = '.5em';
+
         if (orientation!=='landscape') {
           canvas.width = canvas.height = rect.width;
           elem.style.top = (rect.bottom + 4) + 'px';
@@ -1803,6 +1805,9 @@
       });
       
       geolocation.start();
+      if (!navigator.geolocation) {
+        updateDefault();
+      }
 
       window.addEventListener('orientationchange', handleDeviceOrientation);
 
