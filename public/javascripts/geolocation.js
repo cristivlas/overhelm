@@ -7,7 +7,8 @@ class Geolocation {
     this._successCallback = options.onSuccess;
     this._startCallback = options.onStart;
     this._stopCallback = options.onStop;
-    this._ios = (navigator.platform === 'iPad' || navigator.platform === 'iPhone');
+    //this._mobile = (navigator.platform === 'iPad' || navigator.platform === 'iPhone');
+    this._mobile = navigator.userAgent.match(/mobile/i);
     this._iunit = 0;
     this._units = [ 'kts', 'mph', 'km/h' ];
     this._speedConversion = [ 1.943844, 2.236936, 3.6 ];
@@ -25,8 +26,8 @@ class Geolocation {
 
   start() {
     if (!this.isTracking()) {
-      console.log(this);
-      if (this._ios) {
+      //console.log(this);
+      if (this._mobile) {
         this._useHTML5Geolocation();
       }
       else {
@@ -98,10 +99,14 @@ class Geolocation {
   }
 
   _useHTML5Geolocation() {
-    if (this._ios && !this._once) {
+    if (this._mobile && !this._once) {
       this._once = true;
       this._timeout = 5000;
+
       window.addEventListener('deviceorientation', function(e) {
+        if (e.webkitCompassHeading === undefined) {
+          return;
+        }
         this._heading = e.webkitCompassHeading;
         navigator.geolocation.getCurrentPosition(this._onSuccess);
       }.bind(this));
@@ -130,6 +135,7 @@ class Geolocation {
 
   _onError(err) {
     this.stop();
+    this.coord = null;
     if (err.code === err.PERMISSION_DENIED) {
       alertify.alert(err.message);
       if (this._errorCallback) {

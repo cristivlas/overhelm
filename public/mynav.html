@@ -1107,7 +1107,7 @@
 
             app.map.on('postrender', function() {
               showPopup();
-              positionClock();
+              repositionWidgets();
             });
             app.map.on('change:size', function() {
               app.clock.positioned = 0;
@@ -1137,13 +1137,14 @@
         return pos;
       }
 
-      const handleDeviceOrientation = function() {
-        if (!navigator.userAgent.match(/iphone/i)) {
+      const getDeviceOrientation = function() {
+        if (!navigator.userAgent.match(/mobile/i)) {
           return 'default';
         }
-        app.clock.positioned = 0;
         let elem = document.getElementById('tideChart');
-        if (!elem) return;
+        if (!elem) {
+          return 'default';
+        }
         elem = elem.parentElement;
         switch (window.orientation) {
         case 90:
@@ -1156,15 +1157,31 @@
         }
       };
 
+      const handleDeviceOrientation = function() {
+        app.clock.positioned = 0;
+        repositionWidgets();
+      };
+
+      function repositionWidgets() {
+        if (app.clock.reposition) {
+          clearInterval(app.clock.reposition);
+        }
+        app.clock.reposition = setInterval(positionClock, 200);
+      }
+
       /**
        * Position the clock/compass widget relative to tide graph
        */
       function positionClock() {
         // give it a few frames to stabilize
         if (++app.clock.positioned >= 10) {
+          if (app.clock.reposition) {
+            clearInterval(app.clock.reposition);
+            app.clock.reposition = null;
+          }
           return;
         }
-        const orientation = handleDeviceOrientation();
+        const orientation = getDeviceOrientation();
 
         let elem = document.getElementById('tideChart').parentElement;
         const rect = elem.getBoundingClientRect();
@@ -1173,26 +1190,31 @@
         let top = 0;
         let right = '.5em';
 
-        if (orientation!=='landscape') {
-          canvas.width = canvas.height = rect.width;
-          elem.style.top = (rect.bottom + 4) + 'px';
-          elem.style.left = rect.left + 'px';
-          top = rect.bottom + 4;
-        }
-        else {
+        switch (orientation) {
+        case 'landscape':
           canvas.width = canvas.height = rect.height;
           elem.style.top = rect.top + 'px';
           elem.style.left = (rect.left - rect.height - 4) + 'px';
           right = window.innerWidth -rect.left + 4;
           top = rect.top;
+          break;
+
+        case 'portrait':
+        default:
+          canvas.width = canvas.height = rect.width;
+          elem.style.top = (rect.bottom + 4) + 'px';
+          elem.style.left = rect.left + 'px';
+          right = 0;
+          top = rect.bottom + 4;
+          break;
         }
         elem.style.width = elem.style.height = canvas.height + 'px';
+
         elem = document.getElementById('show-clock').parentElement;
         elem.style.top = top + 'px';
         elem.style.right = right + 'px';
 
         startClock();
-
         positionLocation();
       }
 
