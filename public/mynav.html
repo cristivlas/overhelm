@@ -1837,9 +1837,10 @@
           if (geolocation.isTracking()) {
             if (app.clock.visible) {
               drawClock(clock.ctx, clock.radius);
+              app.clock.positioned = 0;
+              positionClock();
             }
             updateMap(app.location.current);
-            positionClock();
           }
         },
         timeout: locationTimeout
