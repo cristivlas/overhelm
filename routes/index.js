@@ -140,9 +140,39 @@ var tileService = {
  * Tiles service proxy
  */
 router.get('/tiles/:srv/:set/:z/:x/:y', function(req, res, next) {
+  if (req.params.srv === 'wikimedia') {
+    return serveWikimediaTile(req, res, next);
+  }
   serveTile(req, res, next);
 });
 
+
+/******************************************************************
+ * serve wiki tile only when
+ * 1) no NOAA tile with same z,x,y exist
+ * 2) the tile is part of a multi-page chart (_1, _2, etc)
+ */
+function serveWikimediaTile(req, res, next) {
+  const index = path.normalize(__dirname + '/../tiles-index/' + req.params.z);
+  const cmd = 'grep "' + req.params.x + ' ' + req.params.y + '" ' + index + ' | cut -d" " -f3';
+
+  exec (cmd, function(err, stdout, stderr) {
+    if (err) {
+      return serveTile(req, res, next);
+    }
+    else {
+      const a = JSON.parse('["' + stdout.trim().replace(/\n/g, '","') + '"]');
+      for (let i = 0; i < a.length; ++i) {
+        const fpath = path.normalize(__dirname + '/../tiles/noaa/' + a[i].replace(/_./, '_2'));
+        if (fs.existsSync(fpath)) {
+          return serveTile(req, res, next);
+        }
+      }
+      console.log(a);
+      return res.sendStatus(204);
+    }
+  });
+}
 
 function handleEmptyTile(req, res, next) {
 /* 
@@ -152,13 +182,14 @@ function handleEmptyTile(req, res, next) {
     req.params.set = related;
     return serveTile(req, res, next);
   }
-  else if (req.params.srv !== 'wikimedia') {
+  else
+ */
+  if (req.params.srv !== 'wikimedia') {
     console.log(req.params.set + ': failing over to wikimedia');
     req.params.set = 'osm-intl';
     req.params.srv = 'wikimedia';
     return serveTile(req, res, next);
   }
-*/
   return res.sendStatus(204);
 }
 
