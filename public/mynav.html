@@ -802,7 +802,7 @@
           iconUrl = positionImg;
           if (app.rotateView) {
             const v = app.map.getView();
-            v.setRotation(2 * Math.PI - geolocation.rotation);
+            v.rotate(2 * Math.PI - geolocation.rotation, app.location.point);
           }
           else {
             rotation = geolocation.rotation;
@@ -913,14 +913,12 @@
       function updateChartLayers(coord, view, callback) {
         const viewMaxRes = view.getMaxResolution();
         const extent = view.calculateExtent();
-        if (ol.extent.equals(extent, app.extent)) {
-          return callback();
-        }
-        app.extent = extent;
         if (ol.extent.containsXY(extent, app.location.point[0], app.location.point[1])) {
           return callback();
         }
-
+        else if (ol.extent.equals(extent, app.extent)) {
+          return callback();
+        }
         getChartTilesets(coord, extent, function(tileset) {
           if (tileset !== app.tileset) {
             getTimezoneOffset(coord);
@@ -989,6 +987,7 @@
               }
             }
           }
+          app.extent = extent;
           callback();
         });
       }
@@ -1010,31 +1009,37 @@
         }
         const pos = ol.proj.fromLonLat(coord);
 
-        const view = app.map ? app.map.getView() : new ol.View({
-          center: pos,
-          zoom: defaultZoom,
-          minZoom: 3,
-          maxZoom: 18,
-          enableRotation: false,
-        });
-
-        function update(view) {
-          if (!view.updating) {
-            view.updating = true;
-            updateChartLayers(app.location.current, view, function() {
-              updateFeatures(app.location.point);
-              if (app.rotateView) {
-                view.setRotation(2 * Math.PI - geolocation.rotation);
-              }
-              app.map.render();
-              view.updating = false;
-              lastInteraction = new Date();
-            });
-          }
+        let view = null;
+        if (app.map) {
+          view = app.map.getView();
         }
+        else {
+          view = new ol.View({
+            center: pos,
+            zoom: defaultZoom,
+            minZoom: 3,
+            maxZoom: 18,
+            enableRotation: false,
+          });
 
-        view.on('change:center', update.bind(this, view));
-        view.on('change:resolution', update.bind(this, view));
+          function update(view) {
+            if (!view.updating) {
+              view.updating = true;
+              updateChartLayers(app.location.current, view, function() {
+                updateFeatures(app.location.point);
+                if (app.rotateView) {
+                  view.setRotation(2 * Math.PI - geolocation.rotation);
+                }
+                app.map.render();
+                view.updating = false;
+                lastInteraction = new Date();
+              });
+            }
+          }
+
+          view.on('change:center', update.bind(this, view));
+          view.on('change:resolution', update.bind(this, view));
+        }
 
         const now = new Date();
         if (!lastInteraction || now.getTime() > lastInteraction.getTime() + 60 * 1000) {
@@ -1059,6 +1064,7 @@
         }
 
         updateChartLayers(coord, view, function() {
+          view.updating = true;
           if (!app.map) {
             /**
              * Construct the base layer (using map tiles from wikimedia)
@@ -1121,6 +1127,7 @@
           app.location.point = pos;
           updateFeatures(pos);
           updateTracking(geolocation.isTracking());
+          view.updating = false;
         });
        
         elem = document.getElementById('location');
@@ -1824,8 +1831,13 @@
           updateTracking(false);
         },
         onCompass: function() {
+          if (app.map && app.map.getView().updating) {
+            return;
+          }
           if (geolocation.isTracking()) {
-            drawClock(clock.ctx, clock.radius);
+            if (app.clock.visible) {
+              drawClock(clock.ctx, clock.radius);
+            }
             updateMap(app.location.current);
             positionClock();
           }
