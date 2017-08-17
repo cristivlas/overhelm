@@ -1182,7 +1182,6 @@
           return;
         }
         const orientation = getDeviceOrientation();
-
         let elem = document.getElementById('tideChart').parentElement;
         const rect = elem.getBoundingClientRect();
         const canvas = document.getElementById('clock');
@@ -1827,6 +1826,7 @@
           if (geolocation.isTracking()) {
             drawClock(clock.ctx, clock.radius);
             updateMap(app.location.current);
+            positionClock();
           }
         },
         timeout: locationTimeout

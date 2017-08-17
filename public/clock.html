@@ -28,7 +28,7 @@
     },
     onCompass: function() {
       document.getElementById('rotation').innerHTML = 
-        Math.floor(geolocation.rotation * 1000) / 1000;
+        Math.floor(geolocation._heading) + ' ' + window.orientation;
       drawClock(clock.ctx, clock.radius);
     },
     timeout: 3000,
