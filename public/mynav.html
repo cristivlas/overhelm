@@ -1138,7 +1138,8 @@
       }
 
       const getDeviceOrientation = function() {
-        if (!navigator.userAgent.match(/mobile/i)) {
+        if (!navigator.userAgent.match(/mobile/i)
+         || navigator.platform.match(/ipad/i)) {
           return 'default';
         }
         let elem = document.getElementById('tideChart');

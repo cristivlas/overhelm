@@ -8,6 +8,7 @@ class Geolocation {
     this._startCallback = options.onStart;
     this._stopCallback = options.onStop;
     this._compassCallback = options.onCompass;
+    this._lastCompassDate = new Date();
     //this._ios = (navigator.platform === 'iPad' || navigator.platform === 'iPhone');
     this._mobile = navigator.userAgent.match(/mobile/i);
     this._iunit = 0;
@@ -104,6 +105,11 @@ class Geolocation {
       this._once = true;
 
       window.addEventListener('deviceorientation', function(e) {
+        const now = new Date();
+        if (now.getTime() < this._lastCompassDate.getTime() + 100) {
+          return;
+        }
+        this._lastCompassDate = now;
         if (e.webkitCompassHeading) {
           this._heading = e.webkitCompassHeading;
         }
@@ -126,7 +132,7 @@ class Geolocation {
       {
         enableHighAccuracy: true,
         timeout: this._timeout,
-        maximumAge: 0
+        maximumAge: this._timeout 
       });
   }
 
