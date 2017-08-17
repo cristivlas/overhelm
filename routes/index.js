@@ -91,16 +91,19 @@ router.get('/tilesets/:srv/:lon/:lat/:minLon/:minLat/:maxLon/:maxLat',
     return 0;
   });
   if (useBest) {
+    /*
     for (let i = 0; i != sets.length-1; ++i) {
       const curr = sets[i+1];
       const next = sets[i];
       if (curr.sounding===next.sounding) {
         alternateTilesets[curr.ident] = next.ident;
       }
-    }
+    } */
     sets = sets.splice(sets.length-1);
   }
-  res.end(JSON.stringify(sets));
+  const result = JSON.stringify(sets);
+  //console.log(result);
+  res.end(result);
 });
 
 
@@ -140,9 +143,9 @@ var tileService = {
  * Tiles service proxy
  */
 router.get('/tiles/:srv/:set/:z/:x/:y', function(req, res, next) {
-  if (req.params.srv === 'wikimedia') {
-    return serveWikimediaTile(req, res, next);
-  }
+  //if (req.params.srv === 'wikimedia') {
+  //  return serveWikimediaTile(req, res, next);
+  //}
   serveTile(req, res, next);
 });
 
@@ -168,7 +171,7 @@ function serveWikimediaTile(req, res, next) {
           return serveTile(req, res, next);
         }
       }
-      console.log(a);
+      console.log(cmd, a);
       return res.sendStatus(204);
     }
   });
@@ -183,13 +186,13 @@ function handleEmptyTile(req, res, next) {
     return serveTile(req, res, next);
   }
   else
- */
   if (req.params.srv !== 'wikimedia') {
     console.log(req.params.set + ': failing over to wikimedia');
     req.params.set = 'osm-intl';
     req.params.srv = 'wikimedia';
     return serveTile(req, res, next);
   }
+*/
   return res.sendStatus(204);
 }
 

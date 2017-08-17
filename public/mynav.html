@@ -407,8 +407,8 @@
           }
           lastInteraction = null;
           geolocation.stop();
-          geolocation.start();
           app.rotateView ^= true;
+          geolocation.start();
           if (app.rotateView) {
             lastInteraction = null;
             button.removeChild(iconLoc);
@@ -528,6 +528,7 @@
               popup.visible = popup.show = false;  
             }
             geolocation.stop();
+            app.rotateView ^= true;
             updateMap(app.destination.coord);
             updatePopup(app.destination.point, app.destination.place, app.destination.coord);
           }
@@ -859,6 +860,10 @@
        * Ask the backend for the tilesets that match the current coordinates
        */ 
       function getChartTilesets(coord, extent, callback) {
+        const pos = ol.proj.fromLonLat(coord);
+        if (!ol.extent.containsXY(extent, pos[0], pos[1])) {
+          extent = [0, 0, 0, 0];
+        }
         const minLonLat = ol.proj.transform([extent[0], extent[1]], 'EPSG:3857', 'EPSG:4326');
         const maxLonLat = ol.proj.transform([extent[2], extent[3]], 'EPSG:3857', 'EPSG:4326');
 
@@ -913,12 +918,7 @@
       function updateChartLayers(coord, view, callback) {
         const viewMaxRes = view.getMaxResolution();
         const extent = view.calculateExtent();
-        if (ol.extent.containsXY(extent, app.location.point[0], app.location.point[1])) {
-          return callback();
-        }
-        else if (ol.extent.equals(extent, app.extent)) {
-          return callback();
-        }
+
         getChartTilesets(coord, extent, function(tileset) {
           if (tileset !== app.tileset) {
             getTimezoneOffset(coord);
@@ -938,7 +938,6 @@
             let hMax = null;
             let maxRes = viewMaxRes;
             const extents = JSON.parse(tileset);
-            const sounding = extents.length===1 ? extents[0].sounding : null;
             //
             // apply new chart layers 
             //
@@ -949,11 +948,11 @@
               maxRes = Math.ceil((tileset.height * viewMaxRes) / hMax);
 
               const url = 'tiles/noaa/' + tileset.ident + '/{z}/{x}/{y}';
-              
+              const sounding = tileset.sounding ? ' Soundings in ' + tileset.sounding : '';
               const layer = new ol.layer.Tile({
                 source: new ol.source.XYZ({
                   url: url,
-                  attributions: tileset.ident.split('_')[0] + (sounding ? ' Soundings in ' + sounding : '')
+                  attributions: tileset.ident.split('_')[0] + sounding
                 }),
                 maxResolution: maxRes,
                 opacity: .8
@@ -1772,15 +1771,16 @@
                 if (!elem) {
                   return;
                 }
-                const coord = JSON.parse(elem.options[elem.selectedIndex].value);
+                const srchCoord = JSON.parse(elem.options[elem.selectedIndex].value);
                 if (geolocation.isTracking()) {
                   geolocation.stop();
+                  app.rotateView ^= true;
                 }
                 if (app.map && app.map.getView().getZoom() < defaultZoom) {
                     app.map.getView().setZoom(defaultZoom);
                 }
-                const pos = updateMap(coord);
-                updatePopup(pos, matches[elem.selectedIndex], coord);
+                const pos = updateMap(srchCoord);
+                updatePopup(pos, matches[elem.selectedIndex], srchCoord);
               });
             }
             else {
@@ -1805,7 +1805,6 @@
         }
         updateMap(app.location.current);
       }
-
 
       let updateTimeout = setInterval(updateDefault, locationTimeout);
 
