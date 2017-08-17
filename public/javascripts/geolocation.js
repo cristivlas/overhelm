@@ -150,6 +150,9 @@ class Geolocation {
       this.start();
     }
     else if (err.code === err.PERMISSION_DENIED) {
+      if (err.message.length === 0) {
+        err.message = 'Unknown geolocation error'
+      }
       alertify.alert(err.message);
       if (this._errorCallback) {
         this._errorCallback(err);

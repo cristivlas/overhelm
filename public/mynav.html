@@ -296,7 +296,7 @@
 
     <script>
       const defaultZoom = 15;
-      const locationTimeout = 3000;
+      const locationTimeout = 1000;
       const positionImg = 'images/compass4.png';
 
       var popup = null;
@@ -402,12 +402,14 @@
         iconNav.className = 'tracking-img';
 
         var handler = function() {
-          if (!geolocation.isTracking()) {
+          if (geolocation.isTracking()) {
+            app.rotateView ^= true;
+          }
+          else {
             app.map.getView().setZoom(app.zoom);
           }
           lastInteraction = null;
           geolocation.stop();
-          app.rotateView ^= true;
           geolocation.start();
           if (app.rotateView) {
             lastInteraction = null;
@@ -528,7 +530,6 @@
               popup.visible = popup.show = false;  
             }
             geolocation.stop();
-            app.rotateView ^= true;
             updateMap(app.destination.coord);
             updatePopup(app.destination.point, app.destination.place, app.destination.coord);
           }
@@ -864,6 +865,7 @@
         if (!ol.extent.containsXY(extent, pos[0], pos[1])) {
           extent = [0, 0, 0, 0];
         }
+
         const minLonLat = ol.proj.transform([extent[0], extent[1]], 'EPSG:3857', 'EPSG:4326');
         const maxLonLat = ol.proj.transform([extent[2], extent[3]], 'EPSG:3857', 'EPSG:4326');
 
@@ -1774,11 +1776,12 @@
                 const srchCoord = JSON.parse(elem.options[elem.selectedIndex].value);
                 if (geolocation.isTracking()) {
                   geolocation.stop();
-                  app.rotateView ^= true;
                 }
                 if (app.map && app.map.getView().getZoom() < defaultZoom) {
                     app.map.getView().setZoom(defaultZoom);
                 }
+                app.map.getView().setCenter(ol.proj.fromLonLat(srchCoord));
+                app.lastInteraction = null;
                 const pos = updateMap(srchCoord);
                 updatePopup(pos, matches[elem.selectedIndex], srchCoord);
               });
