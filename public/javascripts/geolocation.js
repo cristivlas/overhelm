@@ -7,7 +7,8 @@ class Geolocation {
     this._successCallback = options.onSuccess;
     this._startCallback = options.onStart;
     this._stopCallback = options.onStop;
-    //this._mobile = (navigator.platform === 'iPad' || navigator.platform === 'iPhone');
+    this._compassCallback = options.onCompass;
+    //this._ios = (navigator.platform === 'iPad' || navigator.platform === 'iPhone');
     this._mobile = navigator.userAgent.match(/mobile/i);
     this._iunit = 0;
     this._units = [ 'kts', 'mph', 'km/h' ];
@@ -26,7 +27,6 @@ class Geolocation {
 
   start() {
     if (!this.isTracking()) {
-      //console.log(this);
       if (this._mobile) {
         this._useHTML5Geolocation();
       }
@@ -101,14 +101,21 @@ class Geolocation {
   _useHTML5Geolocation() {
     if (this._mobile && !this._once) {
       this._once = true;
-      this._timeout = 5000;
 
       window.addEventListener('deviceorientation', function(e) {
-        if (e.webkitCompassHeading === undefined) {
-          return;
+        if (e.webkitCompassHeading) {
+          this._heading = e.webkitCompassHeading;
         }
-        this._heading = e.webkitCompassHeading;
-        navigator.geolocation.getCurrentPosition(this._onSuccess);
+        else {
+          if (!e.absolute || e.alpha === null) {
+            return;
+          }
+          this._heading = compassHeading(e.alpha, e.beta, e.gamma);
+        }
+        this.rotation = this._heading * (Math.PI / 180);
+        if (this._compassCallback) {
+          this._compassCallback(this);
+        }
       }.bind(this));
     }
 
@@ -134,8 +141,10 @@ class Geolocation {
   }
 
   _onError(err) {
+    if (!this.isTracking()) {
+      return;
+    }
     this.stop();
-    this.coord = null;
     if (err.code === err.PERMISSION_DENIED) {
       alertify.alert(err.message);
       if (this._errorCallback) {
@@ -160,7 +169,7 @@ class Geolocation {
     }
     this.coord = coord;
     this.speed = coord.speed;
-    this.rotation = coord.heading * (Math.PI / 180);
+    this.rotation = (coord.heading % 2 * Math.PI) * (Math.PI / 180);
 
     if (this._successCallback) {
       this._successCallback(coord);
@@ -168,3 +177,40 @@ class Geolocation {
   }
 }
 
+
+// https://stackoverflow.com/questions/18112729/calculate-compass-heading-from-deviceorientation-event-api
+function compassHeading(alpha, beta, gamma) {
+
+  // Convert degrees to radians
+  var alphaRad = alpha * (Math.PI / 180);
+  var betaRad = beta * (Math.PI / 180);
+  var gammaRad = gamma * (Math.PI / 180);
+
+  // Calculate equation components
+  var cA = Math.cos(alphaRad);
+  var sA = Math.sin(alphaRad);
+  var cB = Math.cos(betaRad);
+  var sB = Math.sin(betaRad);
+  var cG = Math.cos(gammaRad);
+  var sG = Math.sin(gammaRad);
+
+  // Calculate A, B, C rotation components
+  var rA = - cA * sG - sA * sB * cG;
+  var rB = - sA * sG + cA * sB * cG;
+  var rC = - cB * cG;
+
+  // Calculate compass heading
+  var compassHeading = Math.atan(rA / rB);
+
+  // Convert from half unit circle to whole unit circle
+  if(rB < 0) {
+    compassHeading += Math.PI;
+  }else if(rA < 0) {
+    compassHeading += 2 * Math.PI;
+  }
+
+  // Convert radians to degrees
+  compassHeading *= 180 / Math.PI;
+
+  return compassHeading;
+}

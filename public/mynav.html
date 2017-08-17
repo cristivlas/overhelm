@@ -296,7 +296,7 @@
 
     <script>
       const defaultZoom = 15;
-      const locationTimeout = 1000;
+      const locationTimeout = 3000;
       const positionImg = 'images/compass4.png';
 
       var popup = null;
@@ -1120,7 +1120,7 @@
           }
           app.location.point = pos;
           updateFeatures(pos);
-          updateTracking(geolocation.coord && geolocation.coord.lon && geolocation.coord.lat);
+          updateTracking(geolocation.isTracking());
         });
        
         elem = document.getElementById('location');
@@ -1822,6 +1822,12 @@
         onStop: function() {
           app.tide.station = null;
           updateTracking(false);
+        },
+        onCompass: function() {
+          if (geolocation.isTracking()) {
+            drawClock(clock.ctx, clock.radius);
+            updateMap(app.location.current);
+          }
         },
         timeout: locationTimeout
       });

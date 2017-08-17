@@ -5,9 +5,15 @@
 <script src="lib/alertify.min.js"></script>
 <script src="javascripts/clock.js"></script>
 <script src="javascripts/geolocation.js"></script>
+<style>
+  .rotation {
+    font-size: 400%;
+  }
+</style>
 <body>
 
-<canvas id="clock" width="600px" height="600px">
+<div id='rotation' class='rotation'></div>
+<canvas id='clock' width='400px' height='400px'>
 </canvas>
 
 <script>
@@ -20,6 +26,12 @@
     },
     onError: function(err) {
     },
+    onCompass: function() {
+      document.getElementById('rotation').innerHTML = 
+        Math.floor(geolocation.rotation * 1000) / 1000;
+      drawClock(clock.ctx, clock.radius);
+    },
+    timeout: 3000,
   });
   
   onload = function() {
