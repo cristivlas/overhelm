@@ -111,8 +111,11 @@ class Map {
       enableRotation: false,
       center: this._location ? this._location._point : null
     })
+
     this._view.on('change:center', this._updateView.bind(this));
-    this._view.on('change:resolution', this._updateView.bind(this));
+    this._view.on('change:resolution', function() {
+      this._updateView(true);
+    }.bind(this))
 
     this._map = new ol.Map({
       target: opts.target,
@@ -139,7 +142,7 @@ class Map {
     this._lastInteraction = new Date();
   }
 
-  _updateView() {
+  _updateView(resolutionChanged) {
     if (this._updating) {
       return;
     }
@@ -149,9 +152,12 @@ class Map {
     else {
       ++this._updating;
       const extent = this._view.calculateExtent();
-      if (ol.extent.containsCoordinate(extent, this._location._point)) {
-        --this._updating;
-        return;
+
+      if (!resolutionChanged) {
+        if (ol.extent.containsCoordinate(extent, this._location._point)) {
+          --this._updating;
+          return;
+        }
       }
       const minLonLat = ol.proj.transform([extent[0], extent[1]], 'EPSG:3857', 'EPSG:4326');
       const maxLonLat = ol.proj.transform([extent[2], extent[3]], 'EPSG:3857', 'EPSG:4326');
@@ -188,7 +194,7 @@ class Map {
   _showLocation(mode) {
     const self = this;
     self._mode = mode;
-    if (self._charts
+    if (self._charts && self._charts.length > 0
       && ol.extent.containsCoordinate(self._view.calculateExtent(), this._location._point)) {
       self._recenter++;
       self._view.setCenter(self._location._point);
@@ -360,6 +366,8 @@ class Map {
   }
 
   showInspectLocation() {
+    this._rotateView = false;
+    this._view.setRotation(0);
     this._location = this._inspectLocation;
     return this._showLocation(Mode.INSPECT_LOCATION);
   }
