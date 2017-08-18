@@ -1,3 +1,10 @@
+
+const roundPoint = function(p, prec = 10000) {
+  p[0] = Math.floor(p[0] * prec)/prec;
+  p[1] = Math.floor(p[1] * prec)/prec;
+}
+
+
 const buildLayers = function(resp, viewMaxRes) {
   charts = [];
 
@@ -28,8 +35,8 @@ const buildLayers = function(resp, viewMaxRes) {
   })
 
   let prev = null;
-  for (i = app.layers.charts.length - 1; i >= 0; --i) {
-    let layer = app.layers.charts[i];
+  for (i = charts.length - 1; i >= 0; --i) {
+    let layer = charts[i];
     if (prev) {
       if (layer.getMaxResolution() / prev.getMaxResolution() > 2) {
         layer.setMinResolution(prev.getMaxResolution());
@@ -47,12 +54,14 @@ const buildLayers = function(resp, viewMaxRes) {
 
 class Location {
   constructor(coord) {
+    roundPoint(coord);
     this._coord = coord;
     this._point = ol.proj.fromLonLat(coord);
     this._charts = [];
   }
 
   equals(coord) {
+    roundPoint(coord);
     return this._coord[0]===coord[0] && this._coord[1]===coord[1];
   }
 
@@ -61,11 +70,11 @@ class Location {
       return callback();
     }
     const url = 'charts/noaa/loc/' + this._coord[0] + '/' + this._coord[1];
-    const loc = this;
+    const self = this;
     const xmlHttp = new XMLHttpRequest();
     xmlHttp.onreadystatechange = function() {
       if (xmlHttp.readyState===4 && xmlHttp.status===200) {
-        loc._charts = buildLayers(xmlHttp.responseText, viewMaxRes);
+        self._charts = buildLayers(xmlHttp.responseText, viewMaxRes);
         callback();
       }
     }
@@ -77,20 +86,23 @@ class Location {
 
 const Mode = {
   CURRENT_LOCATION: 1,
-  INSPECT_LOCATION: 2,
-  SHOW_DESTINATION: 3
+  INSPECT_LOCATION: 3,
+  SHOW_DESTINATION: 4
 }
 
 
 
 class Map {
   constructor(opts) {
-    this._defaultZoom = 15;
+    this._defaultZoom = opts.defaultZoom || 12;
     this._updating = 0;
     this._recenter = 0;
     this._rotateView = false;
     this._mode = Mode.INSPECT_LOCATION;
-    this._location = opts.coord ? new Location(opts.coord) : null;
+    //this._location = opts.coord ? new Location(opts.coord) : null;
+    this._lastInteraction = null;
+    this._onLocationUpdate = opts.onLocationUpdate;
+    this._onUpdateView = opts.onUpdateView;
 
     this._view = new ol.View({
       zoom: this._defaultZoom,
@@ -123,48 +135,60 @@ class Map {
 
   _updateView() {
     if (this._updating) {
-      return;
+      return alert('updating:' + this._updating);
     }
-    this._updating++;
+    ++this._updating;
     if (this._recenter > 0) {
-      this._recenter--;  
+      this._recenter--;
     }
     else {
+      this._lastInteraction = new Date();
+
       const extent = this._view.calculateExtent();
       const minLonLat = ol.proj.transform([extent[0], extent[1]], 'EPSG:3857', 'EPSG:4326');
       const maxLonLat = ol.proj.transform([extent[2], extent[3]], 'EPSG:3857', 'EPSG:4326');
+      roundPoint(minLonLat)
+      roundPoint(maxLonLat)
+
       const viewMaxRes = this._view.getMaxResolution();
-      const map = this;
       const url = 'charts/noaa/ext/' + minLonLat[0] + '/' + minLonLat[1]
           + '/' + maxLonLat[0] + '/' + maxLonLat[1];
-
+ 
+      const self = this;
       const xmlHttp = new XMLHttpRequest();
 
       xmlHttp.onreadystatechange = function() {
         if (xmlHttp.readyState===4 && xmlHttp.status===200) {
 
-          if (map._chartset !== xmlHttp.responseText) {
-            map._chartset = xmlHttp.responseText;
-            map._useLayers(buildLayers(map._chartset, viewMaxRes));
+          if (self._chartset !== xmlHttp.responseText) {
+            self._chartset = xmlHttp.responseText;
+            self._useLayers(buildLayers(self._chartset, viewMaxRes));
           }
         }
       }
       xmlHttp.open('GET', url);
       xmlHttp.send();
-      
     }
-
-    this._updating--;
+    --this._updating;
+    if (this._onUpdateView) {
+      const coord = ol.proj.transform(this._view.getCenter(), 'EPSG:3857', 'EPSG:4326');
+      this._onUpdateView({center:coord});
+    }
   }
 
   _showLocation(mode) {
-    this._mode = mode;
-    self = this;
+    const self = this;
+    self._mode = mode;
+    const first = self._location._charts.length===0;
     this._location.getCharts(this._view.getMaxResolution(), function() {
+      if (first && self._onLocationUpdate) {
+        self._onLocationUpdate(self._location._coord);
+      }
       self._useLayers(self._location._charts);
-      self._recenter = true;
+      self._recenter++;
       self._view.setCenter(self._location._point);
     });
+    return this._location;
   }
 
   _useLayers(charts) {
@@ -179,6 +203,10 @@ class Map {
       const chart = this._charts[i];
       this._map.addLayer(chart);
     }
+    this.updateFeatures();
+  }
+
+  updateFeatures() {
     this._updateCourseLayer();
     this._updatePositionLayer();
   }
@@ -236,6 +264,17 @@ class Map {
     }
   }
 
+  _rotate() {
+    let rotation = 0;
+    if (this._rotateView) {
+      this._view.rotate(2 * Math.PI - geolocation.rotation, this._currentLocation._point);
+    }
+    else {
+      rotation = geolocation.rotation;
+    }
+    return rotation;
+  }
+
   _newPosLayer() {
     let features = [];
 
@@ -243,22 +282,16 @@ class Map {
       const iconCurrentLoc = new ol.Feature({
         geometry: new ol.geom.Point(this._currentLocation._point),
       });
-      let rotation = 0;
       const iconUrl = 'images/compass4.png';
-      if (this._rotateView) {
-        const v = app.map.getView();
-        this._view.rotate(2 * Math.PI - geolocation.rotation, this._currentLocation._point);
-      }
-      else {
-        rotation = geolocation.rotation;
-      }
+      const rotation = this._rotate();
+
       const iconStyle = new ol.style.Style({
         image: new ol.style.Icon({
           anchor: [0.5, 0.5],
           anchorXUnits: 'fraction',
           anchorYUnits: 'fraction',
           src: iconUrl,
-          rotateWithView: !app.rotateView,
+          rotateWithView: !this._rotateView,
           rotation: rotation,
         })
       });
@@ -275,7 +308,7 @@ class Map {
           anchorXUnits: 'fraction',
           anchorYUnits: 'fraction',
           src: 'images/view.png',
-          rotateWithView: true,
+          rotateWithView: !this._rotateView,
           rotation: 0,
         })
       });
@@ -292,35 +325,63 @@ class Map {
     });
   }
 
-  showCurrentLocation() {
+  showCurrentLocation(force) {
+    if (force) {
+      this._lastInteraction = null;
+    }
+    else if (this._lastInteraction) {
+      const now = new Date();
+      if (now.getTime() < this._lastInteraction.getTime() + 60000) {
+        return;
+      }
+    }
     this._location = this._currentLocation;
-    this._showLocation(Mode.CURRENT_LOCATION);
+    return this._showLocation(Mode.CURRENT_LOCATION);
   }
   
   showDestination() {
     this._location = this._destLocation;
-    this._showLocation(Mode.SHOW_DESTINATION);
+    return this._showLocation(Mode.SHOW_DESTINATION);
   }
 
   showInspectLocation() {
     this._location = this._inspectLocation;
-    this._showLocation(Mode.INSPECT_LOCATION);
+    return this._showLocation(Mode.INSPECT_LOCATION);
   }
 
   setCurrentLocation(coord) {
-    return this._currentLocation = new Location(coord);
+    if (!this._currentLocation || !this._currentLocation.equals(coord)) {
+      this._currentLocation = new Location(coord);
+    }
+    return this._currentLocation;
   }
 
   setInspectLocation(coord) {
-    return this._inspectLocation = new Location(coord);
+    if (!this._inspectLocation || !this._inspectLocation.equals(coord)) {
+      this._inspectLocation = new Location(coord);
+    }
+    return this._inspectLocation;
   }
   
-  setDestination(location) {
-    return this._destLocation = location;
+  setDestination(loc) {
+    if (!loc) {
+      loc = this._inspectLocation;
+    }
+    this._lastInteraction = null;
+    return this._destLocation = loc;
   }
 
   removeDestination() {
     this._destLocation = null;
+    this._lastInteraction = null;
+  }
+
+  toggleRotation() {
+    this._rotateView ^= true;
+    if (!this._rotateView) {
+      this._view.setRotation(0);
+    }
+    return this._rotateView;
   }
 
   addOverlay(overlay) {
@@ -333,6 +394,10 @@ class Map {
 
   getView() {
     return this._map.getView();
+  }
+
+  render() {
+    return this._map.render();
   }
 }
 

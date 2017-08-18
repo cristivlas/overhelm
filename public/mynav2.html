@@ -267,7 +267,7 @@
         font-weight: bold;
         font-size: 110%;
         font-family: 'arial black';
-        bottom: 2em;
+        bottom: 1.25em;
         opacity: .95;
         text-align: center;
         box-shadow: 2px 2px 2px rgba(50,50,50,.5);
@@ -296,30 +296,20 @@
     </div>
 
     <script>
-      const defaultZoom = 15;
+      const defaultZoom = 14;
       const locationTimeout = 1000;
-      const positionImg = 'images/compass4.png';
 
       var popup = null;
-      var lastInteraction = null;
 
       var app = {
         map: null,
-        extent: [0, 0, 0, 0],
-        tileset: null,
         zoom: defaultZoom,
         tzOffset: (new Date()).getTimezoneOffset() * 60000,
-        rotateView: false,
         powerClick: 0,
 
-        layers: {
-          charts: [],
-          course: null,
-          positionMarks: null,
-        },
+//<TODO deprecate>
         location: {
           current: null,
-          point: [0, 0],
           prev: {
             point: null,
             name: 'current location'
@@ -330,6 +320,8 @@
           point: null,
           place: null,
         },
+//</TODO>
+
         tide: {
           station: null,
           chart: {
@@ -405,21 +397,20 @@
 
         var handler = function() {
           if (geolocation.isTracking()) {
-            app.rotateView ^= true;
+            app.map.toggleRotation();
           }
           else {
             app.map.getView().setZoom(app.zoom);
+            geolocation.start();
           }
-          lastInteraction = null;
-          geolocation.stop();
-          geolocation.start();
-          if (app.rotateView) {
-            lastInteraction = null;
+          app.map.showCurrentLocation(true);
+          //geolocation.stop();
+          //geolocation.start();
+          if (app.map._rotateView) {
             button.removeChild(iconLoc);
             button.appendChild(iconNav);
           }
           else {
-            app.map.getView().setRotation(0);
             if (iconNav.parentElement===button) {
               button.removeChild(iconNav);
               button.appendChild(iconLoc);
@@ -534,8 +525,8 @@
               popup.visible = popup.show = false;  
             }
             geolocation.stop();
-            updateMap(app.destination.coord);
-            updatePopup(app.destination.point, app.destination.place, app.destination.coord);
+            const loc = app.map.showDestination();
+            updatePopup(loc._point, app.destination.place, loc._coord);
           }
         }
         button.addEventListener('click', handler, false);
@@ -744,162 +735,6 @@
       }
       ol.inherits(locationControl, ol.control.Control);
 
-
-      function getCourseLayer(pos, dest) {
-        return new ol.layer.Vector({
-          source: new ol.source.Vector({
-            features: [
-              new ol.Feature({
-                geometry: new ol.geom.LineString([pos, dest])
-              }),
-              new ol.Feature({
-                geometry: new ol.geom.Point(dest)
-              }),
-            ]
-          }),
-          style: new ol.style.Style({
-            stroke: new ol.style.Stroke({
-              color: '#00D700',
-              width: 5
-            }),
-            image: new ol.style.Icon({
-              anchor: [0.5, 1],
-              anchorXUnits: 'fraction',
-              anchorYUnits: 'fraction',
-              src: 'images/pointer.png'
-            })
-          })
-        });
-      }
-
-
-      function updateCourseLayer(pos) {
-        if (app.layers.course) {
-          app.map.removeLayer(app.layers.course);
-          app.layers.course = null;
-        }
-        if (app.destination.point && geolocation.coord) {
-          pos = ol.proj.fromLonLat([geolocation.coord.lon, geolocation.coord.lat]);
-          app.layers.course = getCourseLayer(pos, app.destination.point);
-          app.map.addLayer(app.layers.course);
-        }
-      }
-
-
-      function updatePositionLayer(pos) {
-        if (app.layers.positionMarks) {
-          app.map.removeLayer(app.layers.positionMarks);
-        }
-        app.layers.positionMarks = getPositionLayer(pos);
-        app.map.addLayer(app.layers.positionMarks);
-      }
-
-
-      /**
-       * Construct position marker layer
-       */
-      function getPositionLayer(xy) {
-        let iconFeature = new ol.Feature({
-          geometry: new ol.geom.Point(xy),
-        });
-        let rotation = 0;
-        let iconUrl = 'images/view.png';
-        if (geolocation.isTracking()) {
-          iconUrl = positionImg;
-          if (app.rotateView) {
-            const v = app.map.getView();
-            v.rotate(2 * Math.PI - geolocation.rotation, app.location.point);
-          }
-          else {
-            rotation = geolocation.rotation;
-          }
-        }
-        let iconStyle = new ol.style.Style({
-          image: new ol.style.Icon({
-            anchor: [0.5, 0.5],
-            anchorXUnits: 'fraction',
-            anchorYUnits: 'fraction',
-            src: iconUrl,
-            rotateWithView: !app.rotateView,
-            rotation: rotation,
-          })
-        });
-        iconFeature.setStyle(iconStyle);
-
-        features = [iconFeature];
-
-        if (app.destination.point && geolocation.coord && !geolocation.isTracking()) {
-          xy = ol.proj.fromLonLat([geolocation.coord.lon, geolocation.coord.lat]);
-
-          iconFeature = new ol.Feature({
-            geometry: new ol.geom.Point(xy)
-          });
-          iconStyle = new ol.style.Style({
-            image: new ol.style.Icon({
-              anchor: [0.5, 0.5],
-              anchorXUnits: 'fraction',
-              anchorYUnits: 'fraction',
-              src: positionImg,
-              rotateWithView: true,
-              rotation: geolocation.rotation
-            })
-          });
-          iconFeature.setStyle(iconStyle);
-          features.push(iconFeature);
-        }
-
-        return new ol.layer.Vector({
-          source: new ol.source.Vector({
-            features: features
-          })
-        });
-      }
-
-
-      function roundPoint(p, prec) {
-        p[0] = Math.floor(p[0] * prec)/prec;
-        p[1] = Math.floor(p[1] * prec)/prec;
-      }
-
-      /**
-       * Ask the backend for the tilesets that match the current coordinates
-       */ 
-      function getChartTilesets(coord, extent, callback) {
-        const pos = ol.proj.fromLonLat(coord);
-        if (!ol.extent.containsXY(extent, pos[0], pos[1])) {
-          extent = [0, 0, 0, 0];
-        }
-
-        const minLonLat = ol.proj.transform([extent[0], extent[1]], 'EPSG:3857', 'EPSG:4326');
-        const maxLonLat = ol.proj.transform([extent[2], extent[3]], 'EPSG:3857', 'EPSG:4326');
-
-        roundPoint(minLonLat, 1000);
-        roundPoint(maxLonLat, 1000);
-
-        const tilesetsUrl = 'tilesets/noaa/' + coord[0] + '/' + coord[1]
-          + '/' + minLonLat[0] + '/' + minLonLat[1]
-          + '/' + maxLonLat[0] + '/' + maxLonLat[1];
-
-        const start = new Date();
-        const xmlHttp = new XMLHttpRequest();
-        xmlHttp.onreadystatechange = function() {
-          if (xmlHttp.readyState === 4 && xmlHttp.status === 200) {
-            const now = new Date();
-            const elapsed = now.getTime() - start.getTime();
-            if (elapsed > geolocation._timeout) {
-              console.log('resetting locationTimeout to: ' + elapsed);
-              geolocation._timeout = app.locationTimeout = elapsed;
-              geolocation.stop();
-              geolocation.start();
-            }
-            callback(xmlHttp.responseText);
-          }
-        }
-        xmlHttp.open('GET', tilesetsUrl);
-        xmlHttp.send();
-      }
-
-
       function getTimezoneOffset(coord) {
         const url = 'search/nearby/' + coord[0] + '/' + coord[1];
         const xmlHttp = new XMLHttpRequest();
@@ -917,92 +752,6 @@
         xmlHttp.send();
       }
 
-      /**
-       * Ask the backend for the best chart tilesets for the given coordinates
-       * and recompute the chart layers if necessary (if tilesets changed).
-       */
-      function updateChartLayers(coord, view, callback) {
-        const viewMaxRes = view.getMaxResolution();
-        const extent = view.calculateExtent();
-
-        getChartTilesets(coord, extent, function(tileset) {
-          if (tileset !== app.tileset) {
-            getTimezoneOffset(coord);
-            app.tileset = tileset;
-            console.log('--- Tileset changed ---');
-            //
-            // remove old chart layers
-            //
-            if (app.map) {
-              res = app.map.getView().getResolution();
-              for (i = 0; i < app.layers.charts.length; ++i) {
-                app.map.removeLayer(app.layers.charts[i]);
-              }
-              app.layers.charts = [];
-            }
-
-            let hMax = null;
-            let maxRes = viewMaxRes;
-            const extents = JSON.parse(tileset);
-            //
-            // apply new chart layers 
-            //
-            extents.map(function(tileset) {
-              if (!hMax) {
-                hMax = tileset.height;
-              }
-              maxRes = Math.ceil((tileset.height * viewMaxRes) / hMax);
-
-              const url = 'tiles/noaa/' + tileset.ident + '/{z}/{x}/{y}';
-              const sounding = tileset.sounding ? ' Soundings in ' + tileset.sounding : '';
-              const layer = new ol.layer.Tile({
-                source: new ol.source.XYZ({
-                  url: url,
-                  attributions: tileset.ident.split('_')[0] + sounding
-                }),
-                maxResolution: maxRes,
-                opacity: .8
-              });
-              layer.ident = tileset.ident;
-              layer.upper = tileset.upper;
-              layer.lower = tileset.lower;
-
-              app.layers.charts.push(layer);
-            })
-
-            let prev = null;
-            for (i = app.layers.charts.length - 1; i >= 0; --i) {
-              let layer = app.layers.charts[i];
-              if (prev) {
-                if (layer.getMaxResolution() / prev.getMaxResolution() > 2) {
-                  layer.setMinResolution(prev.getMaxResolution());
-                }
-                else {
-                  layer.setMinResolution(prev.getMinResolution());
-                }
-              }
-              console.log(i, layer.ident, layer.getMinResolution(), layer.getMaxResolution());
-              prev = layer;
-            }
-
-            if (app.map) {
-              for (i = 0; i != app.layers.charts.length; ++i) {
-                let layer = app.layers.charts[i];
-                app.map.addLayer(layer);
-              }
-            }
-          }
-          app.extent = extent;
-          callback();
-        });
-      }
-
-
-      function updateFeatures(pos) {
-        updateCourseLayer(pos);
-        updatePositionLayer(pos);
-      }
-
       function enableShutdown() {
         const xmlHttp = new XMLHttpRequest();
         xmlHttp.onreadystatechange = function() {
@@ -1015,140 +764,6 @@
         }
         xmlHttp.open('GET', 'shutdown/supported');
         xmlHttp.send();
-      }
-
-      /**
-       * Construct / update the map object
-       */
-      function updateMap(coord) {
-        if (popup && popup.visible) {
-          $(popup.getElement()).popover('destroy');
-          popup.visible = popup.shown = false;
-        }
-
-        const pos = ol.proj.fromLonLat(coord);
-
-        let view = null;
-        if (app.map) {
-          view = app.map.getView();
-        }
-        else {
-          view = new ol.View({
-            center: pos,
-            zoom: defaultZoom,
-            minZoom: 3,
-            maxZoom: 18,
-            enableRotation: false,
-          });
-
-          function update(view) {
-            if (!view.updating) {
-              view.updating = true;
-              updateChartLayers(app.location.current, view, function() {
-                updateFeatures(app.location.point);
-                if (app.rotateView) {
-                  view.setRotation(2 * Math.PI - geolocation.rotation);
-                }
-                app.map.render();
-                view.updating = false;
-                lastInteraction = new Date();
-              });
-            }
-          }
-
-          view.on('change:center', update.bind(this, view));
-          view.on('change:resolution', update.bind(this, view));
-        }
-
-        const now = new Date();
-        if (!lastInteraction || now.getTime() > lastInteraction.getTime() + 60 * 1000) {
-          view.updating = true;
-          view.setCenter(pos);
-          view.updating = false;
-          lastInteraction = null;
-        }
-
-
-        updateChartLayers(coord, view, function() {
-          view.updating = true;
-          if (!app.map) {
-            /**
-             * Construct the base layer (using map tiles from wikimedia)
-             */
-            function baseLayer() {
-              return new ol.layer.Tile({
-                source: new ol.source.XYZ({url:'tiles/wikimedia/osm-intl/{z}/{x}/{y}'})
-
-                //could use OpenStreetMaps here, too:
-                //source: new ol.source.XYZ({url:'tiles/osm/{a-c}/{z}/{x}/{y}.png'})
-              });
-            }
-
-            // custom controls
-            const controls = [
-              new tideChartControl(),
-              new showTideControl(),
-              new clockControl(),
-              new showClockControl(),
-              new locationControl({coords: coord}),
-              new trackingControl(),
-              new searchControl(),
-              new destControl(),
-              new shutdownControl()
-            ];
-            
-            app.map = new ol.Map({
-              controls: ol.control.defaults({
-                rotate: false,
-                attributionOptions: {
-                  collapsible: false,
-                }}
-              ).extend(controls),
-              target: 'map',
-              layers: [
-                baseLayer(),
-              ].concat(app.layers.charts),
-              view: view
-            });
-
-            enableShutdown();
-
-            popup = new ol.Overlay({
-              element: document.getElementById('popup')
-            });
-            app.map.addOverlay(popup);
-
-            app.map.on('postrender', function() {
-              showPopup();
-              repositionWidgets();
-            });
-            app.map.on('change:size', function() {
-              app.clock.positioned = 0;
-            });
-
-            startClock();
-            swipedetect(clock.canvas, function(dir) {
-              geolocation.changeSpeedUnit();
-            }, true);
-          }
-          app.location.point = pos;
-          updateFeatures(pos);
-          updateTracking(geolocation.isTracking());
-          view.updating = false;
-        });
-       
-        elem = document.getElementById('location');
-        if (elem) {
-          if (geolocation.coord) {
-            coord = [geolocation.coord.lon, geolocation.coord.lat];
-          }
-          elem.innerHTML = convertDMS(coord);
-        }
-        updateWaterLevel(coord);
-        //todo:
-        // updateCurrents(coord);
-
-        return pos;
       }
 
       const getDeviceOrientation = function() {
@@ -1167,7 +782,7 @@
           elem.style.width = '60%';
           return 'landscape';
         default:
-          elem.style.width = '85%';
+          elem.style.width = '80%';
           return 'portrait';
         }
       };
@@ -1214,11 +829,11 @@
           break;
 
         case 'portrait':
+          right = 0;
         default:
           canvas.width = canvas.height = rect.width;
           elem.style.top = (rect.bottom + 4) + 'px';
           elem.style.left = rect.left + 'px';
-          right = 0;
           top = rect.bottom + 4;
           break;
         }
@@ -1347,9 +962,6 @@
             date.setTime(date.getTime() - app.tzOffset);
 
             const a = date.toString().split(' ');
-            //const timeString = a[0]
-            //  + ' ' + dateHelper(date.getHours())
-            //  + ':' + dateHelper(date.getMinutes());
             const timeString = (date.getMonth() + 1)
               + '/' + date.getDate()
               + ' ' + dateHelper(date.getHours())
@@ -1376,7 +988,8 @@
 
             const data = datasets[0].data;
             const now = new Date();
-            now.setTime(now.getTime() + now.getTimezoneOffset() * 60000 - app.tzOffset + app.tide.offset * 24 * 3600 * 1000);
+            now.setTime(now.getTime() + now.getTimezoneOffset() * 60000
+              - app.tzOffset + app.tide.offset * 24 * 3600 * 1000);
 
             let closest = 0;
             for (let i = 0; i < predictions.length; ++i) {
@@ -1596,6 +1209,11 @@
             if (app.destination.point) {
               app.destination.place = popup.place;
               app.destination.coord = popup.coord;
+
+              app.map.setDestination();
+            }
+            else {
+              app.map.removeDestination();
             }
             lastInteraction = null;
             geolocation.start();
@@ -1640,13 +1258,6 @@
         popup.place = place;
         popup.coord = coord;
 
-        const e = popup.getElement();
-
-        const elevation = place.elevation < 0 ? 0 : place.elevation;
-        //contrary to docs from geonames.org, elevation seems to be in feet, not meters
-        //otherwise we should multiply by 3.28084 -- I just checked a few data points
-        //against Wikipedia
-
         let html = '<b>' + place.name + '</b>';
         if (place.state) {
           html += ', ' + place.state;
@@ -1689,6 +1300,8 @@
           }
         }
         app.location.current = coord;
+
+        const e = popup.getElement();
 
         $(e).popover({
           'animation': false,
@@ -1734,7 +1347,7 @@
               'title': btn + '<a href="#" id="close-popup" class="close">&times;</a>'
             });
             popup.shown = false;
-            //app.map.render();
+            app.map.render();
           }
         }
         xmlHttp.open('GET', '/weather/' + coord[0] + '/' + coord[1]);
@@ -1783,15 +1396,11 @@
                 if (geolocation.isTracking()) {
                   geolocation.stop();
                 }
-               /* 
-                if (app.map && app.map.getView().getZoom() < defaultZoom) {
+
+                if (app.map.getView().getZoom() < defaultZoom) {
                     app.map.getView().setZoom(defaultZoom);
                 }
-                app.map.getView().setCenter(ol.proj.fromLonLat(srchCoord));
-                app.lastInteraction = null;
-                const pos = updateMap(srchCoord);
-                updatePopup(pos, matches[elem.selectedIndex], srchCoord);
-                */
+
                 updatePopup(
                   app.map.setInspectLocation(srchCoord)._point,
                   matches[elem.selectedIndex],
@@ -1816,13 +1425,13 @@
 
 
       function updateDefault() {
-      /*
         if (!app.location.current) {
           app.location.current = [-122.4049, 47.6810] // Shilshole Bay
           app.location.prev.name = 'Shilshole Bay';
+          app.map.setCurrentLocation(app.location.current);
+          app.map.showCurrentLocation();
+          updateCoords()
         }
-        updateMap(app.location.current);
-        */
       }
 
 
@@ -1841,7 +1450,14 @@
 
         app.map = new Map({
           controls: controls,
-          target: 'map'
+          target: 'map',
+          defaultZoom: defaultZoom,
+          onLocationUpdate: function(coord) {
+            getTimezoneOffset(coord);
+          },
+          onUpdateView: function(view) {
+            getTimezoneOffset(view.center);
+          }
         });
 
         enableShutdown();
@@ -1858,13 +1474,13 @@
         app.map.on('change:size', function() {
           app.clock.positioned = 0;
         });
-      
-      //TODO
-        /* startClock();
-        swipedetect(clock.canvas, function(dir) {
-          geolocation.changeSpeedUnit();
-        }, true);
-        */
+      }
+
+      function updateCoords() {
+        elem = document.getElementById('location');
+        if (elem) {
+          elem.innerHTML = convertDMS(app.location.current);
+        }
       }
 
       initialize();
@@ -1882,14 +1498,10 @@
             app.location.current = [ coord.lon, coord.lat ];
             app.location.prev.name = 'current location';
 
-            //updateMap(app.location.current);
-
             app.map.setCurrentLocation(app.location.current);
             app.map.showCurrentLocation();
-            elem = document.getElementById('location');
-            if (elem) {
-              elem.innerHTML = convertDMS(app.location.current);
-            }
+
+            updateCoords();
           }
         },
         onError: function(err) {
@@ -1910,12 +1522,17 @@
               app.clock.positioned = 0;
               positionClock();
             }
-            updateMap(app.location.current);
+            app.map.updateFeatures();
           }
         },
         timeout: locationTimeout
       });
-      
+
+      startClock();
+
+      swipedetect(clock.canvas, function(dir) {
+        geolocation.changeSpeedUnit();
+      }, true);
       geolocation.start();
       if (!navigator.geolocation) {
         updateDefault();
