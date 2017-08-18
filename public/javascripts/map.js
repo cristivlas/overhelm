@@ -5,21 +5,13 @@ const roundPoint = function(p, prec = 10000) {
 }
 
 
-const buildLayers = function(resp, viewMaxRes, current) {
+const buildLayers = function(resp, viewMaxRes) {
   charts = [];
 
   let hMax = null;
   let maxRes = viewMaxRes;
 
   JSON.parse(resp).map(function(tileset) {
-  /*
-    for (let i = 0; i != current.length; ++i) {
-      if (tileset.ident===current[i].ident) {
-        console.log(tileset.ident);
-        return null;
-      }
-    }
-  */
     if (!hMax) {
       hMax = tileset.height;
     }
@@ -82,7 +74,7 @@ class Location {
     const xmlHttp = new XMLHttpRequest();
     xmlHttp.onreadystatechange = function() {
       if (xmlHttp.readyState===4 && xmlHttp.status===200) {
-        self._charts = buildLayers(xmlHttp.responseText, viewMaxRes, self._charts);
+        self._charts = buildLayers(xmlHttp.responseText, viewMaxRes);
         callback();
       }
     }
@@ -151,8 +143,11 @@ class Map {
     else {
       ++this._updating;
       this._lastInteraction = new Date();
-
       const extent = this._view.calculateExtent();
+      if (ol.extent.containsCoordinate(extent, this._location._point)) {
+        --this._updating;
+        return;
+      }
       const minLonLat = ol.proj.transform([extent[0], extent[1]], 'EPSG:3857', 'EPSG:4326');
       const maxLonLat = ol.proj.transform([extent[2], extent[3]], 'EPSG:3857', 'EPSG:4326');
       roundPoint(minLonLat)
@@ -170,7 +165,7 @@ class Map {
           if (xmlHttp.status===200) {
             if (self._chartset !== xmlHttp.responseText) {
               self._chartset = xmlHttp.responseText;
-              self._useLayers(buildLayers(self._chartset, viewMaxRes, self._charts));
+              self._useLayers(buildLayers(self._chartset, viewMaxRes));
             }
           }
           --self._updating;
