@@ -112,7 +112,7 @@ class Map {
       center: this._location ? this._location._point : null
     })
 
-    this._view.on('change:center', this._updateView.bind(this));
+    this._view.on('change:center', this._updateView.bind(this, null));
     this._view.on('change:resolution', function() {
       this._updateView(true);
     }.bind(this))
