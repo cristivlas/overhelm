@@ -229,7 +229,12 @@ function drawSpeed(ctx, radius) {
   ctx.lineTo(-x,-y);
   ctx.font = 'bold ' + radius*0.125 + 'px arial black';
   const units = geolocation.getSpeedUnit();
-  ctx.fillText(Math.floor(geolocation.speed * 10) / 10 + ' ' + units, 0, 0);
+  if (geolocation._iunit < 3) {
+    ctx.fillText(Math.floor(geolocation.speed * 10) / 10 + ' ' + units, 0, 0);
+  }
+  else {
+    ctx.fillText(360 - geolocation._heading + ' ' + units, 0, 0);
+  }
   ctx.stroke();
   ctx.translate(0, -radius * .2);
 }

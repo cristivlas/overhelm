@@ -125,12 +125,18 @@ class Map {
         }}
       ).extend(opts.controls)
     })
+    this._map.on('pointerdrag', this._updateInteraction.bind(this));
+    this._map.on('pointermove', this._updateInteraction.bind(this));
   }
 
   _baseLayer() {
     return new ol.layer.Tile({
       source: new ol.source.XYZ({url:'tiles/wikimedia/osm-intl/{z}/{x}/{y}'})
     })
+  }
+
+  _updateInteraction() {
+    this._lastInteraction = new Date();
   }
 
   _updateView() {
@@ -142,7 +148,6 @@ class Map {
     }
     else {
       ++this._updating;
-      this._lastInteraction = new Date();
       const extent = this._view.calculateExtent();
       if (ol.extent.containsCoordinate(extent, this._location._point)) {
         --this._updating;
@@ -183,6 +188,10 @@ class Map {
   _showLocation(mode) {
     const self = this;
     self._mode = mode;
+    if (self._charts
+      && ol.extent.containsCoordinate(self._view.calculateExtent(), this._location._point)) {
+      return this._location;
+    }
     const first = self._location._charts.length===0;
     this._location.getCharts(this._view.getMaxResolution(), function() {
       if (first && self._onLocationUpdate) {

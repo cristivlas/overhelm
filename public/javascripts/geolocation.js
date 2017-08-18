@@ -11,7 +11,7 @@ class Geolocation {
     //this._ios = (navigator.platform === 'iPad' || navigator.platform === 'iPhone');
     this._mobile = navigator.userAgent.match(/mobile/i);
     this._iunit = 0;
-    this._units = [ 'kts', 'mph', 'km/h' ];
+    this._units = [ 'kts', 'mph', 'km/h', '' ];
     this._speedConversion = [ 1.943844, 2.236936, 3.6 ];
     this.speed = 0;
     this.rotation = 0;
@@ -111,7 +111,11 @@ class Geolocation {
           if (!e.absolute || e.alpha === null) {
             return;
           }
-          this._heading = -e.alpha;
+          const alpha = -Math.floor(e.alpha / 5) * 5;
+          if (this._heading === alpha) {
+            return;
+          }
+          this._heading = alpha;
         }
         this._updateHeading();
         if (this._compassCallback) {
