@@ -85,18 +85,19 @@ const Mode = {
 
 class Map {
   constructor(opts) {
-    this._defaultZoom = 12;
+    this._defaultZoom = 15;
     this._updating = 0;
     this._recenter = 0;
+    this._rotateView = false;
     this._mode = Mode.INSPECT_LOCATION;
-    this._location = new Location(opts.coord);
+    this._location = opts.coord ? new Location(opts.coord) : null;
 
     this._view = new ol.View({
       zoom: this._defaultZoom,
       minZoom: 3,
       maxZoom: 18,
       enableRotation: false,
-      center: this._location._point
+      center: this._location ? this._location._point : null
     })
     this._view.on('change:center', this._updateView.bind(this));
     this._view.on('change:resolution', this._updateView.bind(this));
@@ -104,7 +105,13 @@ class Map {
     this._map = new ol.Map({
       target: opts.target,
       layers: [ this._baseLayer() ],
-      view: this._view
+      view: this._view,
+      controls: ol.control.defaults({
+        rotate: false,
+        attributionOptions: {
+          collapsible: false,
+        }}
+      ).extend(opts.controls)
     })
   }
 
@@ -172,6 +179,117 @@ class Map {
       const chart = this._charts[i];
       this._map.addLayer(chart);
     }
+    this._updateCourseLayer();
+    this._updatePositionLayer();
+  }
+
+  _newCourseLayer() {
+    if (!this._destLocation || !this._currentLocation) {
+      return null;
+    }
+    const pos = this._currentLocation._point;
+    const dest = this._destLocation._point;
+
+    return new ol.layer.Vector({
+      source: new ol.source.Vector({
+        features: [
+          new ol.Feature({
+            geometry: new ol.geom.LineString([pos, dest])
+          }),
+          new ol.Feature({
+            geometry: new ol.geom.Point(dest)
+          }),
+        ]
+      }),
+      style: new ol.style.Style({
+        stroke: new ol.style.Stroke({
+          color: '#00D700',
+          width: 5
+        }),
+        image: new ol.style.Icon({
+          anchor: [0.5, 1],
+          anchorXUnits: 'fraction',
+          anchorYUnits: 'fraction',
+          src: 'images/pointer.png'
+        })
+      })
+    });
+  }
+
+  _updateCourseLayer() {
+    if (this._course) {
+      this._map.removeLayer(this._course)
+    }
+    this._course = this._newCourseLayer();
+    if (this._course) {
+      this._map.addLayer(this._course);
+    }
+  }
+
+  _updatePositionLayer() {
+    if (this._posMarks) {
+      this._map.removeLayer(this._posMarks);
+    }
+    this._posMarks = this._newPosLayer();
+    if (this._posMarks) {
+      this._map.addLayer(this._posMarks);
+    }
+  }
+
+  _newPosLayer() {
+    let features = [];
+
+    if (this._currentLocation) {
+      const iconCurrentLoc = new ol.Feature({
+        geometry: new ol.geom.Point(this._currentLocation._point),
+      });
+      let rotation = 0;
+      const iconUrl = 'images/compass4.png';
+      if (this._rotateView) {
+        const v = app.map.getView();
+        this._view.rotate(2 * Math.PI - geolocation.rotation, this._currentLocation._point);
+      }
+      else {
+        rotation = geolocation.rotation;
+      }
+      const iconStyle = new ol.style.Style({
+        image: new ol.style.Icon({
+          anchor: [0.5, 0.5],
+          anchorXUnits: 'fraction',
+          anchorYUnits: 'fraction',
+          src: iconUrl,
+          rotateWithView: !app.rotateView,
+          rotation: rotation,
+        })
+      });
+      iconCurrentLoc.setStyle(iconStyle);
+      features.push(iconCurrentLoc);
+    }
+    if (this._inspectLocation) {
+      const iconInspectLoc = new ol.Feature({
+        geometry: new ol.geom.Point(this._inspectLocation._point)
+      });
+      const iconStyle = new ol.style.Style({
+        image: new ol.style.Icon({
+          anchor: [0.5, 0.5],
+          anchorXUnits: 'fraction',
+          anchorYUnits: 'fraction',
+          src: 'images/view.png',
+          rotateWithView: true,
+          rotation: 0,
+        })
+      });
+      iconInspectLoc.setStyle(iconStyle);
+      features.push(iconInspectLoc);
+    }
+    if (features.length===0) {
+      return null;
+    }
+    return new ol.layer.Vector({
+      source: new ol.source.Vector({
+        features: features
+      })
+    });
   }
 
   showCurrentLocation() {
@@ -190,16 +308,31 @@ class Map {
   }
 
   setCurrentLocation(coord) {
-    this._currentLocation = new Location(coord);
+    return this._currentLocation = new Location(coord);
   }
 
   setInspectLocation(coord) {
-    this._inspectLocation = new Location(coord);
+    return this._inspectLocation = new Location(coord);
   }
   
   setDestination(location) {
-    this._destLocation = location;
+    return this._destLocation = location;
   }
 
+  removeDestination() {
+    this._destLocation = null;
+  }
+
+  addOverlay(overlay) {
+    return this._map.addOverlay(overlay);
+  }
+
+  on(event, callback) {
+    return this._map.on(event, callback);
+  }
+
+  getView() {
+    return this._map.getView();
+  }
 }
 

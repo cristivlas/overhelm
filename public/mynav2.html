@@ -1,0 +1,1930 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Chart Navigator [Alpha]</title>
+    
+    <meta name="viewport" content="initial-scale=1.0, maximum-scale=1.0, user-scalable=no, width=device-width">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="Ragnar [Alpha]">
+    <link rel="apple-touch-icon" href="/images/sailboat.png">
+    <link rel="prefetch" href="images/wu_logo_130x80.png">
+    <link rel="prefetch" href="images/left-arrow.png">
+    <link rel="prefetch" href="images/right-arrow.png">
+    <link rel="prefetch" href="images/compass4.png">
+    <link rel="prefetch" href="images/location-arrow.png">
+    <link rel="prefetch" href="images/navigation-arrow.png">
+    <link rel="prefetch" href="images/magnifier.png">
+
+    <link rel="stylesheet" href="lib/OpenLayers/4.2.0/ol.css" type="text/css">
+    <link rel="stylesheet" href="stylesheets/alertify.core.css" type="text/css">
+    <link rel="stylesheet" href="stylesheets/alertify.bootstrap.css" type="text/css">
+    <link rel="stylesheet" href="stylesheets/bootstrap.min.css" type="text/css">
+    <link rel="stylesheet" href="stylesheets/keyboard.min.css" type="text/css">
+
+    <script src="javascripts/geolocation.js"></script>
+    <script src="javascripts/clock.js"></script>
+    <script src="javascripts/swipedetect.js"></script>
+    <script src="javascripts/map.js"></script>
+
+    <script src="lib/alertify.min.js"></script>
+    <script src="lib/OpenLayers/4.2.0/ol.js"></script>
+    <script src="lib/Chart.js"></script>
+
+    <script src="lib/jquery.min.js"></script>
+    <script src="lib/jquery.keyboard.min.js"></script>
+    <script src="lib/bootstrap.min.js"></script>
+
+    <style>
+      .alertify-button {
+        background: rgba(0,65,135,.7);
+        color: white;
+      }
+      .alertify-button-ok:focus {
+        background: rgba(0,65,135,.9);
+        color: white;
+      }
+      .alertify-button-ok:active {
+        background: rgba(0,65,135,.95);
+        color: white;
+      }
+      .alertify-button-ok:hover {
+        background: rgba(0,65,135,1);
+        color: white;
+      }
+      .ol-attribution ul {
+        font-size: 100%;
+        font-weight: bold;
+        position: relative;
+        bottom: 3px;
+      }
+      .ol-attribution a {
+        display: none;
+      }
+      .popover-title {
+        height: 30px;
+        background:rgba(0,65,135,.5);
+        color: white;
+      }
+      .popover-title .close {
+        position: relative;
+        bottom: 6px;
+      } 
+      .popover-title a {
+        color: white;
+        display: inline-block;
+        opacity: 1;
+      }
+      .popover-content {
+        min-width: 250px;
+        font-size: 12px;
+      }
+      .ui-keyboard {
+        background: white;
+        background: -webkit-linear-gradient(rgba(0,65,135, .85), lightblue);
+        top: 100%;
+        left: -12.5%;
+        border-radius: 8px;
+        border: 1px solid;
+        box-shadow: 2px 2px 2px rgba(50,50,50,.5);
+      }
+      .ui-keyboard-button {
+        font-size: 1.35em;
+      }
+      .ui-keyboard-button:active {
+        background: -webkit-linear-gradient(rgba(0,65,135,.5), gray);
+        box-shadow: 1px 1px 1px gray;
+        color:white;
+      }
+      .search-results {
+        width: 100%;
+      }
+      .ol-zoom {
+        background: gray;
+      }
+      .ol-zoom:hover {
+        background: lightblue;
+      }
+      .tablet .ol-zoom {
+        width: 50px;
+        height: 80px;
+      }
+      .tablet .ol-zoom-in {
+        width: 44px;
+        height: 36px;
+      }
+      .tablet .ol-zoom-out {
+        width: 44px;
+        height: 36px;
+      }
+
+      .ol-custom {
+        background: gray;
+      }
+      .ol-custom:hover {
+        background: lightblue;
+      }
+      .tide-chart {
+        position: absolute;
+        top: .5em;
+        right: .5em;
+        background: rgb(255,255,235);
+        opacity: .95;
+        width: 25%;
+        border-radius: 8px;
+        box-shadow: 3px 3px 4px rgba(50,50,50,.5);
+      }
+      .ol-touch .tide-chart {
+        width: 85%;
+        right: 0px;
+      }
+      .tablet .tide-chart {
+        width: 33%;
+      }
+      .show-tide {
+        top: .5em;
+        right: .5em;
+      }
+      .ol-touch .show-tide {
+        right: 0px;
+      }
+      .clock {
+        position: absolute;
+        top: 20em;
+        right: .5em;
+        background: rgb(255,255,235);
+        opacity: .95;
+        border-radius: 8px;
+        box-shadow: 3px 3px 4px rgba(50,50,50,.5);
+      }
+      .ol-touch .clock {
+        top: 150px;
+        right: 0px;
+      }
+      .tablet .clock {
+        top: 160px;
+      }
+      .show-clock {
+        position: absolute;
+        top: 20em;
+        right: .5em;
+      }
+      .ol-touch .show-clock {
+        top: 150px;
+        right: 0px;
+      }
+      .tablet .show-clock {
+        top: 160px;
+      }
+      .tracking {
+        top: 85px;
+        left: .5em;
+        background: brown;
+      }
+      .ol-touch .tracking {
+        top: 95px;
+      }
+      .tablet .tracking {
+        top: 120px;
+        width: 50px;
+        height: 50px;
+      }
+      .tablet .tracking-btn {
+        width: 44px;
+        height: 44px;
+      }
+      .tablet .tracking-img.center {
+        display: block;
+        margin: 0 auto;
+      }
+
+      .search {
+        top: 112px;
+        left: .5em;
+      }
+      .ol-touch .search {
+        top: 130px;
+      }
+      .tablet .search {
+        top: 171px;
+        width: 50px;
+        height: 50px;
+      }
+      .tablet .search-btn {
+        width: 44px;
+        height: 44px;
+      }
+      .tablet .search-img.center {
+        display: block;
+        margin: 0 auto;
+      }
+
+      .dest {
+        top: 140px;
+        left: .5em;
+      }
+      .ol-touch .dest {
+        top: 165px;
+      }
+      .tablet .dest {
+        top: 222px;
+        width: 50px;
+        height: 50px;
+      }
+      .tablet .dest-btn {
+        width: 44px;
+        height: 44px;
+      }
+      .tablet .dest-img.center {
+        display: block;
+        margin: 0 auto;
+      }
+
+      .shutdown {
+        bottom: 2em;
+        left: .5em;
+        visibility: hidden;
+      }
+      .tablet .shutdown {
+        width: 50px;
+        height: 50px;
+      }
+      .tablet .shutdown-btn {
+        width: 44px;
+        height: 44px;
+      }
+      .tablet .shutdown-img.center {
+        display: block;
+        margin: 0 auto;
+      }
+
+      .chart {
+        background-color: white;
+        opacity: 0.7;
+        visibility: hidden;
+      }
+      .location {
+        background-color: yellow;
+        font-weight: bold;
+        font-size: 110%;
+        font-family: 'arial black';
+        bottom: 2em;
+        opacity: .95;
+        text-align: center;
+        box-shadow: 2px 2px 2px rgba(50,50,50,.5);
+      }
+      .set-course {
+        position: absolute;
+        left: .5em;
+        top: .4em;
+      }
+    </style>
+    <style type="text/css">
+      html, body, .map {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        height: 100%;
+      }
+    </style>
+
+  </head>
+  <body>
+
+    <div id="map" class="map"></div>
+    <div style="display: none;">
+      <div id="popup" class="popup"</div>
+    </div>
+
+    <script>
+      const defaultZoom = 15;
+      const locationTimeout = 1000;
+      const positionImg = 'images/compass4.png';
+
+      var popup = null;
+      var lastInteraction = null;
+
+      var app = {
+        map: null,
+        extent: [0, 0, 0, 0],
+        tileset: null,
+        zoom: defaultZoom,
+        tzOffset: (new Date()).getTimezoneOffset() * 60000,
+        rotateView: false,
+        powerClick: 0,
+
+        layers: {
+          charts: [],
+          course: null,
+          positionMarks: null,
+        },
+        location: {
+          current: null,
+          point: [0, 0],
+          prev: {
+            point: null,
+            name: 'current location'
+          }
+        },
+        destination: {
+          coord: null,
+          point: null,
+          place: null,
+        },
+        tide: {
+          station: null,
+          chart: {
+            line: null,
+            lastUpdated: new Date(),
+            visible: true,
+          },
+          lastCoord: null,
+          offset: 0
+        },
+        clock: {
+          visible: true,
+          positioned: 0
+        }
+      }
+
+      // Raspberry or iPad?
+
+      if (navigator.userAgent.match(/armv7/) ||
+          navigator.userAgent.match(/ipad/i)) {
+        var elem = document.getElementById('map');
+        elem.className += ' tablet';
+      }
+
+      //
+      // Utilities
+      //
+      function isFullScreen() {
+        return window.innerHeight===screen.height;
+      }
+
+      function equalPoint(p1, p2) {
+        if (!p1) {
+          return !p2;
+        }
+        if (!p2) {
+          return !p1;
+        }
+        return p1[0]===p2[0] && p1[1]===p2[1];
+      }
+
+      function updateTracking(active) {
+        let elem = document.getElementById('tracking');
+        if (elem) {
+          if (active) {
+            elem.style.background = 'green';
+          }
+          else {
+            elem.style.background = 'brown';
+          }
+        }
+      }
+
+      /**
+       * Custom control for activating geolocation / gps tracking
+       */
+      const trackingControl = function(opt_options) {
+        const options = opt_options || {};
+
+        const button = document.createElement('button');
+        const iconLoc = document.createElement('img');
+        iconLoc.src = 'images/location-arrow.png';
+        iconLoc.className = 'tracking-img';
+
+        button.appendChild(iconLoc);
+
+        button.title = 'Track current location';
+        button.className = 'tracking-btn';
+
+        const iconNav = document.createElement('img');
+        iconNav.src = 'images/navigation-arrow.png';
+        iconNav.className = 'tracking-img';
+
+        var handler = function() {
+          if (geolocation.isTracking()) {
+            app.rotateView ^= true;
+          }
+          else {
+            app.map.getView().setZoom(app.zoom);
+          }
+          lastInteraction = null;
+          geolocation.stop();
+          geolocation.start();
+          if (app.rotateView) {
+            lastInteraction = null;
+            button.removeChild(iconLoc);
+            button.appendChild(iconNav);
+          }
+          else {
+            app.map.getView().setRotation(0);
+            if (iconNav.parentElement===button) {
+              button.removeChild(iconNav);
+              button.appendChild(iconLoc);
+            }
+          }
+        }
+        button.addEventListener('click', handler, false);
+
+        var element = document.createElement('div');
+        element.id = 'tracking';
+        element.className = 'tracking ol-custom ol-unselectable ol-control';
+        element.appendChild(button);
+
+        ol.control.Control.call(this, {
+          element: element,
+          target: options.target
+        });
+      }
+      ol.inherits(trackingControl, ol.control.Control);
+      
+      /**
+       * Custom control for searching for a specific location on the charts
+       */
+      const searchControl = function(opt_options) {
+        //
+        // Virtual keyboard layout
+        //
+        const kbdLayout = {
+          "name" : "ms-US English (Latin)",
+          "lang" : ["en"],
+          "normal" : [
+            "` 1 2 3 4 5 6 7 8 9 0 - = {bksp}",
+            "q w e r t y u i o p [ ] \u005c",
+            "a s d f g h j k l ; '",
+            "{shift} \u005c z x c v b n m , . / {shift}",
+            "{space}"
+          ],
+          "shift" : [
+            "~ ! @ # $ % ^ & * ( ) _ + {bksp}",
+            "Q W E R T Y U I O P { } |",
+            "A S D F G H J K L : \u0022",
+            "{shift} | Z X C V B N M < > / {shift}",
+            "{space}"
+          ]
+        };      
+        const options = opt_options || {};
+
+        const button = document.createElement('button');
+        const icon = document.createElement('img');
+        icon.src = 'images/magnifier.png';
+        icon.className = 'search-img';
+
+        button.appendChild(icon);
+        button.title = 'Search';
+        button.className = 'search-btn';
+
+        var handler = function() {
+          alertify.prompt('', function(valid, value) {
+            if (valid) {
+              value = value.trim();
+              if (value) {
+                searchLocation(value, app.location.current);
+              }
+            }
+          });
+
+          let form = document.getElementById('alertify-form');
+
+          if (location.search === '?touch') {
+            $('#alertify-text').keyboard({
+              autoAccept: true,
+              layout: 'custom',
+              customLayout: kbdLayout,
+              usePreview: false,
+              visible: function(e, keyboard, el) {
+                const kbdElem = document.getElementById('alertify-text_keyboard');
+                form.appendChild(kbdElem);
+              }
+            });
+          }
+        }
+        button.addEventListener('click', handler, false);
+
+        var element = document.createElement('div');
+        element.className = 'search ol-custom ol-unselectable ol-control';
+        element.appendChild(button);
+
+        ol.control.Control.call(this, {
+          element: element,
+          target: options.target
+        });
+      }
+      ol.inherits(searchControl, ol.control.Control);
+
+      /**
+       * Custom control to show the current destination
+       */
+      const destControl = function(opt_options) {
+        const options = opt_options || {};
+
+        const button = document.createElement('button');
+        const icon = document.createElement('img');
+        icon.src = 'images/pointer-icon.png';
+        icon.className = 'dest-img';
+        button.appendChild(icon);
+        button.title = 'Show destination';
+        button.className = 'dest-btn';
+        var handler = function() {
+          if (popup.place && app.destination.point) {
+            if (popup.visible) {
+              $(popup.getElement()).popover('destroy');
+              popup.visible = popup.show = false;  
+            }
+            geolocation.stop();
+            updateMap(app.destination.coord);
+            updatePopup(app.destination.point, app.destination.place, app.destination.coord);
+          }
+        }
+        button.addEventListener('click', handler, false);
+        button.addEventListener('touchstart', handler, false);
+
+        var element = document.createElement('div');
+        element.id = 'dest';
+        element.className = 'dest ol-custom ol-unselectable ol-control';
+        element.appendChild(button);
+        element.style.visibility = 'hidden';
+
+        ol.control.Control.call(this, {
+          element: element,
+          target: options.target
+        });
+      }
+      ol.inherits(destControl, ol.control.Control);
+
+      /**
+       * Shutdown button
+       */
+      const shutdownControl = function(opt_options) {
+        const options = opt_options || {};
+
+        const button = document.createElement('button');
+        const icon = document.createElement('img');
+        icon.src = 'images/shutdown.png';
+        icon.className = 'shutdown-img';
+        button.appendChild(icon);
+        button.title = 'Shutdown system';
+        button.className = 'shutdown-btn';
+
+        const shutdown = function() {
+          alertify.confirm('Do you really want to <b>shutdown</b> the system?',
+            function(accept) {
+              if (accept) {
+                const xmlHttp = new XMLHttpRequest();
+                xmlHttp.open('GET', '/shutdown/now');
+                xmlHttp.send();
+              }
+            }
+          );
+        }
+        const reboot = function() {
+          alertify.confirm('Do you really want to <b>reboot</b> the system?',
+            function(accept) {
+              if (accept) {
+                const xmlHttp = new XMLHttpRequest();
+                xmlHttp.open('GET', '/shutdown/reboot');
+                xmlHttp.send();
+              }
+            }
+          );
+        }
+        button.addEventListener('click', function() {
+          if (app.powerClick===0) {
+            setTimeout(function() {
+              if (app.powerClick > 1) {
+                reboot();
+              }
+              else {
+                shutdown();
+              }
+              app.powerClick = 0;
+            }, 250);
+          }
+          ++app.powerClick;
+        }, false);
+
+        var element = document.createElement('div');
+        element.className = 'shutdown ol-custom ol-unselectable ol-control';
+        element.appendChild(button);
+        element.id = 'shutdown';
+
+        ol.control.Control.call(this, {
+          element: element,
+          target: options.target
+        });
+      }
+      ol.inherits(shutdownControl, ol.control.Control);
+
+      /**
+       * Custom control for drawing water levels
+       */
+      const tideChartControl = function(opt_options) {
+        const options = opt_options || {};
+
+        const canvas = document.createElement('canvas');
+        canvas.id = 'tideChart';
+        var element = document.createElement('div');
+        element.className = 'tide-chart ol-unselectable ol-control';
+        element.appendChild(canvas);
+
+        ol.control.Control.call(this, {
+          element: element,
+          target: options.target
+        });
+      }
+      ol.inherits(tideChartControl, ol.control.Control);
+
+
+      function newOpenCloseWidget(titleOpen, titleClosed, elemName, elemClass, flag) {
+        const button = document.createElement('button');
+        const iconClose = document.createElement('img');
+        const iconOpen = document.createElement('img');
+        iconClose.src = 'images/right-arrow.png';
+        iconOpen.src = 'images/left-arrow.png';
+        button.appendChild(iconClose);
+        button.title = titleOpen;
+        button.id = elemClass;
+
+        var handler = function() {
+          var elem = document.getElementById(elemName).parentElement;
+          if (!flag) {
+            elem.style.visibility = 'visible';
+            button.title = titleOpen;
+            button.appendChild(iconClose);
+            button.removeChild(iconOpen);
+          }
+          else {
+            elem.style.visibility = 'hidden';
+            button.title = titleClosed;
+            button.appendChild(iconOpen);
+            button.removeChild(iconClose);
+          }
+          flag ^= true;
+        }
+        button.addEventListener('click', handler, false);
+
+        //this results in the button being way too trigger-happy
+        //button.addEventListener('touchstart', handler, false);
+
+        var element = document.createElement('div');
+        element.className = elemClass + ' ol-custom ol-unselectable ol-control';
+        element.appendChild(button);
+
+        return element;
+      }
+
+
+      /**
+       * Button for showing / hiding water levels (tide charts)
+       */
+      const showTideControl = function(opt_options) {
+        const options = opt_options || {};
+        const element = newOpenCloseWidget(
+          'Hide tide info', 'Show tide info', 'tideChart', 'show-tide', app.tide.chart.visible);
+
+        ol.control.Control.call(this, {
+          element: element,
+          target: options.target
+        });
+      }
+      ol.inherits(showTideControl, ol.control.Control);
+
+
+      /**
+       * Custom control for clock / compass
+       */
+      const clockControl = function(opt_options) {
+        const options = opt_options || {};
+
+        const canvas = document.createElement('canvas');
+        canvas.id = 'clock';
+        canvas.width = canvas.height = 268; // best for iPhone
+        // hack for the Raspberry PI
+        if (navigator.userAgent.match(/armv7/)) {
+          canvas.width = canvas.height = 277;
+        }
+        let element = document.createElement('div');
+        element.className = 'clock ol-unselectable ol-control';
+        element.appendChild(canvas);
+
+        ol.control.Control.call(this, {
+          element: element,
+          target: options.target
+        });
+      }
+      ol.inherits(clockControl, ol.control.Control);
+      
+      const showClockControl = function(opt_options) {
+        const options = opt_options || {};
+        const element = newOpenCloseWidget('Hide clock', 'Show clock', 'clock', 'show-clock', app.clock.visible);
+
+        ol.control.Control.call(this, {
+          element: element,
+          target: options.target
+        });
+      }
+      ol.inherits(showClockControl, ol.control.Control);
+
+
+      /**
+       * Custom control for displaying current location
+       */
+      const locationControl = function(opt_options) {
+        const options = opt_options || {};
+        var element = document.createElement('div');
+        element.className = 'location ol-unselectable ol-control';
+        element.id = 'location';
+        element.innerHTML = convertDMS(options.coords);
+        ol.control.Control.call(this, {
+          element: element,
+          target: options.target
+        });
+      }
+      ol.inherits(locationControl, ol.control.Control);
+
+
+      function getCourseLayer(pos, dest) {
+        return new ol.layer.Vector({
+          source: new ol.source.Vector({
+            features: [
+              new ol.Feature({
+                geometry: new ol.geom.LineString([pos, dest])
+              }),
+              new ol.Feature({
+                geometry: new ol.geom.Point(dest)
+              }),
+            ]
+          }),
+          style: new ol.style.Style({
+            stroke: new ol.style.Stroke({
+              color: '#00D700',
+              width: 5
+            }),
+            image: new ol.style.Icon({
+              anchor: [0.5, 1],
+              anchorXUnits: 'fraction',
+              anchorYUnits: 'fraction',
+              src: 'images/pointer.png'
+            })
+          })
+        });
+      }
+
+
+      function updateCourseLayer(pos) {
+        if (app.layers.course) {
+          app.map.removeLayer(app.layers.course);
+          app.layers.course = null;
+        }
+        if (app.destination.point && geolocation.coord) {
+          pos = ol.proj.fromLonLat([geolocation.coord.lon, geolocation.coord.lat]);
+          app.layers.course = getCourseLayer(pos, app.destination.point);
+          app.map.addLayer(app.layers.course);
+        }
+      }
+
+
+      function updatePositionLayer(pos) {
+        if (app.layers.positionMarks) {
+          app.map.removeLayer(app.layers.positionMarks);
+        }
+        app.layers.positionMarks = getPositionLayer(pos);
+        app.map.addLayer(app.layers.positionMarks);
+      }
+
+
+      /**
+       * Construct position marker layer
+       */
+      function getPositionLayer(xy) {
+        let iconFeature = new ol.Feature({
+          geometry: new ol.geom.Point(xy),
+        });
+        let rotation = 0;
+        let iconUrl = 'images/view.png';
+        if (geolocation.isTracking()) {
+          iconUrl = positionImg;
+          if (app.rotateView) {
+            const v = app.map.getView();
+            v.rotate(2 * Math.PI - geolocation.rotation, app.location.point);
+          }
+          else {
+            rotation = geolocation.rotation;
+          }
+        }
+        let iconStyle = new ol.style.Style({
+          image: new ol.style.Icon({
+            anchor: [0.5, 0.5],
+            anchorXUnits: 'fraction',
+            anchorYUnits: 'fraction',
+            src: iconUrl,
+            rotateWithView: !app.rotateView,
+            rotation: rotation,
+          })
+        });
+        iconFeature.setStyle(iconStyle);
+
+        features = [iconFeature];
+
+        if (app.destination.point && geolocation.coord && !geolocation.isTracking()) {
+          xy = ol.proj.fromLonLat([geolocation.coord.lon, geolocation.coord.lat]);
+
+          iconFeature = new ol.Feature({
+            geometry: new ol.geom.Point(xy)
+          });
+          iconStyle = new ol.style.Style({
+            image: new ol.style.Icon({
+              anchor: [0.5, 0.5],
+              anchorXUnits: 'fraction',
+              anchorYUnits: 'fraction',
+              src: positionImg,
+              rotateWithView: true,
+              rotation: geolocation.rotation
+            })
+          });
+          iconFeature.setStyle(iconStyle);
+          features.push(iconFeature);
+        }
+
+        return new ol.layer.Vector({
+          source: new ol.source.Vector({
+            features: features
+          })
+        });
+      }
+
+
+      function roundPoint(p, prec) {
+        p[0] = Math.floor(p[0] * prec)/prec;
+        p[1] = Math.floor(p[1] * prec)/prec;
+      }
+
+      /**
+       * Ask the backend for the tilesets that match the current coordinates
+       */ 
+      function getChartTilesets(coord, extent, callback) {
+        const pos = ol.proj.fromLonLat(coord);
+        if (!ol.extent.containsXY(extent, pos[0], pos[1])) {
+          extent = [0, 0, 0, 0];
+        }
+
+        const minLonLat = ol.proj.transform([extent[0], extent[1]], 'EPSG:3857', 'EPSG:4326');
+        const maxLonLat = ol.proj.transform([extent[2], extent[3]], 'EPSG:3857', 'EPSG:4326');
+
+        roundPoint(minLonLat, 1000);
+        roundPoint(maxLonLat, 1000);
+
+        const tilesetsUrl = 'tilesets/noaa/' + coord[0] + '/' + coord[1]
+          + '/' + minLonLat[0] + '/' + minLonLat[1]
+          + '/' + maxLonLat[0] + '/' + maxLonLat[1];
+
+        const start = new Date();
+        const xmlHttp = new XMLHttpRequest();
+        xmlHttp.onreadystatechange = function() {
+          if (xmlHttp.readyState === 4 && xmlHttp.status === 200) {
+            const now = new Date();
+            const elapsed = now.getTime() - start.getTime();
+            if (elapsed > geolocation._timeout) {
+              console.log('resetting locationTimeout to: ' + elapsed);
+              geolocation._timeout = app.locationTimeout = elapsed;
+              geolocation.stop();
+              geolocation.start();
+            }
+            callback(xmlHttp.responseText);
+          }
+        }
+        xmlHttp.open('GET', tilesetsUrl);
+        xmlHttp.send();
+      }
+
+
+      function getTimezoneOffset(coord) {
+        const url = 'search/nearby/' + coord[0] + '/' + coord[1];
+        const xmlHttp = new XMLHttpRequest();
+        xmlHttp.onreadystatechange = function() {
+          if (xmlHttp.readyState === 4 && xmlHttp.status === 200) {
+            const matches = JSON.parse(xmlHttp.responseText);
+            if (matches && matches.length) {
+              app.tzOffset = -matches[0].tz[1] * 3600 * 1000;
+              app.tide.chart.lastUpdated.setTime(0);
+              updateWaterLevel(coord);
+            }
+          }
+        }
+        xmlHttp.open('GET', url);
+        xmlHttp.send();
+      }
+
+      /**
+       * Ask the backend for the best chart tilesets for the given coordinates
+       * and recompute the chart layers if necessary (if tilesets changed).
+       */
+      function updateChartLayers(coord, view, callback) {
+        const viewMaxRes = view.getMaxResolution();
+        const extent = view.calculateExtent();
+
+        getChartTilesets(coord, extent, function(tileset) {
+          if (tileset !== app.tileset) {
+            getTimezoneOffset(coord);
+            app.tileset = tileset;
+            console.log('--- Tileset changed ---');
+            //
+            // remove old chart layers
+            //
+            if (app.map) {
+              res = app.map.getView().getResolution();
+              for (i = 0; i < app.layers.charts.length; ++i) {
+                app.map.removeLayer(app.layers.charts[i]);
+              }
+              app.layers.charts = [];
+            }
+
+            let hMax = null;
+            let maxRes = viewMaxRes;
+            const extents = JSON.parse(tileset);
+            //
+            // apply new chart layers 
+            //
+            extents.map(function(tileset) {
+              if (!hMax) {
+                hMax = tileset.height;
+              }
+              maxRes = Math.ceil((tileset.height * viewMaxRes) / hMax);
+
+              const url = 'tiles/noaa/' + tileset.ident + '/{z}/{x}/{y}';
+              const sounding = tileset.sounding ? ' Soundings in ' + tileset.sounding : '';
+              const layer = new ol.layer.Tile({
+                source: new ol.source.XYZ({
+                  url: url,
+                  attributions: tileset.ident.split('_')[0] + sounding
+                }),
+                maxResolution: maxRes,
+                opacity: .8
+              });
+              layer.ident = tileset.ident;
+              layer.upper = tileset.upper;
+              layer.lower = tileset.lower;
+
+              app.layers.charts.push(layer);
+            })
+
+            let prev = null;
+            for (i = app.layers.charts.length - 1; i >= 0; --i) {
+              let layer = app.layers.charts[i];
+              if (prev) {
+                if (layer.getMaxResolution() / prev.getMaxResolution() > 2) {
+                  layer.setMinResolution(prev.getMaxResolution());
+                }
+                else {
+                  layer.setMinResolution(prev.getMinResolution());
+                }
+              }
+              console.log(i, layer.ident, layer.getMinResolution(), layer.getMaxResolution());
+              prev = layer;
+            }
+
+            if (app.map) {
+              for (i = 0; i != app.layers.charts.length; ++i) {
+                let layer = app.layers.charts[i];
+                app.map.addLayer(layer);
+              }
+            }
+          }
+          app.extent = extent;
+          callback();
+        });
+      }
+
+
+      function updateFeatures(pos) {
+        updateCourseLayer(pos);
+        updatePositionLayer(pos);
+      }
+
+      function enableShutdown() {
+        const xmlHttp = new XMLHttpRequest();
+        xmlHttp.onreadystatechange = function() {
+          if (xmlHttp.readyState === 4 && xmlHttp.status === 200) {
+            if (JSON.parse(xmlHttp.responseText)) {
+              let elem = document.getElementById('shutdown');
+                elem.style.visibility = 'visible';
+            }
+          }
+        }
+        xmlHttp.open('GET', 'shutdown/supported');
+        xmlHttp.send();
+      }
+
+      /**
+       * Construct / update the map object
+       */
+      function updateMap(coord) {
+        if (popup && popup.visible) {
+          $(popup.getElement()).popover('destroy');
+          popup.visible = popup.shown = false;
+        }
+
+        const pos = ol.proj.fromLonLat(coord);
+
+        let view = null;
+        if (app.map) {
+          view = app.map.getView();
+        }
+        else {
+          view = new ol.View({
+            center: pos,
+            zoom: defaultZoom,
+            minZoom: 3,
+            maxZoom: 18,
+            enableRotation: false,
+          });
+
+          function update(view) {
+            if (!view.updating) {
+              view.updating = true;
+              updateChartLayers(app.location.current, view, function() {
+                updateFeatures(app.location.point);
+                if (app.rotateView) {
+                  view.setRotation(2 * Math.PI - geolocation.rotation);
+                }
+                app.map.render();
+                view.updating = false;
+                lastInteraction = new Date();
+              });
+            }
+          }
+
+          view.on('change:center', update.bind(this, view));
+          view.on('change:resolution', update.bind(this, view));
+        }
+
+        const now = new Date();
+        if (!lastInteraction || now.getTime() > lastInteraction.getTime() + 60 * 1000) {
+          view.updating = true;
+          view.setCenter(pos);
+          view.updating = false;
+          lastInteraction = null;
+        }
+
+
+        updateChartLayers(coord, view, function() {
+          view.updating = true;
+          if (!app.map) {
+            /**
+             * Construct the base layer (using map tiles from wikimedia)
+             */
+            function baseLayer() {
+              return new ol.layer.Tile({
+                source: new ol.source.XYZ({url:'tiles/wikimedia/osm-intl/{z}/{x}/{y}'})
+
+                //could use OpenStreetMaps here, too:
+                //source: new ol.source.XYZ({url:'tiles/osm/{a-c}/{z}/{x}/{y}.png'})
+              });
+            }
+
+            // custom controls
+            const controls = [
+              new tideChartControl(),
+              new showTideControl(),
+              new clockControl(),
+              new showClockControl(),
+              new locationControl({coords: coord}),
+              new trackingControl(),
+              new searchControl(),
+              new destControl(),
+              new shutdownControl()
+            ];
+            
+            app.map = new ol.Map({
+              controls: ol.control.defaults({
+                rotate: false,
+                attributionOptions: {
+                  collapsible: false,
+                }}
+              ).extend(controls),
+              target: 'map',
+              layers: [
+                baseLayer(),
+              ].concat(app.layers.charts),
+              view: view
+            });
+
+            enableShutdown();
+
+            popup = new ol.Overlay({
+              element: document.getElementById('popup')
+            });
+            app.map.addOverlay(popup);
+
+            app.map.on('postrender', function() {
+              showPopup();
+              repositionWidgets();
+            });
+            app.map.on('change:size', function() {
+              app.clock.positioned = 0;
+            });
+
+            startClock();
+            swipedetect(clock.canvas, function(dir) {
+              geolocation.changeSpeedUnit();
+            }, true);
+          }
+          app.location.point = pos;
+          updateFeatures(pos);
+          updateTracking(geolocation.isTracking());
+          view.updating = false;
+        });
+       
+        elem = document.getElementById('location');
+        if (elem) {
+          if (geolocation.coord) {
+            coord = [geolocation.coord.lon, geolocation.coord.lat];
+          }
+          elem.innerHTML = convertDMS(coord);
+        }
+        updateWaterLevel(coord);
+        //todo:
+        // updateCurrents(coord);
+
+        return pos;
+      }
+
+      const getDeviceOrientation = function() {
+        if (!navigator.userAgent.match(/mobile/i)
+         || navigator.platform.match(/ipad/i)) {
+          return 'default';
+        }
+        let elem = document.getElementById('tideChart');
+        if (!elem) {
+          return 'default';
+        }
+        elem = elem.parentElement;
+        switch (window.orientation) {
+        case 90:
+        case -90:
+          elem.style.width = '60%';
+          return 'landscape';
+        default:
+          elem.style.width = '85%';
+          return 'portrait';
+        }
+      };
+
+      const handleDeviceOrientation = function() {
+        app.clock.positioned = 0;
+        repositionWidgets();
+      };
+
+      function repositionWidgets() {
+        if (app.clock.reposition) {
+          clearInterval(app.clock.reposition);
+        }
+        app.clock.reposition = setInterval(positionClock, 200);
+      }
+
+      /**
+       * Position the clock/compass widget relative to tide graph
+       */
+      function positionClock() {
+        // give it a few frames to stabilize
+        if (++app.clock.positioned >= 10) {
+          if (app.clock.reposition) {
+            clearInterval(app.clock.reposition);
+            app.clock.reposition = null;
+          }
+          return;
+        }
+        const orientation = getDeviceOrientation();
+        let elem = document.getElementById('tideChart').parentElement;
+        const rect = elem.getBoundingClientRect();
+        const canvas = document.getElementById('clock');
+        elem = canvas.parentElement;
+        let top = 0;
+        let right = '.5em';
+
+        switch (orientation) {
+        case 'landscape':
+          canvas.width = canvas.height = rect.height;
+          elem.style.top = rect.top + 'px';
+          elem.style.left = (rect.left - rect.height - 4) + 'px';
+          right = window.innerWidth -rect.left + 4;
+          top = rect.top;
+          break;
+
+        case 'portrait':
+        default:
+          canvas.width = canvas.height = rect.width;
+          elem.style.top = (rect.bottom + 4) + 'px';
+          elem.style.left = rect.left + 'px';
+          right = 0;
+          top = rect.bottom + 4;
+          break;
+        }
+        elem.style.width = elem.style.height = canvas.height + 'px';
+
+        elem = document.getElementById('show-clock').parentElement;
+        elem.style.top = top + 'px';
+        elem.style.right = right + 'px';
+
+        startClock();
+        positionLocation();
+      }
+
+
+      function positionLocation() {
+        let elem = document.getElementById('tideChart').parentElement;
+        const rect = elem.getBoundingClientRect();
+        elem = document.getElementById('location');
+        elem.style.left = rect.left + 'px';
+        elem.style.width = rect.width + 'px';
+      }
+
+
+      function dateHelper(val) {
+        return Math.floor(val / 10).toString() + (val % 10);
+      }
+
+      /**
+       * Helper for formatting begin_date and end_date for water level requests
+       */
+      function formatDateTimeUTC(date) {
+        const month = date.getUTCMonth() + 1;
+        const day = date.getUTCDate();
+        const hour = date.getUTCHours();
+        const minute = date.getUTCMinutes()
+        return date.getUTCFullYear().toString() + Math.floor(month / 10) + month % 10 + 
+          + Math.floor(day / 10) + day % 10 + ' ' + Math.floor(hour / 10)
+          + Math.floor(hour % 10) + ':' + Math.floor(minute / 10) + minute % 10;
+      }
+
+
+      function formatRequestRange(now, id) {
+        now.setTime(now.getTime() - 12 * 3600 * 1000);
+        const begin = formatDateTimeUTC(now);
+        now.setTime(now.getTime() + 24 * 3600 * 1000);
+        const end = formatDateTimeUTC(now);
+        return '&begin_date=' + begin + '&end_date=' + end
+          + '&time_zone=GMT&station=' + id + '&units=english&format=json';
+      }
+
+
+      /**
+       * Update tide chart:
+       * 1) ask the backend for the closest water level station to current location
+       * 2) in response to the async request, processWaterLevelStation sends a 
+       *    request to the NOAA web service, using a time interval centered around 
+       *    the current time.
+       */
+      function updateWaterLevel(coord) {
+
+        const lastCoord = coord;
+        roundPoint(lastCoord, 10000);
+        if (app.tide.station && equalPoint(lastCoord, app.tide.lastCoord)) {
+          return getWaterLevel(app.tide.station);
+        }
+        app.tide.lastCoord = lastCoord;
+
+        function getWaterLevel(station) {
+          const now = new Date();
+
+          if (app.tide.station && station.Id === app.tide.station.Id) {
+            //
+            // same station? update every 5 minutes
+            //
+            if (now.getTime() < app.tide.chart.lastUpdated.getTime() + 5 * 60 * 1000) {
+              return;
+            }
+          }
+          app.tide.station = station;
+          app.tide.chart.lastUpdated = now;
+
+          now.setTime(now.getTime() + app.tide.offset * 24 * 3600 * 1000);
+          const stationInfo = 'Station: ' + station.Id + ' ' + station.Name + ' ' + station.State;
+          const currentTime = now.toISOString();
+
+          const useNOAAData = location.search == '?noaa';
+          var url;
+          if (useNOAAData) {
+            url = 'https://tidesandcurrents.noaa.gov/api/datagetter?product=predictions&datum=MLLW' 
+            + formatRequestRange(now, app.tide.station.Id);
+          } 
+          else {
+            url = 'tides/' + app.tide.station.Id + '/' + currentTime;
+          }
+        const xmlHttp = new XMLHttpRequest();
+          xmlHttp.onreadystatechange = processWaterLevelRequest.bind(null, stationInfo);
+          xmlHttp.open('GET', url);
+          xmlHttp.send();
+        }
+
+        /**
+         * Process response from backend.
+         */
+        function processWaterLevelStation(event) {
+          const xmlHttp = event.currentTarget;
+          
+          if (xmlHttp.readyState === 4) {
+            if (xmlHttp.status === 200) {
+              getWaterLevel(JSON.parse(xmlHttp.responseText));
+            }
+            else {
+              console.log(xmlHttp.response.text);
+            }
+          }
+        }
+        
+        /**
+         * Process response from NOAA
+         */
+        function processWaterLevelRequest(stationInfo, event) {
+
+          function tickDate(t) {
+            const arr = t.split(/[- :]/);
+            const date = new Date(arr[0], arr[1]-1, arr[2], arr[3], arr[4]);
+            // Convert to local time
+            date.setTime(date.getTime() - app.tzOffset);
+
+            const a = date.toString().split(' ');
+            //const timeString = a[0]
+            //  + ' ' + dateHelper(date.getHours())
+            //  + ':' + dateHelper(date.getMinutes());
+            const timeString = (date.getMonth() + 1)
+              + '/' + date.getDate()
+              + ' ' + dateHelper(date.getHours())
+              + ':' + dateHelper(date.getMinutes());
+                                  
+            return [date, timeString];
+          }
+
+          const xmlHttp = event.currentTarget;
+
+          if (xmlHttp.readyState===4 && xmlHttp.status===200) {
+            const predictions = JSON.parse(xmlHttp.responseText).predictions;
+
+            let labels = []
+            const datasets = [ {
+              data: [],
+              borderColor: 'blue',
+              borderWidth: 2,
+              backgroundColor: 'rgba(0,65,135,.3)',
+              pointBorderColor: 'black',
+              pointBackgroundColor: 'orange',
+              pointRadius: new Array(predictions.length).fill(0),
+            } ]
+
+            const data = datasets[0].data;
+            const now = new Date();
+            now.setTime(now.getTime() + now.getTimezoneOffset() * 60000 - app.tzOffset + app.tide.offset * 24 * 3600 * 1000);
+
+            let closest = 0;
+            for (let i = 0; i < predictions.length; ++i) {
+              labels.push(predictions[i].t);
+              data[i] = predictions[i].v;
+              const t = tickDate(predictions[i].t);
+              if (closest===0 && t[0].getTime() >= now.getTime()) {
+                closest = i;
+              }
+            }
+            let valMin = 99999;
+            let iMin = closest;
+            for (let i = closest; i < predictions.length; ++i) {
+              const val = parseFloat(predictions[i].v);
+              if (val < valMin) {
+                iMin = i;
+                valMin = val;
+              }
+              if (val > valMin) {
+                if (iMin===closest) {
+                  valMin = val;
+                }
+                else {
+                  break;
+                }
+              }
+            }
+            let iMax = closest;
+            let valMax = -99999;
+            for (let i = closest; i < predictions.length; ++i) {
+              const val = parseFloat(predictions[i].v);
+              if (val > valMax) {
+                iMax = i;
+                valMax = val;
+              }
+              if (val < valMax) {
+                if (iMax===closest) {
+                  valMax = val;
+                }
+                else {
+                  break;
+                }
+              }
+            }
+            
+            function rebuildTicks(c) {
+              function label(ticks, i) {
+                return tickDate(ticks[i])[1];
+              }
+              const ticks = c.ticks;
+              c.ticks = [];
+              c.ticks[0] = ['', label(ticks, 0)];
+              c.ticks[closest] = ['', label(ticks, closest)];
+              c.ticks[ticks.length-1] = ['', label(ticks, ticks.length-1)];
+              c.ticks[iMin] = label(ticks, iMin).split(' ')[1];
+              c.ticks[iMax] = label(ticks, iMax).split(' ')[1];
+            }
+
+
+            datasets[0].pointRadius[closest] = 6;
+
+            const ctx = document.getElementById('tideChart');
+
+            if (app.tide.chart.line) {
+              app.tide.chart.line.destroy();
+            }
+            else {
+              swipedetect(ctx, function(dir) {
+                if (dir==='right') {
+                  --app.tide.offset;
+                }
+                else if (dir==='left') {
+                  ++app.tide.offset;
+                }
+                else {
+                  return;
+                }
+                app.tide.chart.lastUpdated.setTime(0);
+                updateWaterLevel(app.location.current);
+              });
+            }
+
+            app.tide.chart.line = new Chart.Line(ctx, {
+
+              data: {
+                labels: labels,
+                datasets: datasets
+              },
+
+              options: {
+
+                animation: {
+                  duration: 0,
+
+                  onComplete: function() {
+                    const ctx = this.chart.ctx;
+                    const fillStyle = ctx.fillStyle;
+                    const font = ctx.font;
+                    ctx.fillStyle = 'navy';
+                    ctx.textBaseline='middle';
+                    ctx.textAlign='left';
+                    ctx.font = 'bold 18px calibri';
+                    const meta = this.getDatasetMeta(0);
+                    for (let i = 0; i != meta.data.length; ++i) {
+                      if (meta.data[i]._model.radius < 6) {
+                        continue;
+                      }
+                      const data = this.data.datasets[0].data;
+                      const value = Math.ceil(10 * data[i]) / 10 + "'";
+                      ctx.fillText(value, 35, 25);
+                      break;
+                    }
+                    ctx.fillStyle = fillStyle;
+                    ctx.font = font;
+                  }
+                },
+                legend: {
+                  display: false
+                },
+                title: {
+                  display: true,
+                  fontSize: 12,
+                  padding: 0,
+                  position: 'bottom',
+                  text: stationInfo
+                },
+                tooltips: {
+                  callbacks: {
+                    title: function(items, data) {
+                      const val = tickDate(data.labels[items[0].index])[1];
+                      return val;
+                    }
+                  }
+                },
+
+                scales: {
+                  yAxes: [ {
+                      gridLines: {
+                        color: 'lightblue',
+                        borderDash: app.tide.offset ? [8, 4] : [0, 0]
+                      },
+                    }
+                  ],
+
+                  xAxes: [ {
+                      gridLines: {
+                        color: 'blue',
+                        borderDash: app.tide.offset ? [8, 4] : [0, 0]
+                      },
+
+                      ticks: {
+                        fontSize: 12,
+                        maxRotation: 0,
+                        autoSkip: false,
+                      },
+
+                      afterBuildTicks: rebuildTicks
+                    },
+                  ]
+                },
+              },
+            });
+          }
+        }
+        const xmlHttp = new XMLHttpRequest();
+        xmlHttp.onreadystatechange = processWaterLevelStation;
+        xmlHttp.open('GET', 'nearestWaterLevelStation/' + coord[1] + '/' + coord[0]);
+        xmlHttp.send();
+      }
+
+
+      function updateCurrents(coord) {
+        const xmlHttp = new XMLHttpRequest();
+        xmlHttp.onreadystatechange = processCurrentsStation;
+        xmlHttp.open('GET', 'nearestCurrentsStation/' + coord[1] + '/' + coord[0]);
+        xmlHttp.send();
+      }
+
+
+      function processCurrentsStation(event) {
+        const xmlHttp = event.currentTarget;
+        if (xmlHttp.readyState === 4 && xmlHttp.status === 200) {
+          console.log(xmlHttp.responseText);
+          const station = JSON.parse(xmlHttp.responseText);
+          const now = new Date();            
+
+          const url = 
+              'https://tidesandcurrents.noaa.gov/api/datagetter?product=currents'
+              + formatRequestRange(now, station.Id);
+          xmlHttp.onreadystatechange = processCurrents;
+          xmlHttp.open('GET', url);
+          xmlHttp.send();
+        }
+      }
+
+
+      function processCurrents(event) {
+        const xmlHttp = event.currentTarget;
+        if (xmlHttp.readyState === 4 && xmlHttp.status === 200) {
+          console.log(xmlHttp.responseText);
+        }
+      }
+
+
+      function showPopup() {
+        if (popup.visible && !popup.shown) {
+          popup.shown = true;
+          const elem = popup.getElement();
+          $(elem).popover('show');
+          function closePopup() {
+            $(elem).popover('destroy'); 
+            popup.visible = popup.shown = false;
+          }
+          function setDestination(pos) {
+            closePopup();
+            app.destination.point = pos;
+            if (app.destination.point) {
+              app.destination.place = popup.place;
+              app.destination.coord = popup.coord;
+            }
+            lastInteraction = null;
+            geolocation.start();
+          }
+          const closeBtn = document.getElementById('close-popup');
+          closeBtn.onclick = closePopup;
+          closeBtn.ontouchstart = closePopup;
+
+          document.getElementById('set-course').onclick = function() {
+            setDestination(popup.getPosition());
+            document.getElementById('dest').style.visibility = 'visible';
+          }
+          document.getElementById('cancel-course').onclick = function() {
+            setDestination(null);
+            document.getElementById('dest').style.visibility = 'hidden';
+          }
+        }
+      }
+
+      function getDistanceFromLonLat(coord1, coord2) {
+       
+        const lon1 = coord1[0];
+        const lat1 = coord1[1];
+        const lon2 = coord2[0];
+        const lat2 = coord2[1];
+
+        function deg2rad(deg) {
+          return deg * (Math.PI/180)
+        }
+
+        const dLat = deg2rad(lat2-lat1);  // deg2rad below
+        const dLon = deg2rad(lon2-lon1); 
+        const a = 
+          Math.sin(dLat/2) * Math.sin(dLat/2) +
+          Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) * 
+          Math.sin(dLon/2) * Math.sin(dLon/2); 
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); 
+        return c;
+      }
+
+      function updatePopup(pos, place, coord) {
+        popup.place = place;
+        popup.coord = coord;
+
+        const e = popup.getElement();
+
+        const elevation = place.elevation < 0 ? 0 : place.elevation;
+        //contrary to docs from geonames.org, elevation seems to be in feet, not meters
+        //otherwise we should multiply by 3.28084 -- I just checked a few data points
+        //against Wikipedia
+
+        let html = '<b>' + place.name + '</b>';
+        if (place.state) {
+          html += ', ' + place.state;
+        }
+
+        html += '<br>' + convertDMS(coord);
+
+        function distance(d) {
+          if (d===0 && geolocation.coord) {
+            const coord = [ geolocation.coord.lon, geolocation.coord.lat ];
+            d = getDistanceFromLonLat(popup.coord, coord) * 3440;
+            app.location.prev.name = 'current location';
+          }
+          return '<br>' + Math.floor(d * 100) / 100
+            + ' nautical miles from ' + app.location.prev.name + '.';
+
+        }
+        let btn = '';
+
+        if (app.destination.point
+          && pos[0]===app.destination.point[0]
+          && pos[1]===app.destination.point[1]) {
+
+          const d = getDistanceFromLonLat(app.destination.coord, app.location.current) * 3440;
+          html += distance(d);
+          html += '<div id="set-course" display: none></div>';
+          btn  += '<button class="set-course btn btn-primary btn-xs" id="cancel-course">Cancel course</button>';
+          app.location.prev.name = app.destination.place.name;
+          if (app.destination.place.state) {
+            app.location.prev.name += ', ' + app.destination.place.state;
+          }
+        }
+        else {
+          html += distance(place.dist);
+          html += '<div id="cancel-course" display: none></div>';
+          btn += '<button class="set-course btn btn-primary btn-xs" id="set-course">Set course</button>';
+          app.location.prev.name = place.name;
+          if (place.state) {
+            app.location.prev.name += ', ' + place.state;
+          }
+        }
+        app.location.current = coord;
+
+        $(e).popover({
+          'animation': false,
+          'html': true,
+          'placement': 'top',
+          'content': html,
+          'title': btn + '<a href="#" id="close-popup" class="close">&times;</a>'
+        });
+        if (!equalPoint(app.location.point, app.destination.point)) {
+          app.location.prev.point = app.location.point;
+        }
+        popup.setPosition(pos);
+        popup.shown = false;
+        popup.visible = true; // popover on map postrender
+        //app.map.getView().setCenter(pos);
+
+        const xmlHttp = new XMLHttpRequest();
+        xmlHttp.onreadystatechange = function() {
+          if (xmlHttp.readyState === 4 && xmlHttp.status === 200) {
+            const w = JSON.parse(xmlHttp.responseText);
+
+            const imageUrl = '/images/wu_logo_130x80.png';
+            html += '<b>Weather Underground</b><image width="15%" src="' + imageUrl + '"/> ';
+
+            html += w.weather + ' ' + w.temp + ' Feels like: ' + w.feelslike
+              + ' Wind: ' + w.wind 
+              + ' (' + w.wind_degrees + '&deg;, '  + w.wind_mph + ' MPH)'
+              + ' Humidity: ' + w.humidity
+              + ' Visibility: ' + w.visibility + ' miles'
+
+            if (!isFullScreen()) {
+              const forecastUrl = 
+                'http://marine.weather.gov/MapClick.php?lat=' + coord[1] + '&lon=' + coord[0];
+              html += ' <a class="btn btn-primary btn-xs forecast" target="_blank" href="'
+                + forecastUrl + '">National Weather Service</a>';
+            }
+            $(e).popover('destroy');
+            $(e).popover({
+              'animation': false,
+              'html': true,
+              'placement': 'top',
+              'content': html,
+              'title': btn + '<a href="#" id="close-popup" class="close">&times;</a>'
+            });
+            popup.shown = false;
+            //app.map.render();
+          }
+        }
+        xmlHttp.open('GET', '/weather/' + coord[0] + '/' + coord[1]);
+        xmlHttp.send();
+      }
+
+
+      function searchLocation(name, coord) {
+ 
+        function buildSelection(matches) {
+          let selectHtml = '<b>Nearest Matches</b><br>';
+          selectHtml += '<select id="searchResults" class="search-results">';
+          for (let i = 0; i < matches.length; ++i) {
+            const m = matches[i];
+            selectHtml += '<option value="[' + m.lon + ',' + m.lat + ']">';
+            selectHtml += m.name;
+            if (m.stateName) {
+              selectHtml += ', ' + m.stateName;
+            }
+            if (m.state) {
+              selectHtml += ' (' + m.state + ')';
+            }
+            selectHtml += '</option>';
+          }
+          selectHtml += '</select>';
+          return selectHtml;
+        }
+
+        const url = 'search/' + name + '/' + coord[0] + '/' + coord[1];
+        const xmlHttp = new XMLHttpRequest();
+        xmlHttp.onreadystatechange = function() {
+          if (xmlHttp.readyState === 4 && xmlHttp.status === 200) {
+            const matches = JSON.parse(xmlHttp.responseText);
+            if (matches && matches.length) {
+              const selectHtml = buildSelection(matches);
+              
+              alertify.confirm(selectHtml, function(accept) {
+                if (!accept) {
+                  return;
+                }
+                const elem = document.getElementById('searchResults');
+                if (!elem) {
+                  return;
+                }
+                const srchCoord = JSON.parse(elem.options[elem.selectedIndex].value);
+                if (geolocation.isTracking()) {
+                  geolocation.stop();
+                }
+               /* 
+                if (app.map && app.map.getView().getZoom() < defaultZoom) {
+                    app.map.getView().setZoom(defaultZoom);
+                }
+                app.map.getView().setCenter(ol.proj.fromLonLat(srchCoord));
+                app.lastInteraction = null;
+                const pos = updateMap(srchCoord);
+                updatePopup(pos, matches[elem.selectedIndex], srchCoord);
+                */
+                updatePopup(
+                  app.map.setInspectLocation(srchCoord)._point,
+                  matches[elem.selectedIndex],
+                  srchCoord
+                );
+                app.map.showInspectLocation();
+              });
+            }
+            else {
+              alertify.alert('<b>No matches</b>');
+            }
+          }
+        }
+        xmlHttp.open('GET', url);
+        xmlHttp.send();
+      }
+      
+
+      function convertDMS(coords) {
+        return ol.coordinate.toStringHDMS(coords);
+      }
+
+
+      function updateDefault() {
+      /*
+        if (!app.location.current) {
+          app.location.current = [-122.4049, 47.6810] // Shilshole Bay
+          app.location.prev.name = 'Shilshole Bay';
+        }
+        updateMap(app.location.current);
+        */
+      }
+
+
+      function initialize() {
+        const controls = [
+          new tideChartControl(),
+          new showTideControl(),
+          new clockControl(),
+          new showClockControl(),
+          new locationControl(),
+          new trackingControl(),
+          new searchControl(),
+          new destControl(),
+          new shutdownControl()
+        ];
+
+        app.map = new Map({
+          controls: controls,
+          target: 'map'
+        });
+
+        enableShutdown();
+        
+        popup = new ol.Overlay({
+          element: document.getElementById('popup')
+        });
+        app.map.addOverlay(popup);
+
+        app.map.on('postrender', function() {
+          showPopup();
+          repositionWidgets();
+        });
+        app.map.on('change:size', function() {
+          app.clock.positioned = 0;
+        });
+      
+      //TODO
+        /* startClock();
+        swipedetect(clock.canvas, function(dir) {
+          geolocation.changeSpeedUnit();
+        }, true);
+        */
+      }
+
+      initialize();
+
+      let updateTimeout = setInterval(updateDefault, locationTimeout);
+
+      var geolocation = new Geolocation({
+        onSuccess: function(coord) {
+          if (coord.lon && coord.lat) {
+            if (updateTimeout) {
+              clearInterval(updateTimeout);
+              updateTimeout = null;
+            }
+            updateTracking(true);
+            app.location.current = [ coord.lon, coord.lat ];
+            app.location.prev.name = 'current location';
+
+            //updateMap(app.location.current);
+
+            app.map.setCurrentLocation(app.location.current);
+            app.map.showCurrentLocation();
+            elem = document.getElementById('location');
+            if (elem) {
+              elem.innerHTML = convertDMS(app.location.current);
+            }
+          }
+        },
+        onError: function(err) {
+          updateTracking(false);
+          updateDefault();
+        },
+        onStop: function() {
+          app.tide.station = null;
+          updateTracking(false);
+        },
+        onCompass: function() {
+          if (app.map && app.map.getView().updating) {
+            return;
+          }
+          if (geolocation.isTracking()) {
+            if (app.clock.visible) {
+              drawClock(clock.ctx, clock.radius);
+              app.clock.positioned = 0;
+              positionClock();
+            }
+            updateMap(app.location.current);
+          }
+        },
+        timeout: locationTimeout
+      });
+      
+      geolocation.start();
+      if (!navigator.geolocation) {
+        updateDefault();
+      }
+
+      window.addEventListener('orientationchange', handleDeviceOrientation);
+
+    </script>
+    <div>Compass icons made by <a href="http://www.freepik.com" title="Freepik">Freepik</a> from <a href="https://www.flaticon.com/" title="Flaticon">www.flaticon.com</a> is licensed by <a href="http://creativecommons.org/licenses/by/3.0/" title="Creative Commons BY 3.0" target="_blank">CC 3.0 BY</a></div>
+  </body>
+</html>
+
