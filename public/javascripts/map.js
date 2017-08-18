@@ -5,13 +5,21 @@ const roundPoint = function(p, prec = 10000) {
 }
 
 
-const buildLayers = function(resp, viewMaxRes) {
+const buildLayers = function(resp, viewMaxRes, current) {
   charts = [];
 
   let hMax = null;
   let maxRes = viewMaxRes;
 
   JSON.parse(resp).map(function(tileset) {
+  /*
+    for (let i = 0; i != current.length; ++i) {
+      if (tileset.ident===current[i].ident) {
+        console.log(tileset.ident);
+        return null;
+      }
+    }
+  */
     if (!hMax) {
       hMax = tileset.height;
     }
@@ -74,7 +82,7 @@ class Location {
     const xmlHttp = new XMLHttpRequest();
     xmlHttp.onreadystatechange = function() {
       if (xmlHttp.readyState===4 && xmlHttp.status===200) {
-        self._charts = buildLayers(xmlHttp.responseText, viewMaxRes);
+        self._charts = buildLayers(xmlHttp.responseText, viewMaxRes, self._charts);
         callback();
       }
     }
@@ -162,7 +170,7 @@ class Map {
           if (xmlHttp.status===200) {
             if (self._chartset !== xmlHttp.responseText) {
               self._chartset = xmlHttp.responseText;
-              self._useLayers(buildLayers(self._chartset, viewMaxRes));
+              self._useLayers(buildLayers(self._chartset, viewMaxRes, self._charts));
             }
           }
           --self._updating;
