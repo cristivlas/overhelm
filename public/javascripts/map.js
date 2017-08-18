@@ -135,13 +135,13 @@ class Map {
 
   _updateView() {
     if (this._updating) {
-      return alert('updating:' + this._updating);
+      return;
     }
-    ++this._updating;
     if (this._recenter > 0) {
       this._recenter--;
     }
     else {
+      ++this._updating;
       this._lastInteraction = new Date();
 
       const extent = this._view.calculateExtent();
@@ -158,21 +158,22 @@ class Map {
       const xmlHttp = new XMLHttpRequest();
 
       xmlHttp.onreadystatechange = function() {
-        if (xmlHttp.readyState===4 && xmlHttp.status===200) {
-
-          if (self._chartset !== xmlHttp.responseText) {
-            self._chartset = xmlHttp.responseText;
-            self._useLayers(buildLayers(self._chartset, viewMaxRes));
+        if (xmlHttp.readyState===4) {
+          if (xmlHttp.status===200) {
+            if (self._chartset !== xmlHttp.responseText) {
+              self._chartset = xmlHttp.responseText;
+              self._useLayers(buildLayers(self._chartset, viewMaxRes));
+            }
+          }
+          --self._updating;
+          if (self._onUpdateView) {
+            const coord = ol.proj.transform(self._view.getCenter(), 'EPSG:3857', 'EPSG:4326');
+            self._onUpdateView({center:coord});
           }
         }
       }
       xmlHttp.open('GET', url);
       xmlHttp.send();
-    }
-    --this._updating;
-    if (this._onUpdateView) {
-      const coord = ol.proj.transform(this._view.getCenter(), 'EPSG:3857', 'EPSG:4326');
-      this._onUpdateView({center:coord});
     }
   }
 
