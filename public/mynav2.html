@@ -403,9 +403,7 @@
             app.map.getView().setZoom(app.zoom);
             geolocation.start();
           }
-          app.map.showCurrentLocation(true);
-          //geolocation.stop();
-          //geolocation.start();
+          getTimezoneOffset(app.map.showCurrentLocation(true)._coord);
           if (app.map._rotateView) {
             button.removeChild(iconLoc);
             button.appendChild(iconNav);
@@ -472,7 +470,7 @@
             if (valid) {
               value = value.trim();
               if (value) {
-                searchLocation(value, app.location.current);
+                searchLocation(value, app.map._location._coord);
               }
             }
           });
@@ -1456,7 +1454,6 @@
             getTimezoneOffset(coord);
           },
           onUpdateView: function(view) {
-            getTimezoneOffset(view.center);
           }
         });
 
