@@ -233,7 +233,7 @@ function drawSpeed(ctx, radius) {
     ctx.fillText(Math.floor(geolocation.speed * 10) / 10 + ' ' + units, 0, 0);
   }
   else {
-    ctx.fillText(360 - geolocation._heading + ' ' + units, 0, 0);
+    ctx.fillText((360 + geolocation._heading) % 360 + ' ' + units, 0, 0);
   }
   ctx.stroke();
   ctx.translate(0, -radius * .2);
