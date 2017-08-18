@@ -190,6 +190,8 @@ class Map {
     self._mode = mode;
     if (self._charts
       && ol.extent.containsCoordinate(self._view.calculateExtent(), this._location._point)) {
+      self._recenter++;
+      self._view.setCenter(self._location._point);
       return this._location;
     }
     const first = self._location._charts.length===0;
