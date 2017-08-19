@@ -143,13 +143,10 @@ class Geolocation {
       let t1 = this.timestamp;
       let t2 = new Date();
       this.timestamp = t2;
-      if (t1) try {
+      if (t1 && this.coord.lon && this.coord.lat) {
         t1 = t1.getTime() / 1000;
         t2 = t2.getTime() / 1000;
         speed = calculateSpeed(t1, this.coord.lat, this.coord.lon, t2, lat, lon);
-      }
-      catch (err) {
-        alert(err);
       }
     }
     speed = speed || 0;
