@@ -22,6 +22,13 @@ class Geolocation {
     this._iunit = (this._iunit + 1) % this._units.length;
   }
 
+  getSpeed() {
+    if (this._iunit < 3) {
+      return Math.floor(this.speed * this._speedConversion[this._iunit] * 10) / 10;
+    }
+    return (360 + this._heading) % 360;
+  }
+
   getSpeedUnit() {
     return this._units[this._iunit];
   }
@@ -129,14 +136,30 @@ class Geolocation {
   }
 
   _onSuccess(pos) {
-    const k = this._speedConversion[this._iunit];
+    const lat = pos.coords.latitude;
+    const lon = pos.coords.longitude;
+    let speed = pos.coords.speed;
+    if (speed===null) {
+      let t1 = this.timestamp;
+      let t2 = new Date();
+      this.timestamp = t2;
+      if (t1) try {
+        t1 = t1.getTime() / 1000;
+        t2 = t2.getTime() / 1000;
+        speed = calculateSpeed(t1, this.coord.lat, this.coord.lon, t2, lat, lon);
+      }
+      catch (err) {
+        alert(err);
+      }
+    }
+    speed = speed || 0;
     var coord = {
-      lon: pos.coords.longitude,
-      lat: pos.coords.latitude,
-      speed: pos.coords.speed * k,
+      lon: lon,
+      lat: lat,
+      speed: speed,
       heading: pos.coords.heading
     }
-    this._update(coord, pos.coords.speed===null);
+    this._update(coord);
   }
 
   _onError(err) {
@@ -174,13 +197,7 @@ class Geolocation {
     this._heading = Math.ceil(this._heading); // for use with clock widget
   }
 
-  _update(coord, calcSpeed) {
-    const t1 = this.timestamp;
-    const t2 = new Date();
-    if (calcSpeed && t1) {
-      coord.speed = calculateSpeed(t1, this.coord.lat, this.coord.lon, t2, coord.lat, coord.lon);
-    }
-    this.timestamp = t2;
+  _update(coord) {
     this.coord = coord;
     this.speed = coord.speed;
     this._updateHeading();
@@ -194,12 +211,7 @@ class Geolocation {
 // https://stackoverflow.com/questions/31456273/calculate-my-speed-with-geolocation-api-javascript
 function calculateSpeed(t1, lat1, lon1, t2, lat2, lon2) {
   const degtorad = Math.PI / 180;
-  /** Converts numeric degrees to radians */
-  if (typeof(Number.prototype.toRad) === "undefined") {
-    Number.prototype.toRad = function() {
-      return this * Math.PI / 180;
-    }
-  }
+
   const R = 6371000; // radius of Earth, in meters
   const dLat = (lat2-lat1) * degtorad;
   const dLon = (lon2-lon1) * degtorad;
