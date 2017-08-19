@@ -8,11 +8,12 @@ class Geolocation {
     this._startCallback = options.onStart;
     this._stopCallback = options.onStop;
     this._compassCallback = options.onCompass;
+    this._heading = 0;
     //this._ios = (navigator.platform === 'iPad' || navigator.platform === 'iPhone');
     this._mobile = navigator.userAgent.match(/mobile/i);
     this._iunit = 0;
     this._units = [ 'kts', 'mph', 'km/h', '\u00B0' ];
-    this._speedConversion = [ 1.943844, 2.236936, 3.6 ];
+    this._speedConversion = [ 1.943844, 2.236936, 3.6, 0.0 ];
     this.speed = 0;
     this.rotation = 0;
   }
@@ -105,17 +106,13 @@ class Geolocation {
 
       window.addEventListener('deviceorientation', function(e) {
         if (e.webkitCompassHeading) {
-          this._heading = Math.floor(e.webkitCompassHeading);
+          this._heading = e.webkitCompassHeading;
         }
         else {
           if (!e.absolute || e.alpha === null) {
             return;
           }
-          const alpha = -Math.floor(e.alpha);
-          if (this._heading === alpha) {
-            return;
-          }
-          this._heading = alpha;
+          this._heading = -e.alpha;
         }
         this._updateHeading();
         if (this._compassCallback) {
@@ -128,21 +125,22 @@ class Geolocation {
       this._onSuccess.bind(this),
       this._onError.bind(this),
       {
-        enableHighAccuracy: true,
+        //enableHighAccuracy: true,
+        enableHighAccuracy: false,
         timeout: this._timeout,
         maximumAge: 0
       });
   }
 
   _onSuccess(pos) {
+    const k = this._speedConversion[this._iunit];
     var coord = {
       lon: pos.coords.longitude,
       lat: pos.coords.latitude,
-      //speed: pos.coords.speed * 1.943844, // meters per second -> knots
-      speed: pos.coords.speed * this._speedConversion[this._iunit],
+      speed: pos.coords.speed * k,
       heading: pos.coords.heading
     }
-    this._update(coord);
+    this._update(coord, pos.coords.speed===null);
   }
 
   _onError(err) {
@@ -175,13 +173,18 @@ class Geolocation {
   }
 
   _updateHeading() {
-    if (this._heading) {
-      this.coord.heading = this._heading + window.orientation;
-      this.rotation = this.coord.heading * (Math.PI / 180);
-    }
+    this.coord.heading = this._heading + window.orientation;
+    this.rotation = this.coord.heading * (Math.PI / 180);
+    this._heading = Math.ceil(this._heading);
   }
 
-  _update(coord) {
+  _update(coord, calcSpeed) {
+    const t1 = this.timestamp;
+    const t2 = new Date();
+    if (calcSpeed && t1) {
+      coord.speed = calculateSpeed(t1, this.coord.lat, this.coord.lon, t2, coord.lat, coord.lon);
+    }
+    this.timestamp = t2;
     this.coord = coord;
     this.speed = coord.speed || 0;
     this._updateHeading();
@@ -190,5 +193,27 @@ class Geolocation {
       this._successCallback(coord);
     }
   }
+}
+
+// https://stackoverflow.com/questions/31456273/calculate-my-speed-with-geolocation-api-javascript
+function calculateSpeed(t1, lat1, lon1, t2, lat2, lon2) {
+  /** Converts numeric degrees to radians */
+  if (typeof(Number.prototype.toRad) === "undefined") {
+    Number.prototype.toRad = function() {
+      return this * Math.PI / 180;
+    }
+  }
+  var R = 6371000; // radius of Earth, in meters
+  var dLat = (lat2-lat1).toRad();
+  var dLon = (lon2-lon1).toRad();
+  var lat1 = lat1.toRad();
+  var lat2 = lat2.toRad();
+
+  var a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+    Math.sin(dLon/2) * Math.sin(dLon/2) * Math.cos(lat1) * Math.cos(lat2); 
+  var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); 
+  var distance = R * c;
+
+  return distance / (t2 - t1);
 }
 
