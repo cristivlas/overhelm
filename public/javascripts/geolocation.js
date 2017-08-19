@@ -192,7 +192,7 @@ class Geolocation {
   }
 
   _updateHeading() {
-    this.coord.heading = this._heading + window.orientation;
+    this.coord.heading = this._heading + (window.orientation || 0);
     this.rotation = this.coord.heading * (Math.PI / 180);
     this._heading = Math.ceil(this._heading); // for use with clock widget
   }

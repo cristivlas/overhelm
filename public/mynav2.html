@@ -35,6 +35,10 @@
     <script src="lib/bootstrap.min.js"></script>
 
     <style>
+      hr {
+        margin-top: .25em;
+        margin-bottom: .25em;
+      }
       .alertify-button {
         background: rgba(0,65,135,.7);
         color: white;
@@ -75,7 +79,7 @@
         opacity: 1;
       }
       .popover-content {
-        min-width: 250px;
+        min-width: 270px;
         font-size: 12px;
       }
       .ui-keyboard {
@@ -296,12 +300,26 @@
     </div>
 
     <script>
-      const defaultZoom = 14;
+      const defaultZoom = 13;
       const locationTimeout = 1000;
 
       var popup = null;
 
       var app = {
+        setCourse() {
+          this.setDestination(popup.getPosition());
+          document.getElementById('dest').style.visibility = 'visible';
+        },
+        cancelCourse() { 
+          this.setDestination(null);
+          document.getElementById('dest').style.visibility = 'hidden';
+        },
+        hasDestination() {
+          return this.destination.point !== null;
+        },
+        isDestination(pos) {
+          return this.destination.point !== null && equalPoint(pos, this.destination.point)
+        },
         map: null,
         zoom: defaultZoom,
         tzOffset: (new Date()).getTimezoneOffset() * 60000,
@@ -514,7 +532,7 @@
         button.title = 'Show destination';
         button.className = 'dest-btn';
         var handler = function() {
-          if (popup.place && app.destination.point) {
+          if (popup.place && app.hasDestination()) {
             if (popup.visible) {
               $(popup.getElement()).popover('destroy');
               popup.visible = popup.show = false;  
@@ -639,13 +657,17 @@
             elem.style.visibility = 'visible';
             button.title = titleOpen;
             button.appendChild(iconClose);
-            button.removeChild(iconOpen);
+            if (iconOpen.parentElement===button) {
+              button.removeChild(iconOpen);
+            }
           }
           else {
             elem.style.visibility = 'hidden';
             button.title = titleClosed;
             button.appendChild(iconOpen);
-            button.removeChild(iconClose);
+            if (iconClose.parentElement===button) {
+              button.removeChild(iconClose);
+            }
           }
           flag ^= true;
         }
@@ -658,6 +680,10 @@
         element.className = elemClass + ' ol-custom ol-unselectable ol-control';
         element.appendChild(button);
 
+        app['hide_' + elemName] = function() {
+          flag = true;
+          handler();
+        }
         return element;
       }
 
@@ -1190,17 +1216,16 @@
             lastInteraction = null;
             geolocation.start();
           }
+          if (!app.setDestination) {
+            app.setDestination = setDestination;
+          }
           const closeBtn = document.getElementById('close-popup');
           closeBtn.onclick = closePopup;
           closeBtn.ontouchstart = closePopup;
 
-          document.getElementById('set-course').onclick = function() {
-            setDestination(popup.getPosition());
-            document.getElementById('dest').style.visibility = 'visible';
-          }
-          document.getElementById('cancel-course').onclick = function() {
-            setDestination(null);
-            document.getElementById('dest').style.visibility = 'hidden';
+          if (navigator.userAgent.match(/mobile/i)) { // small screen?
+            app.hide_clock();
+            app.hide_tideChart();
           }
         }
       }
@@ -1247,16 +1272,10 @@
             + ' nautical miles from ' + app.location.prev.name + '.';
 
         }
-        let btn = '';
 
-        if (app.destination.point
-          && pos[0]===app.destination.point[0]
-          && pos[1]===app.destination.point[1]) {
-
+        if (app.isDestination(pos)) {
           const d = getDistanceFromLonLat(app.destination.coord, app.location.current) * 3440;
           html += distance(d);
-          html += '<div id="set-course" display: none></div>';
-          btn  += '<button class="set-course btn btn-primary btn-xs" id="cancel-course">Cancel course</button>';
           app.location.prev.name = app.destination.place.name;
           if (app.destination.place.state) {
             app.location.prev.name += ', ' + app.destination.place.state;
@@ -1264,8 +1283,6 @@
         }
         else {
           html += distance(place.dist);
-          html += '<div id="cancel-course" display: none></div>';
-          btn += '<button class="set-course btn btn-primary btn-xs" id="set-course">Set course</button>';
           app.location.prev.name = place.name;
           if (place.state) {
             app.location.prev.name += ', ' + place.state;
@@ -1280,7 +1297,7 @@
           'html': true,
           'placement': 'top',
           'content': html,
-          'title': btn + '<a href="#" id="close-popup" class="close">&times;</a>'
+          'title': '<a href="#" id="close-popup" class="close">&times;</a>'
         });
         if (!equalPoint(app.location.point, app.destination.point)) {
           app.location.prev.point = app.location.point;
@@ -1303,12 +1320,19 @@
               + ' (' + w.wind_degrees + '&deg;, '  + w.wind_mph + ' MPH)'
               + ' Humidity: ' + w.humidity
               + ' Visibility: ' + w.visibility + ' miles'
+              + ' Observed at ' + w.station + '.'
 
+            if (app.isDestination(pos)) {
+              html += '<hr><a class="btn btn-primary btn-xs" onClick="app.cancelCourse()">Cancel Course</a> ';
+            }
+            else {
+              html += '<hr><a class="btn btn-primary btn-xs" onClick="app.setCourse()">Set Course</a> ';
+            }
             if (!isFullScreen()) {
               const forecastUrl = 
                 'http://marine.weather.gov/MapClick.php?lat=' + coord[1] + '&lon=' + coord[0];
-              html += ' <a class="btn btn-primary btn-xs forecast" target="_blank" href="'
-                + forecastUrl + '">National Weather Service</a>';
+              html += '<a class="btn btn-primary btn-xs" target="_blank" href="'
+                + forecastUrl + '">Marine Forecast</a>';
             }
             $(e).popover('destroy');
             $(e).popover({
@@ -1316,7 +1340,7 @@
               'html': true,
               'placement': 'top',
               'content': html,
-              'title': btn + '<a href="#" id="close-popup" class="close">&times;</a>'
+              'title': '<a href="#" id="close-popup" class="close">&times;</a>'
             });
             popup.shown = false;
             app.map.render();
@@ -1428,7 +1452,6 @@
             updateWaterLevel(coord);
           },
           onUpdateView: function(view) {
-            console.log(view);
           }
         });
 
