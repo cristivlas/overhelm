@@ -3,6 +3,7 @@ const bs = require('binarysearch');
 const express = require('express');
 const exec = require('child_process').exec;
 const fs = require('fs');
+const geoTZ = require('geo-tz');
 const getLocation = require(__dirname + '/serial_gps');
 const http = require('http');
 const https = require('https');
@@ -19,6 +20,8 @@ const currentsStations = require(__dirname + '/Currents_Active_Stations.json');
 const waterLevelStations = require(__dirname + '/Waterlevel_Active_Stations.json');
 
 const router = express.Router();
+
+geoTZ.createPreloadedFeatureProvider();
 
 /* are we connected to the internets? */
 let __online = false;
@@ -513,12 +516,16 @@ router.get('/nearestWaterLevelStation/:lat/:lon', function(req, res, next) {
     }
   }
 
+  //get timezone offset
+  const moment = geoTZ.tzMoment(req.params.lat, req.params.lon);
+
   const result = {
     Id: closest.Id,
     Name: closest.Name,
     State: closest.State == 'None' ? '' : closest.State,
     Latitude: closest.Latitude,
-    Longitude: closest.Longitude
+    Longitude: closest.Longitude,
+    tzOffset: moment.format('Z').split(':')[0] * 3600 * 1000
   }
   res.send(JSON.stringify(result));
 });

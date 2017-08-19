@@ -329,7 +329,6 @@
             lastUpdated: new Date(),
             visible: true,
           },
-          lastCoord: null,
           offset: 0
         },
         clock: {
@@ -403,7 +402,7 @@
             app.map.getView().setZoom(app.zoom);
             geolocation.start();
           }
-          getTimezoneOffset(app.map.showCurrentLocation(true)._coord);
+          updateWaterLevel(app.map.showCurrentLocation(true)._coord);
           if (app.map._rotateView) {
             button.removeChild(iconLoc);
             button.appendChild(iconNav);
@@ -733,23 +732,6 @@
       }
       ol.inherits(locationControl, ol.control.Control);
 
-      function getTimezoneOffset(coord) {
-        const url = 'search/nearby/' + coord[0] + '/' + coord[1];
-        const xmlHttp = new XMLHttpRequest();
-        xmlHttp.onreadystatechange = function() {
-          if (xmlHttp.readyState === 4 && xmlHttp.status === 200) {
-            const matches = JSON.parse(xmlHttp.responseText);
-            if (matches && matches.length) {
-              app.tzOffset = -matches[0].tz[1] * 3600 * 1000;
-              app.tide.chart.lastUpdated.setTime(0);
-              updateWaterLevel(coord);
-            }
-          }
-        }
-        xmlHttp.open('GET', url);
-        xmlHttp.send();
-      }
-
       function enableShutdown() {
         const xmlHttp = new XMLHttpRequest();
         xmlHttp.onreadystatechange = function() {
@@ -892,13 +874,6 @@
        */
       function updateWaterLevel(coord) {
 
-        const lastCoord = coord;
-        roundPoint(lastCoord, 10000);
-        if (app.tide.station && equalPoint(lastCoord, app.tide.lastCoord)) {
-          return getWaterLevel(app.tide.station);
-        }
-        app.tide.lastCoord = lastCoord;
-
         function getWaterLevel(station) {
           const now = new Date();
 
@@ -912,6 +887,7 @@
           }
           app.tide.station = station;
           app.tide.chart.lastUpdated = now;
+          app.tzOffset = -station.tzOffset;
 
           now.setTime(now.getTime() + app.tide.offset * 24 * 3600 * 1000);
           const stationInfo = 'Station: ' + station.Id + ' ' + station.Name + ' ' + station.State;
@@ -1451,10 +1427,10 @@
           target: 'map',
           defaultZoom: defaultZoom,
           onLocationUpdate: function(coord) {
-            getTimezoneOffset(coord);
+            updateWaterLevel(coord);
           },
           onUpdateView: function(view) {
-            //console.log(view);
+            console.log(view);
           }
         });
 
