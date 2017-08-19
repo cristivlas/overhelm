@@ -109,7 +109,7 @@ class Geolocation {
           this._heading = e.webkitCompassHeading;
         }
         else if (window.chrome && e.absolute) {
-          this._heading = -(e.alpha || 0);
+          this._heading = -e.alpha;
         }
         this._updateHeading();
         if (this._compassCallback) {
@@ -182,7 +182,7 @@ class Geolocation {
     }
     this.timestamp = t2;
     this.coord = coord;
-    this.speed = coord.speed || 0;
+    this.speed = coord.speed;
     this._updateHeading();
 
     if (this._successCallback) {
@@ -193,23 +193,23 @@ class Geolocation {
 
 // https://stackoverflow.com/questions/31456273/calculate-my-speed-with-geolocation-api-javascript
 function calculateSpeed(t1, lat1, lon1, t2, lat2, lon2) {
+  const degtorad = Math.PI / 180;
   /** Converts numeric degrees to radians */
   if (typeof(Number.prototype.toRad) === "undefined") {
     Number.prototype.toRad = function() {
       return this * Math.PI / 180;
     }
   }
-  var R = 6371000; // radius of Earth, in meters
-  var dLat = (lat2-lat1).toRad();
-  var dLon = (lon2-lon1).toRad();
-  var lat1 = lat1.toRad();
-  var lat2 = lat2.toRad();
+  const R = 6371000; // radius of Earth, in meters
+  const dLat = (lat2-lat1) * degtorad;
+  const dLon = (lon2-lon1) * degtorad;
+  lat1 *= degtorad;
+  lat2 *= degtorad;
 
-  var a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+  const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
     Math.sin(dLon/2) * Math.sin(dLon/2) * Math.cos(lat1) * Math.cos(lat2); 
-  var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); 
-  var distance = R * c;
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); 
 
-  return distance / (t2 - t1);
+  return (R * c) / (t2 - t1);
 }
 
