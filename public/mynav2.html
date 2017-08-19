@@ -307,7 +307,6 @@
         tzOffset: (new Date()).getTimezoneOffset() * 60000,
         powerClick: 0,
 
-//<TODO deprecate>
         location: {
           current: null,
           prev: {
@@ -320,7 +319,6 @@
           point: null,
           place: null,
         },
-//</TODO>
 
         tide: {
           station: null,
@@ -338,7 +336,7 @@
       }
 
       // Raspberry or iPad?
-
+      // FIXME: armv7 for raspberry maybe not such a good idea
       if (navigator.userAgent.match(/armv7/) ||
           navigator.userAgent.match(/ipad/i)) {
         var elem = document.getElementById('map');

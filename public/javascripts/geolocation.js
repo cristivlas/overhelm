@@ -108,24 +108,20 @@ class Geolocation {
         if (e.webkitCompassHeading) {
           this._heading = e.webkitCompassHeading;
         }
-        else {
-          if (!e.absolute || e.alpha === null) {
-            return;
-          }
-          this._heading = -e.alpha;
+        else if (window.chrome && e.absolute) {
+          this._heading = -(e.alpha || 0);
         }
         this._updateHeading();
         if (this._compassCallback) {
           this._compassCallback(this);
         }
-      }.bind(this));
+      }.bind(this), false);
     }
 
     this._watchId = navigator.geolocation.watchPosition(
       this._onSuccess.bind(this),
       this._onError.bind(this),
       {
-        //enableHighAccuracy: true,
         enableHighAccuracy: false,
         timeout: this._timeout,
         maximumAge: 0
@@ -175,7 +171,7 @@ class Geolocation {
   _updateHeading() {
     this.coord.heading = this._heading + window.orientation;
     this.rotation = this.coord.heading * (Math.PI / 180);
-    this._heading = Math.ceil(this._heading);
+    this._heading = Math.ceil(this._heading); // for use with clock widget
   }
 
   _update(coord, calcSpeed) {
