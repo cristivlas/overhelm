@@ -99,7 +99,6 @@ class Map {
     this._recenter = 0;
     this._rotateView = false;
     this._mode = Mode.INSPECT_LOCATION;
-    //this._location = opts.coord ? new Location(opts.coord) : null;
     this._lastInteraction = null;
     this._onLocationUpdate = opts.onLocationUpdate;
     this._onUpdateView = opts.onUpdateView;
@@ -200,9 +199,8 @@ class Map {
       self._view.setCenter(self._location._point);
       return this._location;
     }
-    const first = self._location._charts.length===0;
     this._location.getCharts(this._view.getMaxResolution(), function() {
-      if (first && self._onLocationUpdate) {
+      if (self._onLocationUpdate) {
         self._onLocationUpdate(self._location._coord);
       }
       self._useLayers(self._location._charts);
