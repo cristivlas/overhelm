@@ -215,7 +215,7 @@ function drawCompass(ctx, radius) {
 
 function drawSpeed(ctx, radius) {
   ctx.translate(0, radius * .2);
-  const x = -radius * 0.3;
+  const x = -radius * 0.35;
   const y = -radius * 0.095;
   ctx.beginPath();
   ctx.fillStyle = 'lightblue';

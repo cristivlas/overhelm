@@ -38,7 +38,7 @@ function checkConnection() {
 
 
 router.get('/', function(req, res, next) {
-  res.redirect('mynav2.html');
+  res.redirect('mynav.html');
 });
 
 

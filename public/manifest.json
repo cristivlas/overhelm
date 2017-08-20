@@ -1,0 +1,9 @@
+{
+  "manifest_version": 2,
+  "name": "Ragnar",
+  "version": "1.0",
+  "description": "Marine navigation using NOAA charts",
+  "display": "fullscreen",
+  "orientation": "portrait"
+}
+
