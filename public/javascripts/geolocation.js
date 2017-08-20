@@ -9,7 +9,7 @@ class Geolocation {
     this._stopCallback = options.onStop;
     this._compassCallback = options.onCompass;
     this._heading = 0;
-    //this._ios = (navigator.platform === 'iPad' || navigator.platform === 'iPhone');
+    this._ios = (navigator.platform === 'iPad' || navigator.platform === 'iPhone');
     this._mobile = navigator.userAgent.match(/mobile/i);
     this._iunit = 0;
     this._units = [ 'kts', 'mph', 'km/h', '\u00B0' ];
@@ -142,9 +142,9 @@ class Geolocation {
       this._onSuccess.bind(this),
       this._onError.bind(this),
       {
-        enableHighAccuracy: false,
+        enableHighAccuracy: true,
         timeout: this._timeout,
-        maximumAge: 0
+        maximumAge: Infinity
       });
   }
 
@@ -152,16 +152,14 @@ class Geolocation {
     const lat = pos.coords.latitude;
     const lon = pos.coords.longitude;
     let speed = pos.coords.speed;
-    if (speed===null) {
+    /* if (speed===null) {
       let t1 = this.timestamp;
-      let t2 = new Date();
+      let t2 = pos.timestamp / 1000;
       this.timestamp = t2;
       if (t1 && this.coord && this.coord.lon && this.coord.lat) {
-        t1 = t1.getTime() / 1000;
-        t2 = t2.getTime() / 1000;
-        speed = calculateSpeed(t1, this.coord.lat, this.coord.lon, t2, lat, lon);
+        speed = calculateSpeed(t1, this.coord.lon, this.coord.lat, t2, lon, lat);
       }
-    }
+    } */
     speed = speed || 0;
     var coord = {
       lon: lon,
@@ -218,20 +216,34 @@ class Geolocation {
   }
 }
 
-// https://stackoverflow.com/questions/31456273/calculate-my-speed-with-geolocation-api-javascript
-function calculateSpeed(t1, lat1, lon1, t2, lat2, lon2) {
-  const degtorad = Math.PI / 180;
 
-  const R = 6371000; // radius of Earth, in meters
-  const dLat = (lat2-lat1) * degtorad;
-  const dLon = (lon2-lon1) * degtorad;
-  lat1 *= degtorad;
-  lat2 *= degtorad;
+function getDistanceFromLonLat(coord1, coord2) {
+  const lon1 = coord1[0];
+  const lat1 = coord1[1];
+  const lon2 = coord2[0];
+  const lat2 = coord2[1];
+  return getDistance(lon1, lat1, lon2, lat2);
+}
 
-  const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-    Math.sin(dLon/2) * Math.sin(dLon/2) * Math.cos(lat1) * Math.cos(lat2); 
+
+function getDistance(lon1, lat1, lon2, lat2) {
+  function deg2rad(deg) {
+    return deg * (Math.PI/180)
+  }
+
+  const dLat = deg2rad(lat2-lat1);
+  const dLon = deg2rad(lon2-lon1); 
+  const a = 
+    Math.sin(dLat/2) * Math.sin(dLat/2) +
+    Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) * 
+    Math.sin(dLon/2) * Math.sin(dLon/2); 
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); 
+  return c;
+}
 
+function calculateSpeed(t1, lon1, lat1, t2, lon2, lat2) {
+  const R = 6371000; // radius of Earth, in meters
+  const c = getDistance(lon1, lat1, lon2, lat2);
   return (R * c) / (t2 - t1);
 }
 
