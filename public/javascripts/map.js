@@ -22,7 +22,12 @@ const buildLayers = function(resp, viewMaxRes) {
     const layer = new ol.layer.Tile({
       source: new ol.source.XYZ({
         url: url,
-        attributions: tileset.ident.split('_')[0] + sounding
+        attributions: tileset.ident.split('_')[0] + sounding,
+        tileLoadFunction: function(imageTile, src) {
+          setTimeout(function() {
+            imageTile.getImage().src = src;
+          }, 1000)
+        }
       }),
       maxResolution: maxRes,
       opacity: .8
