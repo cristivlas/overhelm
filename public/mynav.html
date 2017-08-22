@@ -1268,7 +1268,9 @@
             }
           }
           let elem = document.getElementById('forecast');
-          elem.style.height = window.innerHeight * .6 + 'px';
+          if (elem) {
+            elem.style.height = window.innerHeight * .6 + 'px';
+          }
         })          
       }
 
@@ -1326,7 +1328,6 @@
         popup.setPosition(pos);
         popup.shown = false;
         popup.visible = true; // popover on map postrender
-        //app.map.getView().setCenter(pos);
 
         const xmlHttp = new XMLHttpRequest();
         xmlHttp.onreadystatechange = function() {
@@ -1525,7 +1526,7 @@
           updateTracking(false);
         },
         onCompass: function() {
-          if (app.map && app.map.getView().updating) {
+          if (app.map && app.map._updating) {
             return;
           }
           if (geolocation.isTracking()) {
