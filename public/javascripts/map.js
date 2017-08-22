@@ -209,12 +209,10 @@ class Map {
     self._mode = mode;
 
     if (self._charts
-      && ol.extent.containsCoordinate(self._view.calculateExtent(), self._location._point)) {
+      && ol.extent.containsCoordinate(self._view.calculateExtent(), self._location._point)
+      && self._contains(self._location)) {
       self._recenter++;
       self._view.setCenter(self._location._point);
-      if (!self._contains(self._location)) {
-        self._charts = null;
-      }
       return this._location;
     }
     this._location.getCharts(this._view.getMaxResolution(), function() {
