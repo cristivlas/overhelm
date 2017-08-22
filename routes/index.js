@@ -56,60 +56,8 @@ function tilesetInfo(t) {
 
 
 /******************************************************************
- * Return tilesets for a given service, longitude and latitude 
+ *
  */
-router.get('/tilesets/:srv/:lon/:lat/:minLon/:minLat/:maxLon/:maxLat',
-  function(req, res, next) {
-
-  const srv = req.params.srv;
-  if (!tilesets[srv]) {
-    tilesets[srv] = require(__dirname + '/' + srv + '-layers.json');
-  }
-  const minLon = parseFloat(req.params.minLon);
-  const minLat = parseFloat(req.params.minLat);
-  const maxLon = parseFloat(req.params.maxLon);
-  const maxLat = parseFloat(req.params.maxLat);
-  let sets = [];
-  let useBest = false;
-  tilesets[srv].map(function(t) {
-    if (t.lower[0] <= minLon && t.lower[1] <= minLat
-     && t.upper[0] >= maxLon && t.upper[1] >= maxLat) {
-      sets.push(tilesetInfo(t));
-      useBest = true;
-    }
-  });
-  if (sets.length===0) {
-    const lon = parseFloat(req.params.lon);
-    const lat = parseFloat(req.params.lat);
-    tilesets[srv].map(function(t) {
-      if (t.lower[0] < lon && t.lower[1] < lat
-       && t.upper[0] > lon && t.upper[1] > lat) {
-        sets.push(tilesetInfo(t));
-      }
-    });
-  }
-  sets.sort(function(a, b) {
-    if (a.height > b.height) return -1;
-    if (a.height < b.height) return 1;
-    return 0;
-  });
-  if (useBest) {
-    /*
-    for (let i = 0; i != sets.length-1; ++i) {
-      const curr = sets[i+1];
-      const next = sets[i];
-      if (curr.sounding===next.sounding) {
-        alternateTilesets[curr.ident] = next.ident;
-      }
-    } */
-    sets = sets.splice(sets.length-1);
-  }
-  const result = JSON.stringify(sets);
-  //console.log(result);
-  res.end(result);
-});
-
-
 router.get('/charts/noaa/loc/:lon/:lat', function(req, res, next) {
   const srv = 'noaa';
   if (!tilesets[srv]) {
@@ -199,9 +147,9 @@ var tileService = {
  * Tiles service proxy
  */
 router.get('/tiles/:srv/:set/:z/:x/:y', function(req, res, next) {
-  //if (req.params.srv === 'wikimedia') {
-  //  return serveWikimediaTile(req, res, next);
-  //}
+  if (req.params.srv === 'wikimedia') {
+    return serveWikimediaTile(req, res, next);
+  }
   serveTile(req, res, next);
 });
 

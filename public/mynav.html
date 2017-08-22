@@ -48,16 +48,19 @@
         overflow-y: scroll;
       }
       table {
-          font-family: arial, sans-serif;
-          border-collapse: collapse;
+        font-family: arial, sans-serif;
+        border-collapse: collapse;
       }
       td, th {
-          border: none;
-          text-align: left;
-          padding: 8px;
+        border: none;
+        text-align: left;
+        padding: 8px;
       }
       tr:nth-child(even) {
-          background-color: rgba(0,65,135,.3);
+        background-color: rgba(0,65,135,.3);
+      }
+      tr:nth-child(odd) {
+        background: rgb(255,255,235);
       }
 
       .alertify-button {
@@ -1485,7 +1488,10 @@
           app.clock.positioned = 0;
         });
         document.getElementById('location').addEventListener('click', function () {
-          getForecast(app.location.current[0], app.location.current[1]);
+          const loc = app.map._currentLocation;
+          if (loc) {
+            getForecast(loc._coord[0], loc._coord[1]);
+          }
         })
       }
 
