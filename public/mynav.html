@@ -29,6 +29,7 @@
     <script src="javascripts/clock.js"></script>
     <script src="javascripts/swipedetect.js"></script>
     <script src="javascripts/map.js"></script>
+    <script src="javascripts/forecast.js"></script>
 
     <script src="lib/alertify.min.js"></script>
     <script src="lib/OpenLayers/4.3.1/ol.js"></script>
@@ -43,6 +44,22 @@
         margin-top: .25em;
         margin-bottom: .25em;
       }
+      .forecast {
+        overflow-y: scroll;
+      }
+      table {
+          font-family: arial, sans-serif;
+          border-collapse: collapse;
+      }
+      td, th {
+          border: none;
+          text-align: left;
+          padding: 8px;
+      }
+      tr:nth-child(even) {
+          background-color: rgba(0,65,135,.3);
+      }
+
       .alertify-button {
         background: rgba(0,65,135,.7);
         color: white;
@@ -124,7 +141,6 @@
         width: 44px;
         height: 36px;
       }
-
       .ol-custom {
         background: gray;
       }
@@ -1235,6 +1251,27 @@
         }
       }
 
+      function getForecast(lon, lat) {
+        forecast(lon, lat, function(err, res) {
+          const msg = err ? err.message : formatForecast(res);
+          alertify.alert(msg);
+          if (!isFullScreen()) {
+            let elem = document.getElementById('alertify-ok');
+            if (elem) {
+              const url = 'http://marine.weather.gov/MapClick.php?lat=' + lat + '&lon=' + lon;
+              let button = document.createElement('a');
+              button.target = '_blank';
+              button.href = url;
+              button.innerHTML = 'Marine Weather';
+              button.className = 'alertify-button alertify-button-ok';
+              elem.parentElement.appendChild(button);
+            }
+          }
+          let elem = document.getElementById('forecast');
+          elem.style.height = window.innerHeight * .6 + 'px';
+        })          
+      }
+
       function updatePopup(pos, place, coord) {
         popup.place = place;
         popup.coord = coord;
@@ -1312,12 +1349,8 @@
             else {
               html += '<hr><a class="btn btn-primary btn-xs" onClick="app.setCourse()">Set Course</a>  ';
             }
-            if (!isFullScreen()) {
-              const forecastUrl = 
-                'http://marine.weather.gov/MapClick.php?lat=' + coord[1] + '&lon=' + coord[0];
-              html += '<a class="btn btn-primary btn-xs" target="_blank" href="'
-                + forecastUrl + '">Marine Forecast</a>';
-            }
+            html += '<button class="btn btn-primary btn-xs" onClick="getForecast('
+              + coord[0] + ',' + coord[1] + ')">NOAA Forecast</button>';
             $(e).popover('destroy');
             $(e).popover({
               'animation': false,
