@@ -161,6 +161,7 @@ class Map {
           return;
         }
       }
+
       const minLonLat = ol.proj.transform([extent[0], extent[1]], 'EPSG:3857', 'EPSG:4326');
       const maxLonLat = ol.proj.transform([extent[2], extent[3]], 'EPSG:3857', 'EPSG:4326');
       roundPoint(minLonLat)
@@ -193,28 +194,11 @@ class Map {
     }
   }
 
-  _contains(loc) {
-    for (let i = 0; i != this._charts.length; ++i) {
-      for (let j = 0; j != loc._charts.length; ++j) {
-        if (this._charts[i].ident===loc._charts[j].ident) {
-          return true;
-        }
-      }
-    }
-    return false;
-  }
 
   _showLocation(mode) {
     const self = this;
     self._mode = mode;
 
-    if (self._charts
-      && ol.extent.containsCoordinate(self._view.calculateExtent(), self._location._point)
-      && self._contains(self._location)) {
-      self._recenter++;
-      self._view.setCenter(self._location._point);
-      return this._location;
-    }
     this._location.getCharts(this._view.getMaxResolution(), function() {
       if (self._onLocationUpdate) {
         self._onLocationUpdate(self._location._coord);

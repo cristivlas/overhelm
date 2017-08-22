@@ -1,7 +1,12 @@
 function forecast(lon, lat, callback) {
+  if (app._forecastPending) {
+    return;
+  }
+  app._forecastPending = true;
   const xmlHttp = new XMLHttpRequest();
   xmlHttp.onreadystatechange = function() {
     if (xmlHttp.readyState===4) {
+      app._forecastPending = false;
       if (xmlHttp.status===200) {
         const res = JSON.parse(xmlHttp.responseText);
         callback(null, res);
