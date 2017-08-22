@@ -193,13 +193,28 @@ class Map {
     }
   }
 
+  _contains(loc) {
+    for (let i = 0; i != this._charts.length; ++i) {
+      for (let j = 0; j != loc._charts.length; ++j) {
+        if (this._charts[i].ident===loc._charts[j].ident) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
   _showLocation(mode) {
     const self = this;
     self._mode = mode;
-    if (self._charts && self._charts.length > 0
-      && ol.extent.containsCoordinate(self._view.calculateExtent(), this._location._point)) {
+
+    if (self._charts
+      && ol.extent.containsCoordinate(self._view.calculateExtent(), self._location._point)) {
       self._recenter++;
       self._view.setCenter(self._location._point);
+      if (!self._contains(self._location)) {
+        self._charts = null;
+      }
       return this._location;
     }
     this._location.getCharts(this._view.getMaxResolution(), function() {
