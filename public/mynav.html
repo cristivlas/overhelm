@@ -324,7 +324,7 @@
     </div>
 
     <script>
-      const defaultZoom = 13;
+      const defaultZoom = 15;
       const locationTimeout = 1000;
 
       var popup = null;
@@ -1493,6 +1493,7 @@
             getForecast(loc._coord[0], loc._coord[1]);
           }
         })
+        app.hide_clock();
       }
 
       function updateCoords() {
