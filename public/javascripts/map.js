@@ -13,7 +13,7 @@ const buildLayers = function(resp, viewMaxRes) {
 
   JSON.parse(resp).map(function(tileset) {
     if (!hMax) {
-      hMax = tileset.height;
+      hMax = tileset.height; // expect tilesets to be sorted in descending order
     }
     maxRes = Math.ceil((tileset.height * viewMaxRes) / hMax);
 
@@ -23,9 +23,6 @@ const buildLayers = function(resp, viewMaxRes) {
       source: new ol.source.XYZ({
         url: url,
         attributions: tileset.ident.split('_')[0] + sounding,
-        tileLoadFunction: function(imageTile, src) {
-          imageTile.getImage().src = src;
-        }
       }),
       maxResolution: maxRes,
       opacity: .8

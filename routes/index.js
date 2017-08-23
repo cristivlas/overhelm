@@ -43,15 +43,27 @@ router.get('/', function(req, res, next) {
 
 
 let tilesets = {}
-let alternateTilesets = {}
+
 
 function tilesetInfo(t) {
   const md = noaa.metadata[t.ident.split('_')[0]];
+  const h = getDistanceFromLatLong(t.upper[1], t.lower[0], t.lower[1], t.lower[0]);
   return {
     ident: t.ident,
-    height: t.upper[1] - t.lower[1],
+    //height: t.upper[1] - t.lower[1],
+    height: h,
     sounding: md ? md.sounding : null
   };
+}
+
+
+const sortTilesets = function(sets) {
+  sets.sort(function(a, b) {
+    if (a.height > b.height) return -1;
+    if (a.height < b.height) return 1;
+    return 0;
+  });
+  return sets;
 }
 
 
@@ -72,11 +84,7 @@ router.get('/charts/noaa/loc/:lon/:lat', function(req, res, next) {
       sets.push(tilesetInfo(t));
     }
   });
-  sets.sort(function(a, b) {
-    if (a.height > b.height) return -1;
-    if (a.height < b.height) return 1;
-    return 0;
-  });
+  sets = sortTilesets(sets);
   const result = JSON.stringify(sets);
   res.end(result);
 });
@@ -100,11 +108,7 @@ router.get('/charts/noaa/ext/:minLon/:minLat/:maxLon/:maxLat',
       sets.push(tilesetInfo(t));
     }
   });
-  sets.sort(function(a, b) {
-    if (a.height > b.height) return -1;
-    if (a.height < b.height) return 1;
-    return 0;
-  });
+  sets = sortTilesets(sets);
   sets = sets.splice(sets.length-1);
   const result = JSON.stringify(sets);
   res.end(result);
@@ -147,9 +151,9 @@ var tileService = {
  * Tiles service proxy
  */
 router.get('/tiles/:srv/:set/:z/:x/:y', function(req, res, next) {
-  if (req.params.srv === 'wikimedia') {
-    return serveWikimediaTile(req, res, next);
-  }
+  //if (req.params.srv === 'wikimedia') {
+  //  return serveWikimediaTile(req, res, next);
+  //}
   serveTile(req, res, next);
 });
 
@@ -182,21 +186,6 @@ function serveWikimediaTile(req, res, next) {
 }
 
 function handleEmptyTile(req, res, next) {
-/* 
-  const related = alternateTilesets[req.params.set];
-  if (related) {
-    console.log(req.params.set + ': trying related tileset: '+ related);
-    req.params.set = related;
-    return serveTile(req, res, next);
-  }
-  else
-  if (req.params.srv !== 'wikimedia') {
-    console.log(req.params.set + ': failing over to wikimedia');
-    req.params.set = 'osm-intl';
-    req.params.srv = 'wikimedia';
-    return serveTile(req, res, next);
-  }
-*/
   return res.sendStatus(204);
 }
 
