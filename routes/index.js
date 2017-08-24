@@ -47,7 +47,6 @@ let tilesets = {}
 
 function tilesetInfo(t) {
   const md = noaa.metadata[t.ident.split('_')[0]];
-  const h = getDistanceFromLatLong(t.upper[1], t.lower[0], t.lower[1], t.lower[0]);
   let sounding = null;
   let scale = 100000000;
   let poly = null;
@@ -63,7 +62,6 @@ function tilesetInfo(t) {
   }
   return {
     ident: t.ident,
-    height: h,
     sounding: sounding,
     scale: scale,
     lower: t.lower,

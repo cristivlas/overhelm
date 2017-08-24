@@ -3,62 +3,36 @@ const roundPoint = function(p, prec = 10000) {
   p[1] = Math.floor(p[1] * prec)/prec;
 }
 
-const buildLayers = function(resp, viewMaxRes) {
-  //console.log(resp)
-  charts = [];
 
-  let hMax = null;
-  let maxRes = viewMaxRes;
-
-  JSON.parse(resp).map(function(tileset) {
-    if (!hMax) {
-      hMax = tileset.height; // expect tilesets to be sorted in descending order
-    }
-    maxRes = Math.ceil((tileset.height * viewMaxRes) / hMax);
-
-    const url = 'tiles/noaa/' + tileset.ident + '/{z}/{x}/{y}';
-    const sounding = tileset.sounding ? ' Soundings in ' + tileset.sounding : '';
-    const layer = new ol.layer.Tile({
-      source: new ol.source.XYZ({
-        url: url,
-        attributions: tileset.ident.split('_')[0] + sounding,
-      }),
-      maxResolution: maxRes,
-      opacity: .8
-    });
-    layer.ident = tileset.ident;
-    layer.upper = tileset.upper;
-    layer.lower = tileset.lower;
-
-    charts.push(layer);
-  })
-
-  let prev = null;
-  for (i = charts.length - 1; i >= 0; --i) {
-    let layer = charts[i];
-    if (prev) {
-      if (layer.getMaxResolution() / prev.getMaxResolution() > 2) {
-        layer.setMinResolution(prev.getMaxResolution());
-      }
-      else {
-        layer.setMinResolution(prev.getMinResolution());
-      }
-    }
-    //console.log(i, layer.ident, layer.getMinResolution(), layer.getMaxResolution());
-    prev = layer;
-  }
-  return charts;
-}
-
-
-const getTilesetInfo = function(callback) {
+/**
+ * Get all NOAA charts metadata
+ */
+const getNOAAChartsMeta = function(callback) {
   const url = 'charts/noaa/';
   const xmlHttp = new XMLHttpRequest();
 
   xmlHttp.onreadystatechange = function() {
     if (xmlHttp.readyState===4) {
       if (xmlHttp.status===200) {
-        callback(null, JSON.parse(xmlHttp.responseText));
+        const charts = JSON.parse(xmlHttp.responseText);
+        for (let i = 0; i != charts.length; ++i) {
+          let c = charts[i];
+          let points = []
+          if (!c.poly) {
+            let coord = c.lower;
+            points.push(ol.proj.fromLonLat([parseFloat(coord[0]), parseFloat(coord[1])]))
+            coord = c.upper;
+            points.push(ol.proj.fromLonLat([parseFloat(coord[0]), parseFloat(coord[1])]))
+          }
+          else {
+            c.poly.forEach(function(coord) {
+              points.push(ol.proj.fromLonLat([parseFloat(coord[1]), parseFloat(coord[0])]))
+            })
+          }
+          points.push(points[0]);
+          c.poly = new ol.geom.Polygon([points]);
+        }
+        callback(null, charts);
       }
       else {
         let err = new Error(xmlHttp.responseText);
@@ -72,38 +46,45 @@ const getTilesetInfo = function(callback) {
 }
 
 
-const getChartsForCoord = function(tilesets, coord, maxRes) {
-  console.log(coord)
-  //const lon = coord[0];
-  //const lat = coord[1];
-  let sets = []
+const getCharts = function(tilesets, center, coord, extent, maxRes) {
   let charts = []
   for (let i = 0; i != tilesets.length; ++i) {
     const t = tilesets[i];
     if (!t.poly) {
       continue;
     }
-    let points = []
-    t.poly.forEach(function(coord) {
-      points.push(ol.proj.fromLonLat([parseFloat(coord[1]), parseFloat(coord[0])]))
-    })
-    points.push(points[0])
-    const poly = new ol.geom.Polygon([points]);
-    if (poly.intersectsCoordinate(coord)) { 
-    //if (t.lower[0] < lon && t.lower[1] < lat && t.upper[0] > lon && t.upper[1] > lat) {
-      sets.push(t);
+    if (t.poly.intersectsCoordinate(center) /* || t.poly.intersectsExtent(extent) */
+      /* ||t.poly.intersectsCoordinate(coord) */) { 
+      charts.push(t);
     }
   }
-  sets.sort(function(a, b) {
+  charts.sort(function(a, b) {
     if (a.scale < b.scale) return -1;
     if (a.scale > b.scale) return 1;
     return 0;
   });
-  const maxScale = sets[sets.length-1].scale;
-  for (let i = 1; i != sets.length; ++i) {
-    const tileset = sets[i];
-    sets[i].maxRes = maxRes * sets[i].scale / maxScale;
-    sets[i].minRes = sets[i-1].maxRes;
+  return charts;
+}
+
+
+const makeLayers = function(charts, minRes, maxRes) {
+  let layers = []
+  if (charts.length===0) {
+    return layers;
+  }
+  const maxScale = charts[charts.length-1].scale;
+  for (let i = 0; i != charts.length; ++i) {
+    let tileset = charts[i];
+    const scale = tileset.scale;
+    if (i > 0 && scale === charts[i-1].scale) {
+      tileset.minRes = charts[i-1].minRes;
+      tileset.maxRes = charts[i-1].maxRes;
+    }
+    else {
+      tileset.minRes = i > 0 ? charts[i-1].maxRes : minRes;
+      tileset.maxRes = Math.ceil(maxRes * scale / maxScale);
+    }
+    //console.log([tileset.ident, tileset.scale, tileset.minRes, tileset.maxRes]);
 
     const url = 'tiles/noaa/' + tileset.ident + '/{z}/{x}/{y}';
     const sounding = tileset.sounding ? ' Soundings in ' + tileset.sounding : '';
@@ -116,11 +97,9 @@ const getChartsForCoord = function(tilesets, coord, maxRes) {
       maxResolution: tileset.maxRes,
       opacity: .8
     });
-    layer.ident = tileset.ident;
-    charts.push(layer);
+    layers.push(layer);
   }
-  console.log(JSON.stringify(sets, null, 2))
-  return charts;
+  return layers;
 }
 
 
@@ -129,29 +108,11 @@ class Location {
     roundPoint(coord);
     this._coord = coord;
     this._point = ol.proj.fromLonLat(coord);
-    this._charts = [];
   }
 
   equals(coord) {
     roundPoint(coord);
     return this._coord[0]===coord[0] && this._coord[1]===coord[1];
-  }
-
-  getCharts(viewMaxRes, callback) {
-    if (this._charts.length > 0) {
-      return callback();
-    }
-    const url = 'charts/noaa/loc/' + this._coord[0] + '/' + this._coord[1];
-    const self = this;
-    const xmlHttp = new XMLHttpRequest();
-    xmlHttp.onreadystatechange = function() {
-      if (xmlHttp.readyState===4 && xmlHttp.status===200) {
-        self._charts = buildLayers(xmlHttp.responseText, viewMaxRes);
-        callback();
-      }
-    }
-    xmlHttp.open('GET', url);
-    xmlHttp.send();
   }
 }
 
@@ -163,18 +124,15 @@ const Mode = {
 }
 
 
-
 class Map {
   constructor(opts) {
+    this._chartsMeta = null;
     this._defaultZoom = opts.defaultZoom || 12;
-    this._updating = 0;
-    this._recenter = 0;
     this._rotateView = false;
     this._mode = Mode.INSPECT_LOCATION;
     this._lastInteraction = null;
     this._onLocationUpdate = opts.onLocationUpdate;
     this._onUpdateView = opts.onUpdateView;
-    this._tilesetInfo = null;
 
     this._view = new ol.View({
       zoom: this._defaultZoom,
@@ -184,11 +142,8 @@ class Map {
       center: this._location ? this._location._point : null
     })
 
-    this._view.on('change:center', this._updateView.bind(this, null));
-    this._view.on('change:resolution', function() {
-      this._updateView(true);
-    }.bind(this))
-    //this._view.on('change:center', this._updateView2.bind(this, null));
+    this._view.on('change:center', this._updateView.bind(this));
+    //this._view.on('change:resolution', this._updateView.bind(this));
 
     this._map = new ol.Map({
       target: opts.target,
@@ -215,88 +170,52 @@ class Map {
     this._lastInteraction = new Date();
   }
 
-  _updateView2() {
+  _updateView() {
     const center = this._view.getCenter();
+    const extent = this._view.calculateExtent();
+    const minRes = this._view.getMinResolution();
     const maxRes = this._view.getMaxResolution();
 
-    if (this._tilesetInfo) {
-      const layers = getChartsForCoord(this._tilesetInfo, center, maxRes);
-      this._useLayers(layers);
+    //console.log(this._view.getCenter(), this._view.getResolution())
+
+    const updateLayers = function(self, charts) {
+      let sCharts = []
+      for (let i = 0; i != charts.length; ++i) {
+        sCharts.push(charts[i].ident);
+      }
+      sCharts = JSON.stringify(sCharts);
+
+      if (self._sCharts !== sCharts) {
+        self._sCharts = sCharts;
+        self._useLayers(makeLayers(charts, minRes, maxRes));
+      }
+      if (self._onUpdateView) {
+        self._onUpdateView();
+      }
+    }
+
+    const coord = this._location._coord;
+    if (this._chartsMeta) {
+      const charts = getCharts(this._chartsMeta, center, coord, extent, maxRes);
+      updateLayers(this, charts);
     }
     else {
-      self = this
-      getTilesetInfo(function(err, result) {
-        this._tilesetInfo = result;
-        const layers = getChartsForCoord(this._tilesetInfo, center, maxRes);
-        self._useLayers(layers);
+      getNOAAChartsMeta(function(err, result) {
+        if (err) {
+          throw err;
+        }
+        this._chartsMeta = result;
+        const charts = getCharts(this._chartsMeta, center, coord, extent, maxRes);
+        updateLayers(this, charts);
       }.bind(this))
     }
   }
 
-  _updateView(resolutionChanged) {
-    if (this._updating) {
-      return;
-    }
-    
-    if (this._recenter > 0) {
-      this._recenter--;
-    }
-    else {
-      ++this._updating;
-      const extent = this._view.calculateExtent();
-
-      if (!resolutionChanged) {
-        if (ol.extent.containsCoordinate(extent, this._location._point)) {
-          --this._updating;
-          return;
-        }
-      }
-
-      const minLonLat = ol.proj.transform([extent[0], extent[1]], 'EPSG:3857', 'EPSG:4326');
-      const maxLonLat = ol.proj.transform([extent[2], extent[3]], 'EPSG:3857', 'EPSG:4326');
-      roundPoint(minLonLat)
-      roundPoint(maxLonLat)
-
-      const viewMaxRes = this._view.getMaxResolution();
-      const url = 'charts/noaa/ext/' + minLonLat[0] + '/' + minLonLat[1]
-          + '/' + maxLonLat[0] + '/' + maxLonLat[1];
- 
-      const self = this;
-      const xmlHttp = new XMLHttpRequest();
-
-      xmlHttp.onreadystatechange = function() {
-        if (xmlHttp.readyState===4) {
-          if (xmlHttp.status===200) {
-            if (self._chartset !== xmlHttp.responseText) {
-              self._chartset = xmlHttp.responseText;
-              self._useLayers(buildLayers(self._chartset, viewMaxRes));
-            }
-          }
-          --self._updating;
-          if (self._onUpdateView) {
-            const coord = ol.proj.transform(self._view.getCenter(), 'EPSG:3857', 'EPSG:4326');
-            self._onUpdateView({center:coord});
-          }
-        }
-      }
-      xmlHttp.open('GET', url);
-      xmlHttp.send();
-    }
-  }
-
-
   _showLocation(mode) {
-    const self = this;
-    self._mode = mode;
-    this._location.getCharts(this._view.getMaxResolution(), function() {
-      if (self._onLocationUpdate) {
-        self._onLocationUpdate(self._location._coord);
-      }
-      self._useLayers(self._location._charts);
-      self._recenter++;
-      self._view.setCenter(self._location._point);
-    });
-    //this._view.setCenter(this._location._point);
+    this._view.setCenter(this._location._point);
+    if (this._onLocationUpdate) {
+      this._onLocationUpdate(this._location._coord);
+    }
     return this._location;
   }
 
