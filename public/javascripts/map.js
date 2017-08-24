@@ -46,6 +46,12 @@ const getNOAAChartsMeta = function(callback) {
 }
 
 
+// compute height as degrees of latitude
+
+const getHeight = function(chart) {
+  return Math.abs(chart.upper[1] - chart.lower[1]); 
+}
+
 const getCharts = function(tilesets, center) {
   let charts = []
   for (let i = 0; i != tilesets.length; ++i) {
@@ -57,22 +63,12 @@ const getCharts = function(tilesets, center) {
   charts.sort(function(a, b) {
     if (a.scale < b.scale) return -1;
     if (a.scale > b.scale) return 1;
-    const h1 = Math.abs(a.upper[1] - a.lower[1]);
-    const h2 = Math.abs(b.upper[1] - b.lower[1]);
+    const h1 = getHeight(a);
+    const h2 = getHeight(b);
     if (h1 < h2) return -1;
     if (h1 > h2) return 1;
     return 0;
   });
-/*
-  for (let i = 0; i != charts.length; ++i) {
-    dCharts.push({
-      ident: charts[i].ident,
-      scale: charts[i].scale,
-      box: [charts[i].lower, charts[i].upper]
-    });
-  }
-  console.log(JSON.stringify(dCharts))
-*/
   return charts;
 }
 
@@ -82,7 +78,9 @@ const makeLayers = function(charts, minRes, maxRes) {
   if (charts.length===0) {
     return layers;
   }
-  const maxScale = charts[charts.length-1].scale;
+  const lastChart = charts[charts.length-1];
+  const maxScale = lastChart.scale;
+
   for (let i = 0; i != charts.length; ++i) {
     const tileset = charts[i];
     tileset.minRes = i > 0 ? charts[i-1].maxRes : minRes;
@@ -145,7 +143,7 @@ class Map {
       center: this._location ? this._location._point : null
     })
 
-    this._view.on('change:center', this._updateView.bind(this));
+    //this._view.on('change:center', this._updateView.bind(this));
 
     this._map = new ol.Map({
       target: opts.target,
@@ -156,10 +154,12 @@ class Map {
         attributionOptions: {
           collapsible: false,
         }}
-      ).extend(opts.controls)
+      ).extend(opts.controls),
     })
     this._map.on('pointerdrag', this._updateInteraction.bind(this));
     this._map.on('pointermove', this._updateInteraction.bind(this));
+    this._map.on('pointerdrag', this._updateView.bind(this));
+    this._map.on('size', this._updateView.bind(this));
   }
 
   _baseLayer() {
@@ -172,17 +172,18 @@ class Map {
     this._lastInteraction = new Date();
   }
 
-  _updateView() {
+  _updateView(e) {
     if (this._updating) {
       return;
     }
+    console.log(e)
     const center = this._view.getCenter();
-    roundPoint(center, 10);
+    //roundPoint(center, 10);
+    //if (equalPoint(center, this._center)) {
+    //  return;
+    //}
+    //this._center = center;
 
-    if (equalPoint(center, this._center)) {
-      return;
-    }
-    this._center = center;
     this._updating = true;
     const minRes = this._view.getMinResolution();
     const maxRes = this._view.getMaxResolution();
@@ -207,7 +208,6 @@ class Map {
       }
     }
 
-    const coord = this._location._coord;
     if (this._chartsMeta) {
       const charts = getCharts(this._chartsMeta, center);
       updateLayers(this, charts);
@@ -228,6 +228,7 @@ class Map {
 
   _showLocation(mode) {
     this._view.setCenter(this._location._point);
+    this._updateView();
     if (this._onLocationUpdate) {
       this._onLocationUpdate(this._location._coord);
     }
