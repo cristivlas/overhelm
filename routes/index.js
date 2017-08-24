@@ -47,12 +47,26 @@ let tilesets = {}
 
 function tilesetInfo(t) {
   const md = noaa.metadata[t.ident.split('_')[0]];
-  const h = getDistanceFromLatLong(t.upper[1], t.lower[0], t.lower[1], t.lower[0]);
+  let sounding = null;
+  let scale = 100000000;
+  let poly = null;
+  if (md) {
+    sounding = md.sounding;
+    for (let i = 0; i != md.extent.length; ++i) {
+      if (md.extent[i].name===t.ident) {
+        poly = md.extent[i].poly;
+        scale = md.extent[i].scale;
+        break;
+      }
+    }
+  }
   return {
     ident: t.ident,
-    //height: t.upper[1] - t.lower[1],
-    height: h,
-    sounding: md ? md.sounding : null
+    sounding: sounding,
+    scale: scale,
+    lower: t.lower,
+    upper: t.upper,
+    poly: poly
   };
 }
 
@@ -110,6 +124,20 @@ router.get('/charts/noaa/ext/:minLon/:minLat/:maxLon/:maxLat',
   });
   sets = sortTilesets(sets);
   sets = sets.splice(sets.length-1);
+  const result = JSON.stringify(sets);
+  res.end(result);
+});
+
+
+router.get('/charts/noaa/', function(req, res, next) {
+  const srv = 'noaa';
+  if (!tilesets[srv]) {
+    tilesets[srv] = require(__dirname + '/' + srv + '-layers.json');
+  }
+  let sets = [];
+  tilesets[srv].map(function(t) {
+    sets.push(tilesetInfo(t));
+  });
   const result = JSON.stringify(sets);
   res.end(result);
 });

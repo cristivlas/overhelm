@@ -49,6 +49,22 @@ function processIdentificationInfo(ii, info) {
 }
 
 
+function findChild(obj, name) {
+  for (let k in obj) {
+    if (k===name) {
+      return obj[name];
+    }
+    else if (typeof obj[k] === 'object') {
+      const child = findChild(obj[k], name);
+      if (child) {
+        return child;
+      }
+    }
+  }
+  return null;
+}
+
+
 function processExtent(ex, info) {
   info.extent = [];
   for(let i = 0; i != ex.length; ++i) {
@@ -64,7 +80,14 @@ function processExtent(ex, info) {
         info.extent[i].scale = parseInt(attr[1].trim());
       }
     }
-    //TODO: geographicElement?
+    const linearRing = findChild(extent, 'gml:LinearRing');
+    if (linearRing) {
+      info.extent[i].poly = [ ];
+      linearRing[0]['gml:pos'].map(function(coord) {
+        const latLon = coord.split(' ')
+        info.extent[i].poly.push([latLon[0], latLon[1]])
+      })
+    }
   }
 }
 

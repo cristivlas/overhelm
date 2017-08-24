@@ -1,21 +1,90 @@
-
 const roundPoint = function(p, prec = 10000) {
   p[0] = Math.floor(p[0] * prec)/prec;
   p[1] = Math.floor(p[1] * prec)/prec;
 }
 
 
-const buildLayers = function(resp, viewMaxRes) {
-  charts = [];
+/**
+ * Get all NOAA charts metadata
+ */
+const getNOAAChartsMeta = function(callback) {
+  const url = 'charts/noaa/';
+  const xmlHttp = new XMLHttpRequest();
 
-  let hMax = null;
-  let maxRes = viewMaxRes;
-
-  JSON.parse(resp).map(function(tileset) {
-    if (!hMax) {
-      hMax = tileset.height; // expect tilesets to be sorted in descending order
+  xmlHttp.onreadystatechange = function() {
+    if (xmlHttp.readyState===4) {
+      if (xmlHttp.status===200) {
+        const charts = JSON.parse(xmlHttp.responseText);
+        for (let i = 0; i != charts.length; ++i) {
+          let c = charts[i];
+          let points = []
+          if (!c.poly) {
+            let coord = c.lower;
+            points.push(ol.proj.fromLonLat([parseFloat(coord[0]), parseFloat(coord[1])]))
+            coord = c.upper;
+            points.push(ol.proj.fromLonLat([parseFloat(coord[0]), parseFloat(coord[1])]))
+          }
+          else {
+            c.poly.forEach(function(coord) {
+              points.push(ol.proj.fromLonLat([parseFloat(coord[1]), parseFloat(coord[0])]))
+            })
+          }
+          points.push(points[0]);
+          c.poly = new ol.geom.Polygon([points]);
+        }
+        callback(null, charts);
+      }
+      else {
+        let err = new Error(xmlHttp.responseText);
+        err.status = xmlHttp.status;
+        callback(err);
+      }
     }
-    maxRes = Math.ceil((tileset.height * viewMaxRes) / hMax);
+  }
+  xmlHttp.open('GET', url);
+  xmlHttp.send();
+}
+
+
+const getCharts = function(tilesets, center, coord, extent, maxRes) {
+  let charts = []
+  for (let i = 0; i != tilesets.length; ++i) {
+    const t = tilesets[i];
+    if (!t.poly) {
+      continue;
+    }
+    if (t.poly.intersectsCoordinate(center) /* || t.poly.intersectsExtent(extent) */
+      /* ||t.poly.intersectsCoordinate(coord) */) { 
+      charts.push(t);
+    }
+  }
+  charts.sort(function(a, b) {
+    if (a.scale < b.scale) return -1;
+    if (a.scale > b.scale) return 1;
+    return 0;
+  });
+  return charts;
+}
+
+
+const makeLayers = function(charts, minRes, maxRes) {
+  let layers = []
+  if (charts.length===0) {
+    return layers;
+  }
+  const maxScale = charts[charts.length-1].scale;
+  for (let i = 0; i != charts.length; ++i) {
+    let tileset = charts[i];
+    const scale = tileset.scale;
+    if (i > 0 && scale === charts[i-1].scale) {
+      tileset.minRes = charts[i-1].minRes;
+      tileset.maxRes = charts[i-1].maxRes;
+    }
+    else {
+      tileset.minRes = i > 0 ? charts[i-1].maxRes : minRes;
+      tileset.maxRes = Math.ceil(maxRes * scale / maxScale);
+    }
+    //console.log([tileset.ident, tileset.scale, tileset.minRes, tileset.maxRes]);
 
     const url = 'tiles/noaa/' + tileset.ident + '/{z}/{x}/{y}';
     const sounding = tileset.sounding ? ' Soundings in ' + tileset.sounding : '';
@@ -24,31 +93,13 @@ const buildLayers = function(resp, viewMaxRes) {
         url: url,
         attributions: tileset.ident.split('_')[0] + sounding,
       }),
-      maxResolution: maxRes,
+      minResolution: tileset.minRes,
+      maxResolution: tileset.maxRes,
       opacity: .8
     });
-    layer.ident = tileset.ident;
-    layer.upper = tileset.upper;
-    layer.lower = tileset.lower;
-
-    charts.push(layer);
-  })
-
-  let prev = null;
-  for (i = charts.length - 1; i >= 0; --i) {
-    let layer = charts[i];
-    if (prev) {
-      if (layer.getMaxResolution() / prev.getMaxResolution() > 2) {
-        layer.setMinResolution(prev.getMaxResolution());
-      }
-      else {
-        layer.setMinResolution(prev.getMinResolution());
-      }
-    }
-    //console.log(i, layer.ident, layer.getMinResolution(), layer.getMaxResolution());
-    prev = layer;
+    layers.push(layer);
   }
-  return charts;
+  return layers;
 }
 
 
@@ -57,46 +108,26 @@ class Location {
     roundPoint(coord);
     this._coord = coord;
     this._point = ol.proj.fromLonLat(coord);
-    this._charts = [];
   }
 
   equals(coord) {
     roundPoint(coord);
     return this._coord[0]===coord[0] && this._coord[1]===coord[1];
   }
-
-  getCharts(viewMaxRes, callback) {
-    if (this._charts.length > 0) {
-      return callback();
-    }
-    const url = 'charts/noaa/loc/' + this._coord[0] + '/' + this._coord[1];
-    const self = this;
-    const xmlHttp = new XMLHttpRequest();
-    xmlHttp.onreadystatechange = function() {
-      if (xmlHttp.readyState===4 && xmlHttp.status===200) {
-        self._charts = buildLayers(xmlHttp.responseText, viewMaxRes);
-        callback();
-      }
-    }
-    xmlHttp.open('GET', url);
-    xmlHttp.send();
-  }
 }
 
 
 const Mode = {
   CURRENT_LOCATION: 1,
-  INSPECT_LOCATION: 3,
+  INSPECT_LOCATION: 2,
   SHOW_DESTINATION: 4
 }
 
 
-
 class Map {
   constructor(opts) {
+    this._chartsMeta = null;
     this._defaultZoom = opts.defaultZoom || 12;
-    this._updating = 0;
-    this._recenter = 0;
     this._rotateView = false;
     this._mode = Mode.INSPECT_LOCATION;
     this._lastInteraction = null;
@@ -111,10 +142,8 @@ class Map {
       center: this._location ? this._location._point : null
     })
 
-    this._view.on('change:center', this._updateView.bind(this, null));
-    this._view.on('change:resolution', function() {
-      this._updateView(true);
-    }.bind(this))
+    this._view.on('change:center', this._updateView.bind(this));
+    //this._view.on('change:resolution', this._updateView.bind(this));
 
     this._map = new ol.Map({
       target: opts.target,
@@ -141,69 +170,52 @@ class Map {
     this._lastInteraction = new Date();
   }
 
-  _updateView(resolutionChanged) {
-    if (this._updating) {
-      return;
+  _updateView() {
+    const center = this._view.getCenter();
+    const extent = this._view.calculateExtent();
+    const minRes = this._view.getMinResolution();
+    const maxRes = this._view.getMaxResolution();
+
+    //console.log(this._view.getCenter(), this._view.getResolution())
+
+    const updateLayers = function(self, charts) {
+      let sCharts = []
+      for (let i = 0; i != charts.length; ++i) {
+        sCharts.push(charts[i].ident);
+      }
+      sCharts = JSON.stringify(sCharts);
+
+      if (self._sCharts !== sCharts) {
+        self._sCharts = sCharts;
+        self._useLayers(makeLayers(charts, minRes, maxRes));
+      }
+      if (self._onUpdateView) {
+        self._onUpdateView();
+      }
     }
-    if (this._recenter > 0) {
-      this._recenter--;
+
+    const coord = this._location._coord;
+    if (this._chartsMeta) {
+      const charts = getCharts(this._chartsMeta, center, coord, extent, maxRes);
+      updateLayers(this, charts);
     }
     else {
-      ++this._updating;
-      const extent = this._view.calculateExtent();
-
-      if (!resolutionChanged) {
-        if (ol.extent.containsCoordinate(extent, this._location._point)) {
-          --this._updating;
-          return;
+      getNOAAChartsMeta(function(err, result) {
+        if (err) {
+          throw err;
         }
-      }
-
-      const minLonLat = ol.proj.transform([extent[0], extent[1]], 'EPSG:3857', 'EPSG:4326');
-      const maxLonLat = ol.proj.transform([extent[2], extent[3]], 'EPSG:3857', 'EPSG:4326');
-      roundPoint(minLonLat)
-      roundPoint(maxLonLat)
-
-      const viewMaxRes = this._view.getMaxResolution();
-      const url = 'charts/noaa/ext/' + minLonLat[0] + '/' + minLonLat[1]
-          + '/' + maxLonLat[0] + '/' + maxLonLat[1];
- 
-      const self = this;
-      const xmlHttp = new XMLHttpRequest();
-
-      xmlHttp.onreadystatechange = function() {
-        if (xmlHttp.readyState===4) {
-          if (xmlHttp.status===200) {
-            if (self._chartset !== xmlHttp.responseText) {
-              self._chartset = xmlHttp.responseText;
-              self._useLayers(buildLayers(self._chartset, viewMaxRes));
-            }
-          }
-          --self._updating;
-          if (self._onUpdateView) {
-            const coord = ol.proj.transform(self._view.getCenter(), 'EPSG:3857', 'EPSG:4326');
-            self._onUpdateView({center:coord});
-          }
-        }
-      }
-      xmlHttp.open('GET', url);
-      xmlHttp.send();
+        this._chartsMeta = result;
+        const charts = getCharts(this._chartsMeta, center, coord, extent, maxRes);
+        updateLayers(this, charts);
+      }.bind(this))
     }
   }
 
-
   _showLocation(mode) {
-    const self = this;
-    self._mode = mode;
-
-    this._location.getCharts(this._view.getMaxResolution(), function() {
-      if (self._onLocationUpdate) {
-        self._onLocationUpdate(self._location._coord);
-      }
-      self._useLayers(self._location._charts);
-      self._recenter++;
-      self._view.setCenter(self._location._point);
-    });
+    this._view.setCenter(this._location._point);
+    if (this._onLocationUpdate) {
+      this._onLocationUpdate(this._location._coord);
+    }
     return this._location;
   }
 
