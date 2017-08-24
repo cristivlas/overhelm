@@ -143,7 +143,7 @@ class Map {
       center: this._location ? this._location._point : null
     })
 
-    //this._view.on('change:center', this._updateView.bind(this));
+    this._view.on('change:center', this._updateView.bind(this));
 
     this._map = new ol.Map({
       target: opts.target,
@@ -158,8 +158,6 @@ class Map {
     })
     this._map.on('pointerdrag', this._updateInteraction.bind(this));
     this._map.on('pointermove', this._updateInteraction.bind(this));
-    this._map.on('pointerdrag', this._updateView.bind(this));
-    this._map.on('size', this._updateView.bind(this));
   }
 
   _baseLayer() {
@@ -176,13 +174,12 @@ class Map {
     if (this._updating) {
       return;
     }
-    console.log(e)
     const center = this._view.getCenter();
-    //roundPoint(center, 10);
-    //if (equalPoint(center, this._center)) {
-    //  return;
-    //}
-    //this._center = center;
+    roundPoint(center, 10);
+    if (equalPoint(center, this._center)) {
+      return;
+    }
+    this._center = center;
 
     this._updating = true;
     const minRes = this._view.getMinResolution();
@@ -196,6 +193,7 @@ class Map {
         hCharts[ident] = charts[i];
         if (!self._hCharts || !self._hCharts.includes(ident)) {
           rebuild = true;
+          break;
         }
       }
 
@@ -228,7 +226,6 @@ class Map {
 
   _showLocation(mode) {
     this._view.setCenter(this._location._point);
-    this._updateView();
     if (this._onLocationUpdate) {
       this._onLocationUpdate(this._location._coord);
     }
