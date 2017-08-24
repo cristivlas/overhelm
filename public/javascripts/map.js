@@ -298,7 +298,6 @@ class Map {
   _updatePositionLayer() {
     if (this._posMarks) {
       if (!this._map.removeLayer(this._posMarks)) {
-        alert('layer not found');
         return;
       }
     }
