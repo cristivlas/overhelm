@@ -28,7 +28,15 @@ function forecast(lon, lat, callback) {
 function formatForecast(res) {
   let html = '<div class="forecast" id="forecast">';
   html += '<table>';
+  let first = true;
   res.properties.periods.forEach(function(period) {
+    if (first) {
+      first = false;
+      if (period.name.match(/night/i)) {
+        html += '<tr></tr>';
+        console.log(period.name);
+      }
+    }
     html += '<tr>';
     html += '<td><img src="' + period.icon + '"></td>';
     html += '<td><b>' + period.name + '</b> ';
