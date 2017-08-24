@@ -46,23 +46,33 @@ const getNOAAChartsMeta = function(callback) {
 }
 
 
-const getCharts = function(tilesets, center, coord, extent, maxRes) {
+const getCharts = function(tilesets, center) {
   let charts = []
   for (let i = 0; i != tilesets.length; ++i) {
     const t = tilesets[i];
-    if (!t.poly) {
-      continue;
-    }
-    if (t.poly.intersectsCoordinate(center) /* || t.poly.intersectsExtent(extent) */
-      /* ||t.poly.intersectsCoordinate(coord) */) { 
+    if (t.poly.intersectsCoordinate(center)) {
       charts.push(t);
     }
   }
   charts.sort(function(a, b) {
     if (a.scale < b.scale) return -1;
     if (a.scale > b.scale) return 1;
+    const h1 = Math.abs(a.upper[1] - a.lower[1]);
+    const h2 = Math.abs(b.upper[1] - b.lower[1]);
+    if (h1 < h2) return -1;
+    if (h1 > h2) return 1;
     return 0;
   });
+  /*
+  let dCharts = []
+  for (let i = 0; i != charts.length; ++i) {
+    dCharts.push({
+      ident: charts[i].ident,
+      scale: charts[i].scale,
+      box: [charts[i].lower, charts[i].upper]
+    });
+  }
+  console.log(JSON.stringify(dCharts)) */
   return charts;
 }
 
@@ -74,17 +84,9 @@ const makeLayers = function(charts, minRes, maxRes) {
   }
   const maxScale = charts[charts.length-1].scale;
   for (let i = 0; i != charts.length; ++i) {
-    let tileset = charts[i];
-    const scale = tileset.scale;
-    if (i > 0 && scale === charts[i-1].scale) {
-      tileset.minRes = charts[i-1].minRes;
-      tileset.maxRes = charts[i-1].maxRes;
-    }
-    else {
-      tileset.minRes = i > 0 ? charts[i-1].maxRes : minRes;
-      tileset.maxRes = Math.ceil(maxRes * scale / maxScale);
-    }
-    //console.log([tileset.ident, tileset.scale, tileset.minRes, tileset.maxRes]);
+    const tileset = charts[i];
+    tileset.minRes = i > 0 ? charts[i-1].maxRes : minRes;
+    tileset.maxRes = Math.ceil(maxRes * tileset.scale / maxScale);
 
     const url = 'tiles/noaa/' + tileset.ident + '/{z}/{x}/{y}';
     const sounding = tileset.sounding ? ' Soundings in ' + tileset.sounding : '';
@@ -133,6 +135,7 @@ class Map {
     this._lastInteraction = null;
     this._onLocationUpdate = opts.onLocationUpdate;
     this._onUpdateView = opts.onUpdateView;
+    this._center = [0,0]
 
     this._view = new ol.View({
       zoom: this._defaultZoom,
@@ -143,7 +146,6 @@ class Map {
     })
 
     this._view.on('change:center', this._updateView.bind(this));
-    //this._view.on('change:resolution', this._updateView.bind(this));
 
     this._map = new ol.Map({
       target: opts.target,
@@ -171,12 +173,19 @@ class Map {
   }
 
   _updateView() {
+    if (this._updating) {
+      return;
+    }
     const center = this._view.getCenter();
-    const extent = this._view.calculateExtent();
+    const centerRound = center;
+    roundPoint(centerRound, 1)
+    if (equalPoint(centerRound, this._center)) {
+      return;
+    }
+    this._updating = true;
+    this._center = centerRound;
     const minRes = this._view.getMinResolution();
     const maxRes = this._view.getMaxResolution();
-
-    //console.log(this._view.getCenter(), this._view.getResolution())
 
     const updateLayers = function(self, charts) {
       let sCharts = []
@@ -196,8 +205,9 @@ class Map {
 
     const coord = this._location._coord;
     if (this._chartsMeta) {
-      const charts = getCharts(this._chartsMeta, center, coord, extent, maxRes);
+      const charts = getCharts(this._chartsMeta, center);
       updateLayers(this, charts);
+      this._updating = false;
     }
     else {
       getNOAAChartsMeta(function(err, result) {
@@ -205,8 +215,9 @@ class Map {
           throw err;
         }
         this._chartsMeta = result;
-        const charts = getCharts(this._chartsMeta, center, coord, extent, maxRes);
+        const charts = getCharts(this._chartsMeta, center);
         updateLayers(this, charts);
+        this._updating = false;
       }.bind(this))
     }
   }
@@ -223,7 +234,9 @@ class Map {
     if (this._charts) {
       for (let i = 0; i != this._charts.length; ++i) {
         const chart = this._charts[i];
-        this._map.removeLayer(chart);
+        if (!this._map.removeLayer(chart)) {
+          alert('Layer not found');
+        }
       }
     }
     this._charts = charts;
@@ -284,7 +297,10 @@ class Map {
 
   _updatePositionLayer() {
     if (this._posMarks) {
-      this._map.removeLayer(this._posMarks);
+      if (!this._map.removeLayer(this._posMarks)) {
+        alert('layer not found');
+        return;
+      }
     }
     this._posMarks = this._newPosLayer();
     if (this._posMarks) {
