@@ -1,11 +1,10 @@
-
 const roundPoint = function(p, prec = 10000) {
   p[0] = Math.floor(p[0] * prec)/prec;
   p[1] = Math.floor(p[1] * prec)/prec;
 }
 
-
 const buildLayers = function(resp, viewMaxRes) {
+  //console.log(resp)
   charts = [];
 
   let hMax = null;
@@ -52,6 +51,79 @@ const buildLayers = function(resp, viewMaxRes) {
 }
 
 
+const getTilesetInfo = function(callback) {
+  const url = 'charts/noaa/';
+  const xmlHttp = new XMLHttpRequest();
+
+  xmlHttp.onreadystatechange = function() {
+    if (xmlHttp.readyState===4) {
+      if (xmlHttp.status===200) {
+        callback(null, JSON.parse(xmlHttp.responseText));
+      }
+      else {
+        let err = new Error(xmlHttp.responseText);
+        err.status = xmlHttp.status;
+        callback(err);
+      }
+    }
+  }
+  xmlHttp.open('GET', url);
+  xmlHttp.send();
+}
+
+
+const getChartsForCoord = function(tilesets, coord, maxRes) {
+  console.log(coord)
+  //const lon = coord[0];
+  //const lat = coord[1];
+  let sets = []
+  let charts = []
+  for (let i = 0; i != tilesets.length; ++i) {
+    const t = tilesets[i];
+    if (!t.poly) {
+      continue;
+    }
+    let points = []
+    t.poly.forEach(function(coord) {
+      points.push(ol.proj.fromLonLat([parseFloat(coord[1]), parseFloat(coord[0])]))
+    })
+    points.push(points[0])
+    const poly = new ol.geom.Polygon([points]);
+    if (poly.intersectsCoordinate(coord)) { 
+    //if (t.lower[0] < lon && t.lower[1] < lat && t.upper[0] > lon && t.upper[1] > lat) {
+      sets.push(t);
+    }
+  }
+  sets.sort(function(a, b) {
+    if (a.scale < b.scale) return -1;
+    if (a.scale > b.scale) return 1;
+    return 0;
+  });
+  const maxScale = sets[sets.length-1].scale;
+  for (let i = 1; i != sets.length; ++i) {
+    const tileset = sets[i];
+    sets[i].maxRes = maxRes * sets[i].scale / maxScale;
+    sets[i].minRes = sets[i-1].maxRes;
+
+    const url = 'tiles/noaa/' + tileset.ident + '/{z}/{x}/{y}';
+    const sounding = tileset.sounding ? ' Soundings in ' + tileset.sounding : '';
+    const layer = new ol.layer.Tile({
+      source: new ol.source.XYZ({
+        url: url,
+        attributions: tileset.ident.split('_')[0] + sounding,
+      }),
+      minResolution: tileset.minRes,
+      maxResolution: tileset.maxRes,
+      opacity: .8
+    });
+    layer.ident = tileset.ident;
+    charts.push(layer);
+  }
+  console.log(JSON.stringify(sets, null, 2))
+  return charts;
+}
+
+
 class Location {
   constructor(coord) {
     roundPoint(coord);
@@ -86,7 +158,7 @@ class Location {
 
 const Mode = {
   CURRENT_LOCATION: 1,
-  INSPECT_LOCATION: 3,
+  INSPECT_LOCATION: 2,
   SHOW_DESTINATION: 4
 }
 
@@ -102,6 +174,7 @@ class Map {
     this._lastInteraction = null;
     this._onLocationUpdate = opts.onLocationUpdate;
     this._onUpdateView = opts.onUpdateView;
+    this._tilesetInfo = null;
 
     this._view = new ol.View({
       zoom: this._defaultZoom,
@@ -115,6 +188,7 @@ class Map {
     this._view.on('change:resolution', function() {
       this._updateView(true);
     }.bind(this))
+    //this._view.on('change:center', this._updateView2.bind(this, null));
 
     this._map = new ol.Map({
       target: opts.target,
@@ -141,10 +215,29 @@ class Map {
     this._lastInteraction = new Date();
   }
 
+  _updateView2() {
+    const center = this._view.getCenter();
+    const maxRes = this._view.getMaxResolution();
+
+    if (this._tilesetInfo) {
+      const layers = getChartsForCoord(this._tilesetInfo, center, maxRes);
+      this._useLayers(layers);
+    }
+    else {
+      self = this
+      getTilesetInfo(function(err, result) {
+        this._tilesetInfo = result;
+        const layers = getChartsForCoord(this._tilesetInfo, center, maxRes);
+        self._useLayers(layers);
+      }.bind(this))
+    }
+  }
+
   _updateView(resolutionChanged) {
     if (this._updating) {
       return;
     }
+    
     if (this._recenter > 0) {
       this._recenter--;
     }
@@ -195,7 +288,6 @@ class Map {
   _showLocation(mode) {
     const self = this;
     self._mode = mode;
-
     this._location.getCharts(this._view.getMaxResolution(), function() {
       if (self._onLocationUpdate) {
         self._onLocationUpdate(self._location._coord);
@@ -204,6 +296,7 @@ class Map {
       self._recenter++;
       self._view.setCenter(self._location._point);
     });
+    //this._view.setCenter(this._location._point);
     return this._location;
   }
 
