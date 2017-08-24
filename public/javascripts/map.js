@@ -63,8 +63,7 @@ const getCharts = function(tilesets, center) {
     if (h1 > h2) return 1;
     return 0;
   });
-  /*
-  let dCharts = []
+/*
   for (let i = 0; i != charts.length; ++i) {
     dCharts.push({
       ident: charts[i].ident,
@@ -72,7 +71,8 @@ const getCharts = function(tilesets, center) {
       box: [charts[i].lower, charts[i].upper]
     });
   }
-  console.log(JSON.stringify(dCharts)) */
+  console.log(JSON.stringify(dCharts))
+*/
   return charts;
 }
 
@@ -177,25 +177,29 @@ class Map {
       return;
     }
     const center = this._view.getCenter();
-    const centerRound = center;
-    roundPoint(centerRound, 1)
-    if (equalPoint(centerRound, this._center)) {
+    roundPoint(center, 10);
+
+    if (equalPoint(center, this._center)) {
       return;
     }
+    this._center = center;
     this._updating = true;
-    this._center = centerRound;
     const minRes = this._view.getMinResolution();
     const maxRes = this._view.getMaxResolution();
 
     const updateLayers = function(self, charts) {
-      let sCharts = []
+      let hCharts = []
+      let rebuild = false;
       for (let i = 0; i != charts.length; ++i) {
-        sCharts.push(charts[i].ident);
+        const ident = charts[i].ident;
+        hCharts[ident] = charts[i];
+        if (!self._hCharts || !self._hCharts.includes(ident)) {
+          rebuild = true;
+        }
       }
-      sCharts = JSON.stringify(sCharts);
 
-      if (self._sCharts !== sCharts) {
-        self._sCharts = sCharts;
+      if (rebuild) {
+        self._hCharts = hCharts;
         self._useLayers(makeLayers(charts, minRes, maxRes));
       }
       if (self._onUpdateView) {
