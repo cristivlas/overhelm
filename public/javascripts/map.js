@@ -61,8 +61,8 @@ const getCharts = function(tilesets, center) {
     }
   }
   charts.sort(function(a, b) {
-    if (a.scale < b.scale) return -1;
-    if (a.scale > b.scale) return 1;
+    //if (a.scale < b.scale) return -1;
+    //if (a.scale > b.scale) return 1;
     const h1 = getHeight(a);
     const h2 = getHeight(b);
     if (h1 < h2) return -1;
@@ -79,12 +79,12 @@ const makeLayers = function(charts, minRes, maxRes) {
     return layers;
   }
   const lastChart = charts[charts.length-1];
-  const maxScale = lastChart.scale;
+  const maxHeight = getHeight(lastChart);
 
   for (let i = 0; i != charts.length; ++i) {
     const tileset = charts[i];
     tileset.minRes = i > 0 ? charts[i-1].maxRes : minRes;
-    tileset.maxRes = Math.ceil(maxRes * tileset.scale / maxScale);
+    tileset.maxRes = Math.ceil(maxRes * getHeight(tileset) / maxHeight);
 
     const url = 'tiles/noaa/' + tileset.ident + '/{z}/{x}/{y}';
     const sounding = tileset.sounding ? ' Soundings in ' + tileset.sounding : '';
@@ -99,6 +99,7 @@ const makeLayers = function(charts, minRes, maxRes) {
     });
     layers.push(layer);
   }
+  //console.log(charts)
   return layers;
 }
 
@@ -170,12 +171,13 @@ class Map {
     this._lastInteraction = new Date();
   }
 
-  _updateView(e) {
+  _updateView() {
     if (this._updating) {
+      console.log('updating');
       return;
     }
     const center = this._view.getCenter();
-    roundPoint(center, 10);
+    roundPoint(center, 1);
     if (equalPoint(center, this._center)) {
       return;
     }
@@ -196,7 +198,6 @@ class Map {
           break;
         }
       }
-
       if (rebuild) {
         self._hCharts = hCharts;
         self._useLayers(makeLayers(charts, minRes, maxRes));
@@ -204,6 +205,7 @@ class Map {
       if (self._onUpdateView) {
         self._onUpdateView();
       }
+      self._map.render();
     }
 
     if (this._chartsMeta) {
