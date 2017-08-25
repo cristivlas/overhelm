@@ -99,7 +99,6 @@ const makeLayers = function(charts, minRes, maxRes) {
     });
     layers.push(layer);
   }
-  //console.log(charts)
   return layers;
 }
 
@@ -134,7 +133,6 @@ class Map {
     this._lastInteraction = null;
     this._onLocationUpdate = opts.onLocationUpdate;
     this._onUpdateView = opts.onUpdateView;
-    this._center = [0,0]
 
     this._view = new ol.View({
       zoom: this._defaultZoom,
@@ -172,46 +170,26 @@ class Map {
   }
 
   _updateView() {
-    if (this._updating) {
-      console.log('updating');
-      return;
-    }
     const center = this._view.getCenter();
-    roundPoint(center, 1);
-    if (equalPoint(center, this._center)) {
-      return;
-    }
-    this._center = center;
-
-    this._updating = true;
-    const minRes = this._view.getMinResolution();
-    const maxRes = this._view.getMaxResolution();
 
     const updateLayers = function(self, charts) {
-      let hCharts = []
-      let rebuild = false;
-      for (let i = 0; i != charts.length; ++i) {
-        const ident = charts[i].ident;
-        hCharts[ident] = charts[i];
-        if (!self._hCharts || !self._hCharts.includes(ident)) {
-          rebuild = true;
-          break;
-        }
-      }
-      if (rebuild) {
-        self._hCharts = hCharts;
+      self._updating = true;
+      if (!self._lastCenter || !ol.extent.containsCoordinate(
+          self._view.calculateExtent(), self._lastCenter)) {
+        self._lastCenter = center;
+        const minRes = self._view.getMinResolution();
+        const maxRes = self._view.getMaxResolution();
         self._useLayers(makeLayers(charts, minRes, maxRes));
       }
       if (self._onUpdateView) {
         self._onUpdateView();
       }
-      self._map.render();
-    }
+      self._updating = false;
+    } // updateLayers
 
     if (this._chartsMeta) {
       const charts = getCharts(this._chartsMeta, center);
       updateLayers(this, charts);
-      this._updating = false;
     }
     else {
       getNOAAChartsMeta(function(err, result) {
@@ -221,7 +199,6 @@ class Map {
         this._chartsMeta = result;
         const charts = getCharts(this._chartsMeta, center);
         updateLayers(this, charts);
-        this._updating = false;
       }.bind(this))
     }
   }
