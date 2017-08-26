@@ -332,11 +332,11 @@
       var app = {
         setCourse() {
           this.setDestination(popup.getPosition());
-          document.getElementById('dest').style.visibility = 'visible';
+          //document.getElementById('dest').style.visibility = 'visible';
         },
         cancelCourse() { 
           this.setDestination(null);
-          document.getElementById('dest').style.visibility = 'hidden';
+          //document.getElementById('dest').style.visibility = 'hidden';
         },
         hasDestination() {
           return this.destination.point !== null;
@@ -548,10 +548,11 @@
 
         const button = document.createElement('button');
         const icon = document.createElement('img');
-        icon.src = 'images/pointer-icon.png';
+        //icon.src = 'images/pointer-icon.png';
+        icon.src = 'images/circular-target.png';
         icon.className = 'dest-img';
         button.appendChild(icon);
-        button.title = 'Show destination';
+        button.title = 'Show target location / forecast';
         button.className = 'dest-btn';
         var handler = function() {
           if (popup.place && app.hasDestination()) {
@@ -563,6 +564,19 @@
             const loc = app.map.showDestination();
             updatePopup(loc._point, app.destination.place, loc._coord);
           }
+          else {
+            const m = app.map;
+            const forecast = equalPoint(m._location._point, m._view.getCenter());
+            m._view.animate({
+              center: m._location._point,
+              duration: 2000
+            }, function() {
+              if (forecast) {
+                let coord = m._location._coord;
+                getForecast(coord[0], coord[1]);
+              }
+            })
+          }
         }
         button.addEventListener('click', handler, false);
         button.addEventListener('touchstart', handler, false);
@@ -571,7 +585,7 @@
         element.id = 'dest';
         element.className = 'dest ol-custom ol-unselectable ol-control';
         element.appendChild(button);
-        element.style.visibility = 'hidden';
+        //element.style.visibility = 'hidden';
 
         ol.control.Control.call(this, {
           element: element,
@@ -1254,7 +1268,7 @@
 
       function getForecast(lon, lat) {
         forecast(lon, lat, function(err, res) {
-          const msg = err ? err.message : formatForecast(res);
+          const msg = err ? err.message : formatForecast(res, lon, lat);
           alertify.alert(msg);
           if (!isFullScreen()) {
             let elem = document.getElementById('alertify-ok');

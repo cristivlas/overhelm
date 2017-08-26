@@ -25,7 +25,7 @@ function forecast(lon, lat, callback) {
 }
 
 
-function formatForecast(res) {
+function formatForecast(res, lon, lat) {
   let html = '<div class="forecast" id="forecast">';
   html += '<table>';
   let first = true;
