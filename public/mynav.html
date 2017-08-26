@@ -332,11 +332,9 @@
       var app = {
         setCourse() {
           this.setDestination(popup.getPosition());
-          //document.getElementById('dest').style.visibility = 'visible';
         },
         cancelCourse() { 
           this.setDestination(null);
-          //document.getElementById('dest').style.visibility = 'hidden';
         },
         hasDestination() {
           return this.destination.point !== null;
@@ -552,28 +550,27 @@
         icon.src = 'images/circular-target.png';
         icon.className = 'dest-img';
         button.appendChild(icon);
-        button.title = 'Show target location / forecast';
+        button.title = 'Zoom on location';
         button.className = 'dest-btn';
         var handler = function() {
-          if (popup.place && app.hasDestination()) {
-            if (popup.visible) {
-              $(popup.getElement()).popover('destroy');
-              popup.visible = popup.show = false;  
-            }
+          if (popup.visible) {
+            $(popup.getElement()).popover('destroy');
+            popup.visible = popup.show = false;  
+          }
+          if (app.hasDestination()) {
             geolocation.stop();
             const loc = app.map.showDestination();
             updatePopup(loc._point, app.destination.place, loc._coord);
           }
           else {
-            const m = app.map;
-            const forecast = equalPoint(m._location._point, m._view.getCenter());
-            m._view.animate({
-              center: m._location._point,
+            app.map._view.animate({
+              center: app.map._location._point,
+              zoom: 16,
               duration: 2000
             }, function() {
-              if (forecast) {
-                let coord = m._location._coord;
-                getForecast(coord[0], coord[1]);
+              const loc = app.map._location;
+              if (popup.place && equalPoint(popup.coord, loc._coord)) {
+                updatePopup(loc._point, popup.place, loc._coord);
               }
             })
           }
@@ -585,7 +582,6 @@
         element.id = 'dest';
         element.className = 'dest ol-custom ol-unselectable ol-control';
         element.appendChild(button);
-        //element.style.visibility = 'hidden';
 
         ol.control.Control.call(this, {
           element: element,
@@ -784,6 +780,7 @@
         var element = document.createElement('div');
         element.className = 'location ol-unselectable ol-control';
         element.id = 'location';
+        element.title = 'Current location (tap to see forecast)';
         element.innerHTML = convertDMS(options.coords);
         ol.control.Control.call(this, {
           element: element,

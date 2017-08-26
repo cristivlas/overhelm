@@ -171,16 +171,17 @@ class Map {
 
   _updateView() {
     const center = this._view.getCenter();
-
+    if (this._lastCenter
+      && ol.extent.containsCoordinate(this._view.calculateExtent(), this._lastCenter)) {
+      return;
+    }
     const updateLayers = function(self, charts) {
       self._updating = true;
-      if (!self._lastCenter || !ol.extent.containsCoordinate(
-          self._view.calculateExtent(), self._lastCenter)) {
-        self._lastCenter = center;
-        const minRes = self._view.getMinResolution();
-        const maxRes = self._view.getMaxResolution();
-        self._useLayers(makeLayers(charts, minRes, maxRes));
-      }
+      self._lastCenter = center;
+      const minRes = self._view.getMinResolution();
+      const maxRes = self._view.getMaxResolution();
+      self._useLayers(makeLayers(charts, minRes, maxRes));
+
       if (self._onUpdateView) {
         self._onUpdateView();
       }
@@ -205,6 +206,12 @@ class Map {
 
   _showLocation(mode) {
     this._view.setCenter(this._location._point);
+    this._view.animate({
+      center: this._location._point,
+      zoom: this._defaultZoom,
+      duration: 2000
+    });
+
     if (this._onLocationUpdate) {
       this._onLocationUpdate(this._location._coord);
     }
