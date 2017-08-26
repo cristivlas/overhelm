@@ -438,7 +438,14 @@
           else {
             geolocation.start();
           }
-          updateWaterLevel(app.map.showCurrentLocation(true)._coord);
+          app.map._view.animate({
+            center: app.map._currentLocation._point,
+            zoom: defaultZoom,
+            duration: 2000
+          },
+          function() {
+            updateWaterLevel(app.map.showCurrentLocation(true)._coord);
+          })
           if (app.map._rotateView) {
             button.removeChild(iconLoc);
             button.appendChild(iconNav);

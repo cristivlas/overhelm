@@ -206,11 +206,6 @@ class Map {
 
   _showLocation(mode) {
     this._view.setCenter(this._location._point);
-    this._view.animate({
-      center: this._location._point,
-      zoom: this._defaultZoom,
-      duration: 2000
-    });
 
     if (this._onLocationUpdate) {
       this._onLocationUpdate(this._location._coord);
