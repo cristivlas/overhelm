@@ -52,7 +52,7 @@ const getHeight = function(chart) {
   return Math.abs(chart.upper[1] - chart.lower[1]); 
 }
 
-const getCharts = function(tilesets, center) {
+const getCharts = function(tilesets, center, ext) {
   let charts = []
   for (let i = 0; i != tilesets.length; ++i) {
     const t = tilesets[i];
@@ -61,12 +61,13 @@ const getCharts = function(tilesets, center) {
     }
   }
   charts.sort(function(a, b) {
-    //if (a.scale < b.scale) return -1;
-    //if (a.scale > b.scale) return 1;
-    const h1 = getHeight(a);
-    const h2 = getHeight(b);
-    if (h1 < h2) return -1;
-    if (h1 > h2) return 1;
+    if (a.scale < b.scale) return -1;
+    if (a.scale > b.scale) return 1;
+    // prefer the chart that covers more degress of latitude
+    const ha = getHeight(a);
+    const hb = getHeight(b);
+    if (ha > hb) return -1;
+    if (ha < hb) return 1;
     return 0;
   });
   return charts;
@@ -78,13 +79,14 @@ const makeLayers = function(charts, minRes, maxRes) {
   if (charts.length===0) {
     return layers;
   }
+
   const lastChart = charts[charts.length-1];
-  const maxHeight = getHeight(lastChart);
+  const maxScale = lastChart.scale;
 
   for (let i = 0; i != charts.length; ++i) {
     const tileset = charts[i];
     tileset.minRes = i > 0 ? charts[i-1].maxRes : minRes;
-    tileset.maxRes = Math.ceil(maxRes * getHeight(tileset) / maxHeight);
+    tileset.maxRes = Math.ceil(maxRes * tileset.scale / maxScale);
 
     const url = 'tiles/noaa/' + tileset.ident + '/{z}/{x}/{y}';
     const sounding = tileset.sounding ? ' Soundings in ' + tileset.sounding : '';
@@ -175,6 +177,8 @@ class Map {
       && ol.extent.containsCoordinate(this._view.calculateExtent(), this._lastCenter)) {
       return;
     }
+    const ext = this._view.calculateExtent();
+
     const updateLayers = function(self, charts) {
       self._updating = true;
       self._lastCenter = center;
@@ -189,7 +193,7 @@ class Map {
     } // updateLayers
 
     if (this._chartsMeta) {
-      const charts = getCharts(this._chartsMeta, center);
+      const charts = getCharts(this._chartsMeta, center, ext);
       updateLayers(this, charts);
     }
     else {
@@ -198,7 +202,7 @@ class Map {
           throw err;
         }
         this._chartsMeta = result;
-        const charts = getCharts(this._chartsMeta, center);
+        const charts = getCharts(this._chartsMeta, center, ext);
         updateLayers(this, charts);
       }.bind(this))
     }
@@ -406,9 +410,9 @@ class Map {
 
   toggleRotation() {
     this._rotateView ^= true;
-    if (!this._rotateView) {
-      this._view.setRotation(0);
-    }
+    //if (!this._rotateView) {
+    //  this._view.setRotation(0);
+    //}
     return this._rotateView;
   }
 

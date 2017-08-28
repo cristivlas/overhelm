@@ -40,6 +40,8 @@ function formatForecast(res, lon, lat) {
     html += '<tr>';
     html += '<td><img src="' + period.icon + '"></td>';
     html += '<td><b>' + period.name + '</b> ';
+    html += '(' + new Date(period.startTime).toLocaleString()
+         +' - ' + new Date(period.endTime).toLocaleString() + '): ';
     html += period.detailedForecast + '</td>';
     html += '</tr>'
   })

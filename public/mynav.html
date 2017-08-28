@@ -438,24 +438,39 @@
           else {
             geolocation.start();
           }
-          app.map._view.animate({
-            center: app.map._currentLocation._point,
-            zoom: defaultZoom,
-            duration: 2000
-          },
-          function() {
-            updateWaterLevel(app.map.showCurrentLocation(true)._coord);
-          })
           if (app.map._rotateView) {
-            button.removeChild(iconLoc);
+            if (iconLoc.parentElement===button) {
+              button.removeChild(iconLoc);
+            }
             button.appendChild(iconNav);
           }
           else {
             if (iconNav.parentElement===button) {
               button.removeChild(iconNav);
-              button.appendChild(iconLoc);
             }
+            button.appendChild(iconLoc);
           }
+
+          let rot = 0;
+          const rotateView = app.map._rotateView;
+
+          if (app.map._rotateView) {
+            app.map._rotateView = false;
+            app.map._view.setRotation(0);
+            rot = 2 * Math.PI - geolocation.rotation;
+          }
+          app.map._view.animate({
+            center: app.map._currentLocation._point,
+            zoom: defaultZoom,
+            duration: 2000,
+            rotation: rot
+          },
+          function() {
+            updateWaterLevel(app.map.showCurrentLocation(true)._coord);
+            if (rotateView) {
+              app.map.toggleRotation();
+            }
+          })
         }
         button.addEventListener('click', handler, false);
 
@@ -553,7 +568,6 @@
 
         const button = document.createElement('button');
         const icon = document.createElement('img');
-        //icon.src = 'images/pointer-icon.png';
         icon.src = 'images/circular-target.png';
         icon.className = 'dest-img';
         button.appendChild(icon);
@@ -570,14 +584,26 @@
             updatePopup(loc._point, app.destination.place, loc._coord);
           }
           else {
+            let rot = 0;
+            const rotateView = app.map._rotateView;
+
+            if (app.map._rotateView) {
+              app.map._rotateView = false;
+              app.map._view.setRotation(0);
+              rot = 2 * Math.PI - geolocation.rotation;
+            }
             app.map._view.animate({
               center: app.map._location._point,
               zoom: 16,
-              duration: 2000
+              duration: 2000,
+              rotation: rot
             }, function() {
               const loc = app.map._location;
               if (popup.place && equalPoint(popup.coord, loc._coord)) {
                 updatePopup(loc._point, popup.place, loc._coord);
+              }
+              if (rotateView) {
+                app.map.toggleRotation();
               }
             })
           }
