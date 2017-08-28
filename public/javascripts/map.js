@@ -214,6 +214,11 @@ class Map {
     if (this._onLocationUpdate) {
       this._onLocationUpdate(this._location._coord);
     }
+    if (mode !== this._mode) {
+      this._lastCenter = null;
+    }
+    this._mode = mode;
+    this._updateView();
     return this._location;
   }
 
@@ -285,6 +290,7 @@ class Map {
   _updatePositionLayer() {
     if (this._posMarks) {
       if (!this._map.removeLayer(this._posMarks)) {
+        console.log('_posMarks layer not found')
         return;
       }
     }
@@ -426,10 +432,6 @@ class Map {
 
   getView() {
     return this._map.getView();
-  }
-
-  render() {
-    return this._map.render();
   }
 }
 

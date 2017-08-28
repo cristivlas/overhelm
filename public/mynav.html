@@ -11,12 +11,12 @@
     <meta name="theme-color" content="#000000">
     <link rel="apple-touch-icon" href="/images/sailboat.png">
     <link rel="manifest" href="/manifest.json">
-    <link rel="prefetch" href="images/wu_logo_130x80.png">
     <link rel="prefetch" href="images/left-arrow.png">
     <link rel="prefetch" href="images/right-arrow.png">
     <link rel="prefetch" href="images/compass4.png">
     <link rel="prefetch" href="images/location-arrow.png">
     <link rel="prefetch" href="images/navigation-arrow.png">
+    <link rel="prefetch" href="images/view.png">
     <link rel="prefetch" href="images/magnifier.png">
 
     <link rel="stylesheet" href="lib/OpenLayers/4.3.1/ol.css" type="text/css">
@@ -1348,6 +1348,7 @@
           if (app.destination.place.state) {
             app.location.prev.name += ', ' + app.destination.place.state;
           }
+          html += '<hr><a class="btn btn-primary btn-xs" onClick="app.cancelCourse()">Cancel Course</a>  ';
         }
         else {
           html += distance(place.dist);
@@ -1355,7 +1356,11 @@
           if (place.state) {
             app.location.prev.name += ', ' + place.state;
           }
+          html += '<hr><a class="btn btn-primary btn-xs" onClick="app.setCourse()">Set Course</a>  ';
         }
+        html += '<button class="btn btn-primary btn-xs" onClick="getForecast('
+             + coord[0] + ',' + coord[1] + ')">NOAA Forecast</button>';
+
         app.location.current = coord;
 
         const e = popup.getElement();
@@ -1373,44 +1378,6 @@
         popup.setPosition(pos);
         popup.shown = false;
         popup.visible = true; // popover on map postrender
-
-        const xmlHttp = new XMLHttpRequest();
-        xmlHttp.onreadystatechange = function() {
-          if (xmlHttp.readyState === 4 && xmlHttp.status === 200) {
-            const w = JSON.parse(xmlHttp.responseText);
-
-            const imageUrl = '/images/wu_logo_130x80.png';
-            html += '<b>Weather Underground</b><image width="15%" src="' + imageUrl + '"/> ';
-
-            html += w.weather + ' ' + w.temp + ' Feels like: ' + w.feelslike
-              + ' Wind: ' + w.wind 
-              + ' (' + w.wind_degrees + '&deg;, '  + w.wind_mph + ' MPH)'
-              + ' Humidity: ' + w.humidity
-              + ' Visibility: ' + w.visibility + ' miles'
-              + ' Observed at ' + w.station + '.'
-
-            if (app.isDestination(pos)) {
-              html += '<hr><a class="btn btn-primary btn-xs" onClick="app.cancelCourse()">Cancel Course</a>  ';
-            }
-            else {
-              html += '<hr><a class="btn btn-primary btn-xs" onClick="app.setCourse()">Set Course</a>  ';
-            }
-            html += '<button class="btn btn-primary btn-xs" onClick="getForecast('
-              + coord[0] + ',' + coord[1] + ')">NOAA Forecast</button>';
-            $(e).popover('destroy');
-            $(e).popover({
-              'animation': false,
-              'html': true,
-              'placement': 'top',
-              'content': html,
-              'title': '<a href="#" id="close-popup" class="close">&times;</a>'
-            });
-            popup.shown = false;
-            app.map.render();
-          }
-        }
-        xmlHttp.open('GET', '/weather/' + coord[0] + '/' + coord[1]);
-        xmlHttp.send();
       }
 
 
