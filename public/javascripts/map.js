@@ -159,6 +159,11 @@ class Map {
     })
     this._map.on('pointerdrag', this._updateInteraction.bind(this));
     this._map.on('pointermove', this._updateInteraction.bind(this));
+
+    new ol.Graticule({
+      showLabels: true,
+      map: this._map
+    });
   }
 
   _baseLayer() {
