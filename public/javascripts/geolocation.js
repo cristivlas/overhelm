@@ -16,10 +16,13 @@ class Geolocation {
     this._ios = (navigator.platform === 'iPad' || navigator.platform === 'iPhone');
     this._mobile = navigator.userAgent.match(/mobile/i);
     this._iunit = 0;
-    this._units = [ 'kts', 'mph', 'km/h', '\u00B0' ];
+    this._units = [ 'kts', 'mph', 'km/h', '\u00B0 TN' ];
     this._speedConversion = [ 1.943844, 2.236936, 3.6, 0.0 ];
     this.speed = 0;
     this.rotation = 0;
+
+    const now = new Date();
+    this._year = parseFloat(now.getFullYear()) + parseFloat(now.getMonth()) / 12;
   }
 
   changeSpeedUnit() {
@@ -47,7 +50,7 @@ class Geolocation {
       }
       if (this._startCallback) {
         this._startCallback();
-      } 
+      }
     }
   }
 
@@ -103,7 +106,7 @@ class Geolocation {
           //
           // First successful call? Repeat at given interval/timeout
           //
-          this._intervalId = 
+          this._intervalId =
             setInterval(this._sendLocationRequest.bind(this), this._timeout);
         }
         if (loc.time) {
@@ -136,10 +139,12 @@ class Geolocation {
           const a = e.alpha * Math.PI / 180;
           this._lastSin = smoothingFactor * this._lastSin + (1-smoothingFactor) * Math.sin(a);
           this._lastCos = smoothingFactor * this._lastCos + (1-smoothingFactor) * Math.cos(a);
-          this._heading = -Math.atan2(this._lastSin, this._lastCos) * 180 / Math.PI;
+          this._heading = -Math.atan2(this._lastSin, this._lastCos) * 180.00 / Math.PI;
         }
-        //const decl = WMM.declination(0, this.coord.lat, this.coord.lon, new Date().getFullYear());
-        //this._heading -= Math.ceil(decl);
+
+        // 0 for altitude since this is to be used at sea level
+        this._decl = WMM.declination(0, this.coord.lat, this.coord.lon, this._year);
+        this._heading = (360 + Math.floor(this._heading - this._decl)) % 360;
 
         this._updateHeading();
         if (this._compassCallback) {
@@ -244,12 +249,12 @@ function getDistance(lon1, lat1, lon2, lat2) {
   }
 
   const dLat = deg2rad(lat2-lat1);
-  const dLon = deg2rad(lon2-lon1); 
-  const a = 
+  const dLon = deg2rad(lon2-lon1);
+  const a =
     Math.sin(dLat/2) * Math.sin(dLat/2) +
-    Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) * 
-    Math.sin(dLon/2) * Math.sin(dLon/2); 
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); 
+    Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) *
+    Math.sin(dLon/2) * Math.sin(dLon/2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
   return c;
 }
 

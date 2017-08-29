@@ -211,6 +211,16 @@ function drawCompass(ctx, radius) {
   ctx.rotate(heading);
   drawDegrees(ctx, radius);
   ctx.rotate(-heading);
+
+  if (geolocation._decl) {
+    ctx.beginPath();
+    ctx.font = radius*0.12 + "px arial black";
+    ctx.fillStyle = 'black';
+    ctx.textAlign = 'right';
+    const variation = Math.ceil(geolocation._decl * 100) / 100 + '\u00B0 variation ';
+    ctx.fillText(variation, radius * 1.1, radius * 1.05);
+    ctx.stroke();
+  }
 }
 
 function drawSpeed(ctx, radius) {
@@ -222,6 +232,7 @@ function drawSpeed(ctx, radius) {
   ctx.fillRect(x, y, -2*x, -2*y);
   ctx.fillStyle = 'black';
   ctx.strokeStyle = 'white';
+  ctx.textAlign = 'center';
   ctx.lineWidth=2;
   ctx.moveTo(-x,y+1);
   ctx.lineTo(-x,-y);
