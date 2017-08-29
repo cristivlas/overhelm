@@ -1,3 +1,4 @@
+const smoothingFactor = 0.9;
 
 class Geolocation {
   constructor(opt_options) {
@@ -9,6 +10,8 @@ class Geolocation {
     this._stopCallback = options.onStop;
     this._compassCallback = options.onCompass;
     this._heading = 0;
+    this._lastSin = 0;
+    this._lastCos = 0;
     this._ios = (navigator.platform === 'iPad' || navigator.platform === 'iPhone');
     this._mobile = navigator.userAgent.match(/mobile/i);
     this._iunit = 0;
@@ -119,7 +122,6 @@ class Geolocation {
     }
   }
 
-
   _useHTML5Geolocation() {
     if (this._mobile && !this._once) {
       this._once = true;
@@ -129,7 +131,11 @@ class Geolocation {
           this._heading = e.webkitCompassHeading;
         }
         else if (window.chrome && e.absolute) {
-          this._heading = -e.alpha;
+// http://christine-coenen.de/blog/2014/07/02/smooth-compass-needle-in-android-or-any-angle-with-low-pass-filter/
+          const a = e.alpha * Math.PI / 180;
+          this._lastSin = smoothingFactor * this._lastSin + (1-smoothingFactor) * Math.sin(a);
+          this._lastCos = smoothingFactor * this._lastCos + (1-smoothingFactor) * Math.cos(a);
+          this._heading = -Math.atan2(this._lastSin, this._lastCos) * 180 / Math.PI;
         }
         this._updateHeading();
         if (this._compassCallback) {
