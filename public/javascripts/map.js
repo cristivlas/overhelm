@@ -224,6 +224,7 @@ class Map {
     }
     this._mode = mode;
     this._updateView();
+    this.updateFeatures();
     return this._location;
   }
 

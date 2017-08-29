@@ -337,25 +337,17 @@
           this.setDestination(null);
         },
         hasDestination() {
-          return this.destination.point !== null;
+          return this.map._destLocation;
         },
         isDestination(pos) {
-          return this.destination.point !== null && equalPoint(pos, this.destination.point)
+          return this.hasDestination() && equalPoint(pos, this.map._destLocation._point);
         },
         map: null,
         tzOffset: (new Date()).getTimezoneOffset() * 60000,
         powerClick: 0,
 
-        location: {
-          current: null,
-          prev: {
-            point: null,
-            name: 'current location'
-          }
-        },
         destination: {
           coord: null,
-          point: null,
           place: null,
         },
 
@@ -386,7 +378,7 @@
       // Utilities
       //
       function isFullScreen() {
-        return window.innerHeight===screen.height;
+        return window.innerHeight >= screen.height;
       }
 
       function equalPoint(p1, p2) {
@@ -576,7 +568,7 @@
         var handler = function() {
           if (popup.visible) {
             $(popup.getElement()).popover('destroy');
-            popup.visible = popup.show = false;  
+            popup.visible = popup.show = false;
           }
           if (app.hasDestination()) {
             geolocation.stop();
@@ -1132,7 +1124,7 @@
                   return;
                 }
                 app.tide.chart.lastUpdated.setTime(0);
-                updateWaterLevel(app.location.current);
+                updateWaterLevel(app.map._location._coord);
               });
             }
 
@@ -1269,11 +1261,8 @@
           }
           function setDestination(pos) {
             closePopup();
-            app.destination.point = pos;
-            if (app.destination.point) {
+            if (pos) {
               app.destination.place = popup.place;
-              app.destination.coord = popup.coord;
-
               app.map.setDestination();
             }
             else {
@@ -1295,9 +1284,12 @@
         }
       }
 
-      function getForecast(lon, lat) {
+      function getForecast(lon, lat, tzOffset) {
+        if (!tzOffset) {
+          tzOffset = app.tzOffset;
+        }
         forecast(lon, lat, function(err, res) {
-          const msg = err ? err.message : formatForecast(res, lon, lat);
+          const msg = err ? err.message : formatForecast(res, lon, lat, tzOffset);
           alertify.alert(msg);
           if (!isFullScreen()) {
             let elem = document.getElementById('alertify-ok');
@@ -1329,38 +1321,17 @@
 
         html += '<br>' + convertDMS(coord);
 
-        function distance(d) {
-          if (d===0 && geolocation.coord) {
-            const coord = [ geolocation.coord.lon, geolocation.coord.lat ];
-            d = getDistanceFromLonLat(popup.coord, coord) * 3440;
-            app.location.prev.name = 'current location';
-          }
-          return '<br>' + Math.floor(d * 100) / 100
-            + ' nautical miles from ' + app.location.prev.name + '.';
-
-        }
+        const d = getDistanceFromLonLat(coord, app.map._currentLocation._coord) * 3440;
+        html += '<br>' + Math.floor(d * 100) / 100 + ' nautical miles from your current location';
 
         if (app.isDestination(pos)) {
-          const d = getDistanceFromLonLat(app.destination.coord, app.location.current) * 3440;
-          html += distance(d);
-          app.location.prev.name = app.destination.place.name;
-          if (app.destination.place.state) {
-            app.location.prev.name += ', ' + app.destination.place.state;
-          }
           html += '<hr><a class="btn btn-primary btn-xs" onClick="app.cancelCourse()">Cancel Course</a>  ';
         }
         else {
-          html += distance(place.dist);
-          app.location.prev.name = place.name;
-          if (place.state) {
-            app.location.prev.name += ', ' + place.state;
-          }
           html += '<hr><a class="btn btn-primary btn-xs" onClick="app.setCourse()">Set Course</a>  ';
         }
         html += '<button class="btn btn-primary btn-xs" onClick="getForecast('
              + coord[0] + ',' + coord[1] + ')">NOAA Forecast</button>';
-
-        app.location.current = coord;
 
         const e = popup.getElement();
 
@@ -1371,9 +1342,6 @@
           'content': html,
           'title': '<a href="#" id="close-popup" class="close">&times;</a>'
         });
-        if (!equalPoint(app.location.point, app.destination.point)) {
-          app.location.prev.point = app.location.point;
-        }
         popup.setPosition(pos);
         popup.shown = false;
         popup.visible = true; // popover on map postrender
@@ -1426,6 +1394,10 @@
                     app.map.getView().setZoom(defaultZoom);
                 }
 
+                if (popup.visible) {
+                  $(popup.getElement()).popover('destroy');
+                  popup.visible = popup.show = false;  
+                }
                 updatePopup(
                   app.map.setInspectLocation(srchCoord)._point,
                   matches[elem.selectedIndex],
@@ -1450,10 +1422,9 @@
 
 
       function updateDefault() {
-        if (!app.location.current) {
-          app.location.current = [-122.4049, 47.6810] // Shilshole Bay
-          app.location.prev.name = 'Shilshole Bay';
-          app.map.setCurrentLocation(app.location.current);
+        if (!app.map._currentLocation) {
+          const coord = [-122.4049, 47.6810] // Shilshole Bay
+          app.map.setCurrentLocation(coord);
           app.map.showCurrentLocation();
           updateCoords()
         }
@@ -1500,7 +1471,8 @@
         document.getElementById('location').addEventListener('click', function () {
           const loc = app.map._currentLocation;
           if (loc) {
-            getForecast(loc._coord[0], loc._coord[1]);
+            const tzOffset = new Date().getTimezoneOffset() * 60000;
+            getForecast(loc._coord[0], loc._coord[1], tzOffset);
           }
         })
         app.hide_clock();
@@ -1509,7 +1481,7 @@
       function updateCoords() {
         elem = document.getElementById('location');
         if (elem) {
-          elem.innerHTML = convertDMS(app.location.current);
+          elem.innerHTML = convertDMS(app.map._currentLocation._coord);
         }
       }
 
@@ -1525,12 +1497,8 @@
               updateTimeout = null;
             }
             updateTracking(true);
-            app.location.current = [ coord.lon, coord.lat ];
-            app.location.prev.name = 'current location';
-
-            app.map.setCurrentLocation(app.location.current);
+            app.map.setCurrentLocation([ coord.lon, coord.lat ]);
             app.map.showCurrentLocation();
-
             updateCoords();
           }
         },
