@@ -9,6 +9,7 @@ class Geolocation {
     this._successCallback = options.onSuccess;
     this._startCallback = options.onStart;
     this._stopCallback = options.onStop;
+    this._calibrationCallback = options.onNeedsCalibration;
     this._compassCallback = options.onCompass;
     this._heading = 0;
     this._lastSin = 0;
@@ -130,21 +131,28 @@ class Geolocation {
     if (this._mobile && !this._once) {
       this._once = true;
 
-      window.addEventListener('deviceorientation', function(e) {
-        if (e.webkitCompassHeading) {
-          this._heading = e.webkitCompassHeading;
+      window.addEventListener('compassneedscalibration', function(e) {
+        if (this._calibrationCallback) {
+          this._calibrationCallback();
         }
-        else if (window.chrome && e.absolute) {
-// http://christine-coenen.de/blog/2014/07/02/smooth-compass-needle-in-android-or-any-angle-with-low-pass-filter/
-          const a = e.alpha * Math.PI / 180;
-          this._lastSin = smoothingFactor * this._lastSin + (1-smoothingFactor) * Math.sin(a);
-          this._lastCos = smoothingFactor * this._lastCos + (1-smoothingFactor) * Math.cos(a);
-          this._heading = -Math.atan2(this._lastSin, this._lastCos) * 180.00 / Math.PI;
-        }
+      }.bind(this), false);
 
+      window.addEventListener('deviceorientation', function(e) {
         // 0 for altitude since this is to be used at sea level
         this._decl = WMM.declination(0, this.coord.lat, this.coord.lon, this._year);
-        this._heading = (360 + Math.floor(this._heading - this._decl)) % 360;
+
+        if (e.webkitCompassHeading) {
+          this._heading = e.webkitCompassHeading + this._decl;
+        }
+        else if (window.chrome && e.absolute) {
+          const a = e.alpha * Math.PI / 180;
+
+// http://christine-coenen.de/blog/2014/07/02/smooth-compass-needle-in-android-or-any-angle-with-low-pass-filter/
+          this._lastSin = smoothingFactor * this._lastSin + (1-smoothingFactor) * Math.sin(a);
+          this._lastCos = smoothingFactor * this._lastCos + (1-smoothingFactor) * Math.cos(a);
+          this._heading = -Math.atan2(this._lastSin, this._lastCos) * 180.00 / Math.PI - this._decl;
+        }
+        this._heading = (360 + this._heading) % 360;
 
         this._updateHeading();
         if (this._compassCallback) {

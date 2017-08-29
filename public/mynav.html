@@ -1533,6 +1533,9 @@
             app.map.updateFeatures();
           }
         },
+        onNeedsCalibration: function() {
+          alertify.alert('Compass needs calibration');
+        },
         timeout: locationTimeout
       });
 
