@@ -425,6 +425,10 @@
         iconNav.className = 'tracking-img';
 
         var handler = function() {
+          if (app.animation) {
+            return;
+          }
+          app.animation = true;
           if (geolocation.isTracking()) {
             app.map.toggleRotation();
           }
@@ -443,7 +447,6 @@
             }
             button.appendChild(iconLoc);
           }
-
           let rot = 0;
           const rotateView = app.map._rotateView;
 
@@ -463,6 +466,7 @@
             if (rotateView) {
               app.map.toggleRotation();
             }
+            app.animation = false;
           })
         }
         button.addEventListener('click', handler, false);
@@ -577,6 +581,10 @@
             updatePopup(loc._point, app.destination.place, loc._coord);
           }
           else {
+            if (app.animation) {
+              return;
+            }
+            app.animation = true;
             let rot = 0;
             const rotateView = app.map._rotateView;
 
@@ -598,6 +606,7 @@
               if (rotateView) {
                 app.map.toggleRotation();
               }
+              app.animation = false;
             })
           }
         }
