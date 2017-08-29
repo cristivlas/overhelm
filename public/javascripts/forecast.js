@@ -12,7 +12,14 @@ function forecast(lon, lat, callback) {
         callback(null, res);
       }
       else {
-        let err = new Error(xmlHttp.responseText);
+        let msg = xmlHttp.responseText;
+        if (msg.length===0) {
+          msg = 'No response.';
+          if (!navigator.onLine) {
+            msg += ' Looks like you are offline.';
+          }
+        }
+        let err = new Error(msg);
         err.status = xmlHttp.status;
         return callback(err);
       }
@@ -30,6 +37,7 @@ const getTimeString = function(t, tzOffset) {
   date.setTime(date.getTime() + date.getTimezoneOffset() * 60000 - tzOffset);
   return date.toLocaleString();
 }
+
 
 function formatForecast(res, lon, lat, tzOffset) {
   let html = '<div class="forecast" id="forecast">';

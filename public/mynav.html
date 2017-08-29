@@ -1301,7 +1301,7 @@
         forecast(lon, lat, function(err, res) {
           const msg = err ? err.message : formatForecast(res, lon, lat, tzOffset);
           alertify.alert(msg);
-          if (!isFullScreen()) {
+          if (!err && !isFullScreen()) {
             let elem = document.getElementById('alertify-ok');
             if (elem) {
               const url = 'http://marine.weather.gov/MapClick.php?lat=' + lat + '&lon=' + lon;
