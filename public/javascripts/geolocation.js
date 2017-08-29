@@ -1,4 +1,5 @@
 const smoothingFactor = 0.9;
+const WMM = new WorldMagneticModel();
 
 class Geolocation {
   constructor(opt_options) {
@@ -29,7 +30,7 @@ class Geolocation {
     if (this._iunit < 3) {
       return Math.floor(this.speed * this._speedConversion[this._iunit] * 10) / 10;
     }
-    return (360 + this._heading) % 360;
+    return (360 +  this._heading) % 360;
   }
 
   getSpeedUnit() {
@@ -137,6 +138,9 @@ class Geolocation {
           this._lastCos = smoothingFactor * this._lastCos + (1-smoothingFactor) * Math.cos(a);
           this._heading = -Math.atan2(this._lastSin, this._lastCos) * 180 / Math.PI;
         }
+        //const decl = WMM.declination(0, this.coord.lat, this.coord.lon, new Date().getFullYear());
+        //this._heading -= Math.ceil(decl);
+
         this._updateHeading();
         if (this._compassCallback) {
           this._compassCallback(this);
