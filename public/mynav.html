@@ -254,6 +254,9 @@
         top: 168px;
         left: .5em
       }
+      .ol-touch .nav-aids {
+        top: 200px;
+      }
       .tablet .nav-aids {
         top: 273px;
         width: 50px;
@@ -625,7 +628,6 @@
           app.map.toggleNavAids();
         }
         button.addEventListener('click', handler, false);
-        button.addEventListener('touchstart', handler, false);
 
         var element = document.createElement('div');
         element.className = 'nav-aids ol-custom ol-unselectable ol-control';
