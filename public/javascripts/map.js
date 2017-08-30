@@ -46,7 +46,39 @@ const getNOAAChartsMeta = function(callback) {
 }
 
 
-function getNavAids(extent) {
+function updateNavAidsLayer(map, navAids) {
+  let features = []
+  for (let i = 0; i != navAids.length; ++i) {
+    const p = ol.proj.fromLonLat(navAids[i].coord);
+    features.push(
+      new ol.Feature({
+        geometry: new ol.geom.Point(p)
+      })
+    )
+  }
+  if (map._buoys) {
+    if (!map._map.removeLayer(map._buoys)) {
+      alert('buoys layer not found');
+    }
+  }
+  map._buoys = new ol.layer.Vector({
+    source: new ol.source.Vector({
+      features: features
+    }),
+    style: new ol.style.Style({
+      image: new ol.style.Icon({
+        anchor: [0.5, 1],
+        anchorXUnits: 'fraction',
+        anchorYUnits: 'fraction',
+        src: 'images/icon-buoy.png',
+      })
+    })
+  });
+  map._map.addLayer(map._buoys);
+}
+
+
+function getNavAids(map, extent) {
   let url = 'navaids'
   //console.log(extent)
   const lonLatMin = ol.proj.transform([extent[0], extent[1]], 'EPSG:3857', 'EPSG:4326');
@@ -60,6 +92,7 @@ function getNavAids(extent) {
     if (xmlHttp.readyState===4) {
       if (xmlHttp.status===200) {
         console.log(xmlHttp.responseText);
+        updateNavAidsLayer(map, JSON.parse(xmlHttp.responseText));
       }
     }
   }
@@ -226,7 +259,7 @@ class Map {
       }
       self._updating = false;
 
-      getNavAids(ext);
+      getNavAids(self, ext);
     } // updateLayers
 
     if (this._chartsMeta) {
