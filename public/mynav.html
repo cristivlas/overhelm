@@ -379,6 +379,9 @@
       // Utilities
       //
       function isFullScreen() {
+        if (geolocation._mobile) {
+          return false;
+        }
         return window.innerHeight >= screen.height;
       }
 
@@ -781,9 +784,9 @@
         canvas.id = 'clock';
         canvas.width = canvas.height = 268; // best for iPhone
         // hack for the Raspberry PI
-        if (navigator.userAgent.match(/armv7/)) {
-          canvas.width = canvas.height = 277;
-        }
+        // if (navigator.userAgent.match(/armv7/)) {
+        //  canvas.width = canvas.height = 277;
+        //}
         let element = document.createElement('div');
         element.className = 'clock ol-unselectable ol-control';
         element.appendChild(canvas);
