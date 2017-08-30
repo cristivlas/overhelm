@@ -721,12 +721,17 @@ router.get('/shutdown/:arg', function(req, res, next) {
 router.get('/navaids/:lon1/:lat1/:lon2/:lat2', function(req, res, next) {
   let result = []
 
+  const lon1 = parseFloat(req.params.lon1);
+  const lat1 = parseFloat(req.params.lat1);
+  const lon2 = parseFloat(req.params.lon2);
+  const lat2 = parseFloat(req.params.lat2);
+
   for (let i = 0; i != navAids.features.length; ++i) {
     const f = navAids.features[i];
-    if (f.geometry.coordinates[0] > req.params.lon1
-     && f.geometry.coordinates[1] > req.params.lat1
-     && f.geometry.coordinates[0] < req.params.lon2
-     && f.geometry.coordinates[1] < req.params.lat2) {
+    if (f.geometry.coordinates[0] > lon1
+     && f.geometry.coordinates[1] > lat1
+     && f.geometry.coordinates[0] < lon2
+     && f.geometry.coordinates[1] < lat2) {
 
      result.push({
       name: f.properties.name,

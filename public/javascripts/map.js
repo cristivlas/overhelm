@@ -46,53 +46,76 @@ const getNOAAChartsMeta = function(callback) {
 }
 
 
-function updateNavAidsLayer(map, navAids) {
+function updateNavAidsLayer(map, minRes, maxRes, navAids) {
   let features = []
+  const image = new ol.style.Icon({
+    anchor: [0.5, 0.5],
+    anchorXUnits: 'fraction',
+    anchorYUnits: 'fraction',
+    src: 'images/icon-buoy64.png',
+  });
+
   for (let i = 0; i != navAids.length; ++i) {
-    const p = ol.proj.fromLonLat(navAids[i].coord);
-    features.push(
-      new ol.Feature({
-        geometry: new ol.geom.Point(p)
+    const b = navAids[i]
+    const p = ol.proj.fromLonLat(b.coord);
+    let f = new ol.Feature({
+      geometry: new ol.geom.Point(p),
+    });
+
+    const text = b.name + '\n' + b.desc;
+
+    f.setStyle(new ol.style.Style({
+      image: image,
+      text: new ol.style.Text({
+        text: text,
+        textAlign: 'start',
+        font: 'italic 15px arial',
+        offsetX: 16,
+        offsetY: -32,
+        //fill: new ol.style.Fill({
+        //  color: 'rgb(0, 65, 135)'
+        //})
       })
-    )
+    }));
+    features.push(f);
   }
   if (map._buoys) {
     if (!map._map.removeLayer(map._buoys)) {
       alert('buoys layer not found');
     }
   }
+  console.log(minRes, maxRes)
   map._buoys = new ol.layer.Vector({
     source: new ol.source.Vector({
-      features: features
+      features: features,
     }),
-    style: new ol.style.Style({
-      image: new ol.style.Icon({
-        anchor: [0.5, 1],
-        anchorXUnits: 'fraction',
-        anchorYUnits: 'fraction',
-        src: 'images/icon-buoy.png',
-      })
-    })
+    minResolution: minRes,
+    maxResolution: maxRes,
   });
   map._map.addLayer(map._buoys);
 }
 
 
-function getNavAids(map, extent) {
+function showNavAids(map) {
+  const v = map._view;
+  const extent = v.calculateExtent();
+  const minRes = v.getResolutionForZoom(18);
+  const maxRes = v.getResolutionForZoom(map._defaultZoom + 1);
+
   let url = 'navaids'
   //console.log(extent)
   const lonLatMin = ol.proj.transform([extent[0], extent[1]], 'EPSG:3857', 'EPSG:4326');
   const lonLatMax = ol.proj.transform([extent[2], extent[3]], 'EPSG:3857', 'EPSG:4326');
   url += '/' + lonLatMin[0] + '/' + lonLatMin[1]
   url += '/' + lonLatMax[0] + '/' + lonLatMax[1];
-  //console.log(url);
+  console.log(url);
   const xmlHttp = new XMLHttpRequest();
 
   xmlHttp.onreadystatechange = function() {
     if (xmlHttp.readyState===4) {
       if (xmlHttp.status===200) {
         console.log(xmlHttp.responseText);
-        updateNavAidsLayer(map, JSON.parse(xmlHttp.responseText));
+        updateNavAidsLayer(map, minRes, maxRes, JSON.parse(xmlHttp.responseText));
       }
     }
   }
@@ -258,8 +281,6 @@ class Map {
         self._onUpdateView();
       }
       self._updating = false;
-
-      getNavAids(self, ext);
     } // updateLayers
 
     if (this._chartsMeta) {
@@ -308,6 +329,8 @@ class Map {
       this._map.addLayer(chart);
     }
     this.updateFeatures();
+
+    showNavAids(this);
   }
 
   updateFeatures() {
