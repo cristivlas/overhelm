@@ -741,7 +741,7 @@ router.get('/navaids/:lon1/:lat1/:lon2/:lat2', function(req, res, next) {
      });
     }
   }
-  res.send(JSON.stringify(result, null, 2));
+  res.send(JSON.stringify(result));
 });
 
 

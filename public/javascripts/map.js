@@ -46,84 +46,6 @@ const getNOAAChartsMeta = function(callback) {
 }
 
 
-function updateNavAidsLayer(map, minRes, maxRes, navAids) {
-  let features = []
-  const image = new ol.style.Icon({
-    anchor: [0.5, 0.5],
-    anchorXUnits: 'fraction',
-    anchorYUnits: 'fraction',
-    src: 'images/icon-buoy64.png',
-  });
-
-  for (let i = 0; i != navAids.length; ++i) {
-    const b = navAids[i]
-    const p = ol.proj.fromLonLat(b.coord);
-    let f = new ol.Feature({
-      geometry: new ol.geom.Point(p),
-    });
-
-    const text = b.name + '\n' + b.desc;
-
-    f.setStyle(new ol.style.Style({
-      image: image,
-      text: new ol.style.Text({
-        text: text,
-        textAlign: 'start',
-        font: 'italic 15px arial',
-        offsetX: 16,
-        offsetY: -32,
-        //fill: new ol.style.Fill({
-        //  color: 'rgb(0, 65, 135)'
-        //})
-      })
-    }));
-    features.push(f);
-  }
-  if (map._buoys) {
-    if (!map._map.removeLayer(map._buoys)) {
-      alert('buoys layer not found');
-    }
-  }
-  console.log(minRes, maxRes)
-  map._buoys = new ol.layer.Vector({
-    source: new ol.source.Vector({
-      features: features,
-    }),
-    minResolution: minRes,
-    maxResolution: maxRes,
-  });
-  map._map.addLayer(map._buoys);
-}
-
-
-function showNavAids(map) {
-  const v = map._view;
-  const extent = v.calculateExtent();
-  const minRes = v.getResolutionForZoom(18);
-  const maxRes = v.getResolutionForZoom(map._defaultZoom + 1);
-
-  let url = 'navaids'
-  //console.log(extent)
-  const lonLatMin = ol.proj.transform([extent[0], extent[1]], 'EPSG:3857', 'EPSG:4326');
-  const lonLatMax = ol.proj.transform([extent[2], extent[3]], 'EPSG:3857', 'EPSG:4326');
-  url += '/' + lonLatMin[0] + '/' + lonLatMin[1]
-  url += '/' + lonLatMax[0] + '/' + lonLatMax[1];
-  console.log(url);
-  const xmlHttp = new XMLHttpRequest();
-
-  xmlHttp.onreadystatechange = function() {
-    if (xmlHttp.readyState===4) {
-      if (xmlHttp.status===200) {
-        console.log(xmlHttp.responseText);
-        updateNavAidsLayer(map, minRes, maxRes, JSON.parse(xmlHttp.responseText));
-      }
-    }
-  }
-  xmlHttp.open('GET', url);
-  xmlHttp.send();
-}
-
-
 // compute height as degrees of latitude
 
 const getHeight = function(chart) {
@@ -213,6 +135,7 @@ class Map {
     this._lastInteraction = null;
     this._onLocationUpdate = opts.onLocationUpdate;
     this._onUpdateView = opts.onUpdateView;
+    this._navAids = false;
 
     this._view = new ol.View({
       zoom: this._defaultZoom,
@@ -281,7 +204,11 @@ class Map {
         self._onUpdateView();
       }
       self._updating = false;
-    } // updateLayers
+    }
+
+    if (this._navAids) {
+      this._showNavAids(ext);
+    }
 
     if (this._chartsMeta) {
       const charts = getCharts(this._chartsMeta, center, ext);
@@ -314,7 +241,7 @@ class Map {
     return this._location;
   }
 
-  _useLayers(charts) {
+  _removeChartLayers() {
     if (this._charts) {
       for (let i = 0; i != this._charts.length; ++i) {
         const chart = this._charts[i];
@@ -323,14 +250,27 @@ class Map {
         }
       }
     }
+    this._charts = null;
+  }
+
+  _removeNavAidsLayer() {
+    if (this._buoys) {
+      if (!this._map.removeLayer(this._buoys)) {
+        alert('buoys layer not found');
+      }
+    }
+    this._buoys = null;
+  }
+
+  _useLayers(charts) {
+    this._removeNavAidsLayer();
+    this._removeChartLayers();
     this._charts = charts;
     for (let i = 0; i != this._charts.length; ++i) {
       const chart = this._charts[i];
       this._map.addLayer(chart);
     }
     this.updateFeatures();
-
-    showNavAids(this);
   }
 
   updateFeatures() {
@@ -510,10 +450,87 @@ class Map {
 
   toggleRotation() {
     this._rotateView ^= true;
-    //if (!this._rotateView) {
-    //  this._view.setRotation(0);
-    //}
     return this._rotateView;
+  }
+
+  _showNavAids(extent) {
+    const v = this._view;
+
+    function updateNavAidsLayer(map, navAids) {
+      let features = []
+      const image = new ol.style.Icon({
+        anchor: [0.5, 0.5],
+        anchorXUnits: 'fraction',
+        anchorYUnits: 'fraction',
+        src: 'images/icon-buoy.png',
+      });
+
+      for (let i = 0; i != navAids.length; ++i) {
+        const b = navAids[i]
+        const p = ol.proj.fromLonLat(b.coord);
+        let f = new ol.Feature({
+          geometry: new ol.geom.Point(p),
+        });
+
+        const text = b.name + '\n' + b.desc + ' ' + b.prop;
+
+        f.setStyle(new ol.style.Style({
+          image: image,
+        /*
+          text: new ol.style.Text({
+            text: text,
+            textAlign: 'start',
+            font: 'italic 15px arial',
+            offsetX: 16,
+            offsetY: 16,
+            fill: new ol.style.Fill({
+              color: 'rgb(0, 65, 135)'
+            })
+          })
+        */
+        }));
+        features.push(f);
+      }
+      map._removeNavAidsLayer();
+      map._buoys = new ol.layer.Vector({
+        source: new ol.source.Vector({
+          features: features,
+        }),
+
+        //minResolution: v.getResolutionForZoom(18),
+        //maxResolution: v.getResolutionForZoom(14)
+
+      });
+      map._map.addLayer(map._buoys);
+    }
+
+
+    let url = 'navaids'
+
+    const lonLatMin = ol.proj.transform([extent[0], extent[1]], 'EPSG:3857', 'EPSG:4326');
+    const lonLatMax = ol.proj.transform([extent[2], extent[3]], 'EPSG:3857', 'EPSG:4326');
+    url += '/' + lonLatMin[0] + '/' + lonLatMin[1]
+    url += '/' + lonLatMax[0] + '/' + lonLatMax[1];
+
+    const xmlHttp = new XMLHttpRequest();
+
+    xmlHttp.onreadystatechange = function() {
+      if (xmlHttp.readyState===4) {
+        if (xmlHttp.status===200) {
+          updateNavAidsLayer(this, JSON.parse(xmlHttp.responseText));
+        }
+      }
+    }.bind(this);
+
+    xmlHttp.open('GET', url);
+    xmlHttp.send();
+  }
+
+
+  toggleNavAids() {
+    this._lastCenter = null;
+    this._navAids ^= true;
+    this._updateView();
   }
 
   addOverlay(overlay) {

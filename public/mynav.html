@@ -216,11 +216,11 @@
         width: 50px;
         height: 50px;
       }
-      .tablet .tracking-btn {
+      .tablet .ctrl-btn {
         width: 44px;
         height: 44px;
       }
-      .tablet .tracking-img.center {
+      .tablet .ctrl-img.center {
         display: block;
         margin: 0 auto;
       }
@@ -237,14 +237,6 @@
         width: 50px;
         height: 50px;
       }
-      .tablet .search-btn {
-        width: 44px;
-        height: 44px;
-      }
-      .tablet .search-img.center {
-        display: block;
-        margin: 0 auto;
-      }
 
       .dest {
         top: 140px;
@@ -258,13 +250,14 @@
         width: 50px;
         height: 50px;
       }
-      .tablet .dest-btn {
-        width: 44px;
-        height: 44px;
+      .nav-aids {
+        top: 168px;
+        left: .5em
       }
-      .tablet .dest-img.center {
-        display: block;
-        margin: 0 auto;
+      .tablet .nav-aids {
+        top: 273px;
+        width: 50px;
+        height: 50px;
       }
 
       .shutdown {
@@ -275,14 +268,6 @@
       .tablet .shutdown {
         width: 50px;
         height: 50px;
-      }
-      .tablet .shutdown-btn {
-        width: 44px;
-        height: 44px;
-      }
-      .tablet .shutdown-img.center {
-        display: block;
-        margin: 0 auto;
       }
 
       .chart {
@@ -369,9 +354,8 @@
 
       // Raspberry or iPad?
       // FIXME: armv7 for raspberry maybe not such a good idea
-      if (navigator.userAgent.match(/armv7/) ||
-          navigator.userAgent.match(/ipad/i)) {
-        var elem = document.getElementById('map');
+      if (navigator.userAgent.match(/armv7/) || navigator.userAgent.match(/ipad/i)) {
+        let elem = document.getElementById('map');
         elem.className += ' tablet';
       }
 
@@ -416,16 +400,16 @@
         const button = document.createElement('button');
         const iconLoc = document.createElement('img');
         iconLoc.src = 'images/location-arrow.png';
-        iconLoc.className = 'tracking-img';
+        iconLoc.className = 'ctrl-img';
 
         button.appendChild(iconLoc);
 
         button.title = 'Track current location';
-        button.className = 'tracking-btn';
+        button.className = 'ctrl-btn';
 
         const iconNav = document.createElement('img');
         iconNav.src = 'images/navigation-arrow.png';
-        iconNav.className = 'tracking-img';
+        iconNav.className = 'ctrl-img';
 
         var handler = function() {
           if (app.animation) {
@@ -516,11 +500,11 @@
         const button = document.createElement('button');
         const icon = document.createElement('img');
         icon.src = 'images/magnifier.png';
-        icon.className = 'search-img';
+        icon.className = 'ctrl-img';
 
         button.appendChild(icon);
         button.title = 'Search';
-        button.className = 'search-btn';
+        button.className = 'ctrl-btn';
 
         var handler = function() {
           alertify.prompt('', function(valid, value) {
@@ -569,10 +553,10 @@
         const button = document.createElement('button');
         const icon = document.createElement('img');
         icon.src = 'images/circular-target.png';
-        icon.className = 'dest-img';
+        icon.className = 'ctrl-img';
         button.appendChild(icon);
         button.title = 'Zoom on location';
-        button.className = 'dest-btn';
+        button.className = 'ctrl-btn';
         var handler = function() {
           if (popup.visible) {
             $(popup.getElement()).popover('destroy');
@@ -628,6 +612,32 @@
       }
       ol.inherits(destControl, ol.control.Control);
 
+      const navAidsControl = function(opt_options) {
+        const options = opt_options || {};
+        const button = document.createElement('button');
+        const icon = document.createElement('img');
+        icon.src = 'images/buoy.png';
+        icon.className = 'ctrl-img';
+        button.appendChild(icon);
+        button.title = 'Show navigation aids';
+        button.className = 'ctrl-btn';
+        var handler = function() {
+          app.map.toggleNavAids();
+        }
+        button.addEventListener('click', handler, false);
+        button.addEventListener('touchstart', handler, false);
+
+        var element = document.createElement('div');
+        element.className = 'nav-aids ol-custom ol-unselectable ol-control';
+        element.appendChild(button);
+
+        ol.control.Control.call(this, {
+          element: element,
+          target: options.target
+        });
+      }
+      ol.inherits(navAidsControl, ol.control.Control);
+
       /**
        * Shutdown button
        */
@@ -637,10 +647,10 @@
         const button = document.createElement('button');
         const icon = document.createElement('img');
         icon.src = 'images/shutdown.png';
-        icon.className = 'shutdown-img';
+        icon.className = 'ctrl-img';
         button.appendChild(icon);
         button.title = 'Shutdown system';
-        button.className = 'shutdown-btn';
+        button.className = 'ctrl-btn';
 
         const shutdown = function() {
           alertify.confirm('Do you really want to <b>shutdown</b> the system?',
@@ -1454,6 +1464,7 @@
           new trackingControl(),
           new searchControl(),
           new destControl(),
+          new navAidsControl(),
           new shutdownControl()
         ];
 
