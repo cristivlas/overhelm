@@ -15,6 +15,7 @@ const PNG = require('pngjs').PNG;
 const states = require(__dirname + '/states');
 const tmp = require('tmp');
 const urlJoin = require('url-join');
+const navAids = require(__dirname + '/AidsToNavigation.json');
 
 const currentsStations = require(__dirname + '/Currents_Active_Stations.json');
 const waterLevelStations = require(__dirname + '/Waterlevel_Active_Stations.json');
@@ -712,6 +713,32 @@ router.get('/shutdown/:arg', function(req, res, next) {
 
   res.send(false);
 });
+
+
+/******************************************************************
+ *
+ */
+router.get('/navaids/:lon1/:lat1/:lon2/:lat2', function(req, res, next) {
+  let result = []
+
+  for (let i = 0; i != navAids.features.length; ++i) {
+    const f = navAids.features[i];
+    if (f.geometry.coordinates[0] > req.params.lon1
+     && f.geometry.coordinates[1] > req.params.lat1
+     && f.geometry.coordinates[0] < req.params.lon2
+     && f.geometry.coordinates[1] < req.params.lat2) {
+
+     result.push({
+      name: f.properties.name,
+      desc: f.properties.structure,
+      prop: f.properties.characteristics,
+      coord: f.geometry.coordinates,
+     });
+    }
+  }
+  res.send(JSON.stringify(result, null, 2));
+});
+
 
 module.exports = router;
 

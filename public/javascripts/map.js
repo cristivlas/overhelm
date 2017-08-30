@@ -46,6 +46,28 @@ const getNOAAChartsMeta = function(callback) {
 }
 
 
+function getNavAids(extent) {
+  let url = 'navaids'
+  //console.log(extent)
+  const lonLatMin = ol.proj.transform([extent[0], extent[1]], 'EPSG:3857', 'EPSG:4326');
+  const lonLatMax = ol.proj.transform([extent[2], extent[3]], 'EPSG:3857', 'EPSG:4326');
+  url += '/' + lonLatMin[0] + '/' + lonLatMin[1]
+  url += '/' + lonLatMax[0] + '/' + lonLatMax[1];
+  //console.log(url);
+  const xmlHttp = new XMLHttpRequest();
+
+  xmlHttp.onreadystatechange = function() {
+    if (xmlHttp.readyState===4) {
+      if (xmlHttp.status===200) {
+        console.log(xmlHttp.responseText);
+      }
+    }
+  }
+  xmlHttp.open('GET', url);
+  xmlHttp.send();
+}
+
+
 // compute height as degrees of latitude
 
 const getHeight = function(chart) {
@@ -177,14 +199,22 @@ class Map {
   }
 
   _updateView() {
-    const center = this._view.getCenter();
-    if (this._lastCenter
-      && ol.extent.containsCoordinate(this._view.calculateExtent(), this._lastCenter)) {
-      return;
-    }
     const ext = this._view.calculateExtent();
 
+    function isLastCenterVisible(map) {
+      return map._lastCenter && ol.extent.containsCoordinate(ext, map._lastCenter);
+    }
+
+    if (isLastCenterVisible(this)) {
+      return;
+    }
+
+    const center = this._view.getCenter();
+
     const updateLayers = function(self, charts) {
+      if (isLastCenterVisible(self)) {
+        return;
+      }
       self._updating = true;
       self._lastCenter = center;
       const minRes = self._view.getMinResolution();
@@ -195,6 +225,8 @@ class Map {
         self._onUpdateView();
       }
       self._updating = false;
+
+      getNavAids(ext);
     } // updateLayers
 
     if (this._chartsMeta) {
