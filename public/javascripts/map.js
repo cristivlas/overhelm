@@ -49,21 +49,29 @@ const getNOAAChartsMeta = function(callback) {
 // compute height as degrees of latitude
 
 const getHeight = function(chart) {
-  return Math.abs(chart.upper[1] - chart.lower[1]); 
+  return Math.abs(chart.upper[1] - chart.lower[1]);
+}
+
+const contains = function(t, c, ext) {
+  if (ol.extent.containsExtent(t.poly.getExtent(), ext)) {
+    return true;
+  }
+  if (t.poly.intersectsCoordinate(c)) {
+    return true;
+  }
 }
 
 const getCharts = function(tilesets, center, ext) {
   let charts = []
   for (let i = 0; i != tilesets.length; ++i) {
     const t = tilesets[i];
-    if (t.poly.intersectsCoordinate(center)) {
+    if (contains(t, center, ext)) {
       charts.push(t);
     }
   }
   charts.sort(function(a, b) {
     if (a.scale < b.scale) return -1;
     if (a.scale > b.scale) return 1;
-    // prefer the chart that covers more degress of latitude
     const ha = getHeight(a);
     const hb = getHeight(b);
     if (ha > hb) return -1;
@@ -74,11 +82,12 @@ const getCharts = function(tilesets, center, ext) {
 }
 
 
-const makeLayers = function(charts, minRes, maxRes) {
+const makeLayers = function(map, charts, minRes, maxRes) {
   let layers = []
   if (charts.length===0) {
     return layers;
   }
+  console.log(minRes, maxRes);
 
   const lastChart = charts[charts.length-1];
   const maxScale = lastChart.scale;
@@ -86,19 +95,26 @@ const makeLayers = function(charts, minRes, maxRes) {
   for (let i = 0; i != charts.length; ++i) {
     const tileset = charts[i];
     tileset.minRes = i > 0 ? charts[i-1].maxRes : minRes;
-    tileset.maxRes = Math.ceil(maxRes * tileset.scale / maxScale);
+    tileset.maxRes = Math.floor(tileset.minRes + (maxRes - minRes) * tileset.scale / maxScale);
+
+    console.log(tileset.ident, tileset.scale, tileset.minRes, tileset.maxRes);
 
     const url = 'tiles/noaa/' + tileset.ident + '/{z}/{x}/{y}';
     const sounding = tileset.sounding ? ' Soundings in ' + tileset.sounding : '';
+    const source = new ol.source.XYZ({
+      url: url,
+      attributions: tileset.ident.split('_')[0] + sounding,
+    });
+
     const layer = new ol.layer.Tile({
-      source: new ol.source.XYZ({
-        url: url,
-        attributions: tileset.ident.split('_')[0] + sounding,
-      }),
+      source: source,
+
       minResolution: tileset.minRes,
       maxResolution: tileset.maxRes,
+
       opacity: .8
     });
+
     layers.push(layer);
   }
   return layers;
@@ -147,6 +163,10 @@ class Map {
 
     this._view.on('change:center', this._updateView.bind(this, null));
 
+    //this._view.on('change:resolution', function() {
+    //  console.log(this._view.getZoom(), this._view.getResolution())
+    //}.bind(this));
+
     this._map = new ol.Map({
       target: opts.target,
       layers: [ this._baseLayer() ],
@@ -178,9 +198,15 @@ class Map {
   }
 
   _updateView(cb) {
-    const ext = this._view.calculateExtent();
+    let ext = this._view.calculateExtent();
+    const w = Math.abs(ext[2] - ext[0]);
+    const h = Math.abs(ext[3] - ext[1]);
+    ext[0] -= w/2;
+    ext[2] += w/2;
+    ext[1] -= h/2;
+    ext[3] += h/2;
 
-    function isLastCenterVisible(map) {
+    const isLastCenterVisible = function(map) {
       return map._lastCenter && ol.extent.containsCoordinate(ext, map._lastCenter);
     }
 
@@ -206,7 +232,7 @@ class Map {
       self._lastCenter = center;
       const minRes = self._view.getMinResolution();
       const maxRes = self._view.getMaxResolution();
-      self._useLayers(makeLayers(charts, minRes, maxRes));
+      self._useLayers(makeLayers(self, charts, minRes, maxRes));
 
       if (self._navAids) {
         self._showNavAids(ext, function() {
@@ -416,7 +442,7 @@ class Map {
     this._location = this._currentLocation;
     return this._showLocation(Mode.CURRENT_LOCATION);
   }
-  
+
   showDestination() {
     this._location = this._destLocation;
     return this._showLocation(Mode.SHOW_DESTINATION);
@@ -442,7 +468,7 @@ class Map {
     }
     return this._inspectLocation;
   }
-  
+
   setDestination(loc) {
     if (!loc) {
       loc = this._inspectLocation;
@@ -464,7 +490,7 @@ class Map {
   _showNavAids(extent, cb) {
     const v = this._view;
 
-    function updateNavAidsLayer(map, navAids) {
+    const updateNavAidsLayer = function(map, navAids) {
 
       let features = []
       const image = new ol.style.Icon({
@@ -472,6 +498,7 @@ class Map {
         anchorXUnits: 'fraction',
         anchorYUnits: 'fraction',
         src: 'images/icon-buoy.png',
+        color: 'blue'
       });
 
       map._nearestAid = null;
@@ -515,8 +542,8 @@ class Map {
           features: features,
         }),
 
-        //minResolution: v.getResolutionForZoom(18),
-        //maxResolution: v.getResolutionForZoom(14)
+        minResolution: v.getResolutionForZoom(18),
+        maxResolution: v.getResolutionForZoom(10)
 
       });
       map._map.addLayer(map._buoys);
