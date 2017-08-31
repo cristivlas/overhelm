@@ -145,7 +145,7 @@ class Map {
       center: this._location ? this._location._point : null
     })
 
-    this._view.on('change:center', this._updateView.bind(this));
+    this._view.on('change:center', this._updateView.bind(this, null));
 
     this._map = new ol.Map({
       target: opts.target,
@@ -177,7 +177,7 @@ class Map {
     this._lastInteraction = new Date();
   }
 
-  _updateView() {
+  _updateView(cb) {
     const ext = this._view.calculateExtent();
 
     function isLastCenterVisible(map) {
@@ -203,11 +203,16 @@ class Map {
       if (self._onUpdateView) {
         self._onUpdateView();
       }
-      self._updating = false;
-    }
-
-    if (this._navAids) {
-      this._showNavAids(ext);
+      if (self._navAids) {
+        self._showNavAids(ext, function() {
+          self._updating = false;
+          if (cb) cb();
+        })
+      }
+      else {
+        self._updating = false;
+        if (cb) cb();
+      }
     }
 
     if (this._chartsMeta) {
@@ -453,10 +458,11 @@ class Map {
     return this._rotateView;
   }
 
-  _showNavAids(extent) {
+  _showNavAids(extent, cb) {
     const v = this._view;
 
     function updateNavAidsLayer(map, navAids) {
+
       let features = []
       const image = new ol.style.Icon({
         anchor: [0.5, 0.5],
@@ -465,8 +471,17 @@ class Map {
         src: 'images/icon-buoy.png',
       });
 
+      map._nearestAid = null;
+      let dMin = 999999;
       for (let i = 0; i != navAids.length; ++i) {
         const b = navAids[i]
+
+        const d = getDistanceFromLonLat(map._location._coord, b.coord);
+        if (!map._nearestAid || d < dMin) {
+          map._nearestAid = b;
+          dMin = d;
+        }
+
         const p = ol.proj.fromLonLat(b.coord);
         let f = new ol.Feature({
           geometry: new ol.geom.Point(p),
@@ -502,8 +517,10 @@ class Map {
 
       });
       map._map.addLayer(map._buoys);
+      if (cb) {
+        cb();
+      }
     }
-
 
     let url = 'navaids'
 
@@ -528,9 +545,22 @@ class Map {
 
 
   toggleNavAids() {
+    if (this.animation) {
+      return;
+    }
+    this._view.setZoom(this._defaultZoom);
     this._lastCenter = null;
     this._navAids ^= true;
-    this._updateView();
+    this._updateView(function() {
+      if (this._navAids && this._nearestAid) {
+        this.animation = true;
+        this._view.animate({
+          center: ol.proj.fromLonLat(this._nearestAid.coord)
+        }, function() {
+          this.animation = false;
+        }.bind(this))
+      }
+    }.bind(this));
   }
 
   addOverlay(overlay) {

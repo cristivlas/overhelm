@@ -415,10 +415,10 @@
         iconNav.className = 'ctrl-img';
 
         var handler = function() {
-          if (app.animation) {
+          if (app.map.animation) {
             return;
           }
-          app.animation = true;
+          app.map.animation = true;
           if (geolocation.isTracking()) {
             app.map.toggleRotation();
           }
@@ -456,7 +456,7 @@
             if (rotateView) {
               app.map.toggleRotation();
             }
-            app.animation = false;
+            app.map.animation = false;
           })
         }
         button.addEventListener('click', handler, false);
@@ -571,10 +571,10 @@
             updatePopup(loc._point, app.destination.place, loc._coord);
           }
           else {
-            if (app.animation) {
+            if (app.map.animation) {
               return;
             }
-            app.animation = true;
+            app.map.animation = true;
             let rot = 0;
             const rotateView = app.map._rotateView;
 
@@ -596,7 +596,7 @@
               if (rotateView) {
                 app.map.toggleRotation();
               }
-              app.animation = false;
+              app.map.animation = false;
             })
           }
         }
@@ -624,14 +624,22 @@
         button.appendChild(icon);
         button.title = 'Show navigation aids';
         button.className = 'ctrl-btn';
-        var handler = function() {
-          app.map.toggleNavAids();
-        }
-        button.addEventListener('click', handler, false);
 
         var element = document.createElement('div');
         element.className = 'nav-aids ol-custom ol-unselectable ol-control';
         element.appendChild(button);
+        element.id = 'nav-aids'
+        
+        var handler = function() {
+          app.map.toggleNavAids();
+          if (app.map._navAids) {
+            element.style.backgroundColor = 'white';
+          }
+          else {
+            element.style.backgroundColor = 'gray';
+          }
+        }
+        button.addEventListener('click', handler, false);
 
         ol.control.Control.call(this, {
           element: element,
