@@ -190,6 +190,14 @@ class Map {
 
     const center = this._view.getCenter();
 
+    const finishLayers = function(self, cb) {
+      self._updating = false;
+      if (cb) cb();
+      if (self._onUpdateView) {
+        self._onUpdateView();
+      }
+    }
+
     const updateLayers = function(self, charts) {
       if (isLastCenterVisible(self)) {
         return;
@@ -200,18 +208,13 @@ class Map {
       const maxRes = self._view.getMaxResolution();
       self._useLayers(makeLayers(charts, minRes, maxRes));
 
-      if (self._onUpdateView) {
-        self._onUpdateView();
-      }
       if (self._navAids) {
         self._showNavAids(ext, function() {
-          self._updating = false;
-          if (cb) cb();
+          finishLayers(self, cb);
         })
       }
       else {
-        self._updating = false;
-        if (cb) cb();
+        finishLayers(self, cb);
       }
     }
 
@@ -551,6 +554,9 @@ class Map {
     this._view.setZoom(this._defaultZoom);
     this._lastCenter = null;
     this._navAids ^= true;
+    if (!this._navAids) {
+      this._showLocation(this._mode);
+    }
     this._updateView(function() {
       if (this._navAids && this._nearestAid) {
         this.animation = true;
