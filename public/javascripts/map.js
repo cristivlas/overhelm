@@ -87,7 +87,7 @@ const makeLayers = function(map, charts, minRes, maxRes) {
   if (charts.length===0) {
     return layers;
   }
-  console.log(minRes, maxRes);
+  // console.log(minRes, maxRes);
 
   const lastChart = charts[charts.length-1];
   const maxScale = lastChart.scale;
@@ -97,7 +97,7 @@ const makeLayers = function(map, charts, minRes, maxRes) {
     tileset.minRes = i > 0 ? charts[i-1].maxRes : minRes;
     tileset.maxRes = Math.floor(tileset.minRes + (maxRes - minRes) * tileset.scale / maxScale);
 
-    console.log(tileset.ident, tileset.scale, tileset.minRes, tileset.maxRes);
+    // console.log(tileset.ident, tileset.scale, tileset.minRes, tileset.maxRes);
 
     const url = 'tiles/noaa/' + tileset.ident + '/{z}/{x}/{y}';
     const sounding = tileset.sounding ? ' Soundings in ' + tileset.sounding : '';
@@ -199,13 +199,14 @@ class Map {
 
   _updateView(cb) {
     let ext = this._view.calculateExtent();
+/*
     const w = Math.abs(ext[2] - ext[0]);
     const h = Math.abs(ext[3] - ext[1]);
     ext[0] -= w/2;
     ext[2] += w/2;
     ext[1] -= h/2;
     ext[3] += h/2;
-
+ */
     const isLastCenterVisible = function(map) {
       return map._lastCenter && ol.extent.containsCoordinate(ext, map._lastCenter);
     }
@@ -498,7 +499,6 @@ class Map {
         anchorXUnits: 'fraction',
         anchorYUnits: 'fraction',
         src: 'images/icon-buoy.png',
-        color: 'blue'
       });
 
       map._nearestAid = null;
@@ -588,7 +588,8 @@ class Map {
       if (this._navAids && this._nearestAid) {
         this.animation = true;
         this._view.animate({
-          center: ol.proj.fromLonLat(this._nearestAid.coord)
+          center: ol.proj.fromLonLat(this._nearestAid.coord),
+          zoom: 14
         }, function() {
           this.animation = false;
         }.bind(this))
