@@ -924,8 +924,8 @@
         case 'landscape':
           canvas.width = canvas.height = rect.height;
           elem.style.top = rect.top + 'px';
-          elem.style.left = (rect.left - rect.height - 4) + 'px';
-          right = window.innerWidth -rect.left + 4;
+          elem.style.left = (rect.left - rect.height - 1) + 'px';
+          right = window.innerWidth - rect.left + 1;
           top = rect.top;
           break;
 
