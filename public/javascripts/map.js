@@ -105,6 +105,10 @@ const makeLayers = function(map, charts, minRes, maxRes) {
     const source = new ol.source.XYZ({
       url: url,
       attributions: tileset.ident.split('_')[0] + sounding,
+      tileLoadFunction: function(imageTile, src) {
+        console.log(src)
+        imageTile.getImage().src = src;
+      }
     });
 
     const layer = new ol.layer.Tile({
@@ -117,6 +121,14 @@ const makeLayers = function(map, charts, minRes, maxRes) {
     });
 
     source.on('tileloaderror', function(e) {
+      if (i < charts.length) {
+        next = charts[i+1].ident;
+        const c = e.tile.getTileCoord();
+        const src = '/tiles/noaa/' + next + '/' + c[0] + '/' + c[1] + '/' + c[2];
+        console.log(src)
+        //e.tile.getImage().src = src;
+        //e.tile.load()
+      }
     })
 
     layers.push(layer);
