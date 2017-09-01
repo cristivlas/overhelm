@@ -105,10 +105,6 @@ const makeLayers = function(map, charts, minRes, maxRes) {
     const source = new ol.source.XYZ({
       url: url,
       attributions: tileset.ident.split('_')[0] + sounding,
-      tileLoadFunction: function(imageTile, src) {
-        console.log(src)
-        imageTile.getImage().src = src;
-      }
     });
 
     const layer = new ol.layer.Tile({
@@ -121,13 +117,14 @@ const makeLayers = function(map, charts, minRes, maxRes) {
     });
 
     source.on('tileloaderror', function(e) {
-      if (i < charts.length) {
-        next = charts[i+1].ident;
-        const c = e.tile.getTileCoord();
-        const src = '/tiles/noaa/' + next + '/' + c[0] + '/' + c[1] + '/' + c[2];
-        console.log(src)
-        //e.tile.getImage().src = src;
-        //e.tile.load()
+      z = e.tile.getTileCoord()[0];
+      if (!layer.errcnt) {
+        layer.errcnt = [];
+      }
+      layer.errcnt[z] = (layer.errcnt[z] || 0) + 1;
+      console.log(tileset.ident, z, layer.errcnt[z]);
+      if (layer.errcnt[z]===18-z) {
+        map._view.setZoom(z-1);
       }
     })
 
