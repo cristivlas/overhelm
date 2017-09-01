@@ -92,12 +92,13 @@ const makeLayers = function(map, charts, minRes, maxRes) {
   const lastChart = charts[charts.length-1];
   const maxScale = lastChart.scale;
 
+  let prev = null;
   for (let i = 0; i != charts.length; ++i) {
     const tileset = charts[i];
-    tileset.minRes = i > 0 ? charts[i-1].maxRes : minRes;
+    tileset.minRes = prev ? prev.maxRes : minRes;
     tileset.maxRes = Math.floor(tileset.minRes + (maxRes - minRes) * tileset.scale / maxScale);
-
-    // console.log(tileset.ident, tileset.scale, tileset.minRes, tileset.maxRes);
+    prev = charts[i];
+    //console.log(tileset.ident, tileset.scale, tileset.minRes, tileset.maxRes);
 
     const url = 'tiles/noaa/' + tileset.ident + '/{z}/{x}/{y}';
     const sounding = tileset.sounding ? ' Soundings in ' + tileset.sounding : '';
@@ -114,6 +115,9 @@ const makeLayers = function(map, charts, minRes, maxRes) {
 
       opacity: .8
     });
+
+    source.on('tileloaderror', function(e) {
+    })
 
     layers.push(layer);
   }
