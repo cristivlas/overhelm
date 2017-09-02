@@ -1,5 +1,11 @@
 const smoothingFactor = 0.9;
-const WMM = new WorldMagneticModel();
+let WMM = null;
+try {
+  WMM = new WorldMagneticModel();
+}
+catch (err) {
+  console.log('WorldMagneticModel not present');
+}
 
 class Geolocation {
   constructor(opt_options) {
@@ -17,7 +23,7 @@ class Geolocation {
     this._ios = (navigator.platform === 'iPad' || navigator.platform === 'iPhone');
     this._mobile = navigator.userAgent.match(/mobile/i);
     this._iunit = 0;
-    this._units = [ 'kts', 'mph', 'km/h', '\u00B0 TN' ];
+    this._units = [ 'kts', 'mph', 'km/h', '\u00B0' + (WMM ? ' True' : '') ];
     this._speedConversion = [ 1.943844, 2.236936, 3.6, 0.0 ];
     this.speed = 0;
     this.rotation = 0;
@@ -139,7 +145,7 @@ class Geolocation {
 
       window.addEventListener('deviceorientation', function(e) {
         // 0 for altitude since this is to be used at sea level
-        this._decl = WMM.declination(0, this.coord.lat, this.coord.lon, this._year);
+        this._decl = WMM ? WMM.declination(0, this.coord.lat, this.coord.lon, this._year) : 0;
 
         if (e.webkitCompassHeading) {
           this._heading = e.webkitCompassHeading + this._decl;

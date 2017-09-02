@@ -25,7 +25,7 @@ function toJSON(file) {
         source: file,
         tool: 'get_noaa_metadata.js',
         metadata: metadata,
-      } , null, 2));
+      } /* , null, 2 */));
     });
   })
 }

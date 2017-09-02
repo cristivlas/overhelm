@@ -3,7 +3,6 @@ const roundPoint = function(p, prec = 10000) {
   p[1] = Math.floor(p[1] * prec)/prec;
 }
 
-
 /**
  * Get all NOAA charts metadata
  */
@@ -212,14 +211,7 @@ class Map {
 
   _updateView(cb) {
     let ext = this._view.calculateExtent();
-/*
-    const w = Math.abs(ext[2] - ext[0]);
-    const h = Math.abs(ext[3] - ext[1]);
-    ext[0] -= w/2;
-    ext[2] += w/2;
-    ext[1] -= h/2;
-    ext[3] += h/2;
- */
+
     const isLastCenterVisible = function(map) {
       return map._lastCenter && ol.extent.containsCoordinate(ext, map._lastCenter);
     }
@@ -263,7 +255,12 @@ class Map {
       updateLayers(this, charts);
     }
     else {
+      if (this._metaRequested) {
+        return;
+      }
+      this._metaRequested = true;
       getNOAAChartsMeta(function(err, result) {
+        this._metaRequested = false;
         if (err) {
           throw err;
         }
