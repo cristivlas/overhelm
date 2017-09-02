@@ -87,7 +87,7 @@ const makeLayers = function(map, charts, minRes, maxRes) {
   if (charts.length===0) {
     return layers;
   }
-  // console.log(minRes, maxRes);
+  //console.log(minRes, maxRes);
 
   const lastChart = charts[charts.length-1];
   const maxScale = lastChart.scale;
@@ -122,8 +122,8 @@ const makeLayers = function(map, charts, minRes, maxRes) {
         layer.errcnt = [];
       }
       layer.errcnt[z] = (layer.errcnt[z] || 0) + 1;
-      console.log(tileset.ident, z, layer.errcnt[z]);
-      if (layer.errcnt[z]===18-z) {
+      // console.log(tileset.ident, z, layer.errcnt[z]);
+      if (layer.errcnt[z]===20-z) {
         map._view.setZoom(z-1);
       }
     })
