@@ -6,7 +6,7 @@ const parser = new xml2js.Parser();
 //
 // TODO: download this from NOAA on the fly and remove from GIT
 //
-const file = 'RNCProdCat_19115.xml';
+const file = __dirname + '/RNCProdCat_19115.xml';
 
 let metadata = {}
 
@@ -80,6 +80,7 @@ function processExtent(ex, info) {
         info.extent[i].scale = parseInt(attr[1].trim());
       }
     }
+    /*
     const linearRing = findChild(extent, 'gml:LinearRing');
     if (linearRing) {
       info.extent[i].poly = [ ];
@@ -88,6 +89,7 @@ function processExtent(ex, info) {
         info.extent[i].poly.push([latLon[0], latLon[1]])
       })
     }
+    */
   }
 }
 
