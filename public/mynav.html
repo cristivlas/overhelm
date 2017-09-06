@@ -624,40 +624,7 @@
         });
       }
       ol.inherits(destControl, ol.control.Control);
-  /*
-      const navAidsControl = function(opt_options) {
-        const options = opt_options || {};
-        const button = document.createElement('button');
-        const icon = document.createElement('img');
-        icon.src = 'images/buoy.png';
-        icon.className = 'ctrl-img';
-        button.appendChild(icon);
-        button.title = 'Show navigation aids';
-        button.className = 'ctrl-btn';
 
-        var element = document.createElement('div');
-        element.className = 'nav-aids ol-custom ol-unselectable ol-control';
-        element.appendChild(button);
-        element.id = 'nav-aids'
-        
-        var handler = function() {
-          app.map.toggleNavAids();
-          if (app.map._navAids) {
-            element.style.backgroundColor = 'white';
-          }
-          else {
-            element.style.backgroundColor = 'gray';
-          }
-        }
-        button.addEventListener('click', handler, false);
-
-        ol.control.Control.call(this, {
-          element: element,
-          target: options.target
-        });
-      }
-      ol.inherits(navAidsControl, ol.control.Control);
-    */
 
       /**
        * Shutdown button
@@ -1493,7 +1460,6 @@
           new trackingControl(),
           new searchControl(),
           new destControl(),
-          // new navAidsControl(),
           new shutdownControl()
         ];
 
