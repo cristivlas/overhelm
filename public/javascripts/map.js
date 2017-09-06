@@ -290,12 +290,13 @@ class Map {
   }
 
   _showLocation(mode) {
-    this._lastCenter = null;
     this._lastInteraction = null;
     this._mode = mode;
     this._locationUpdate = true;
     this._view.setCenter(this._location._point);
-    this._map.render(); // hack: render popup
+    if (mode != Mode.CURRENT_LOCATION) {
+      this._map.render(); // hack: render popup if needed
+    }
     return this._location;
   }
 
