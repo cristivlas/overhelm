@@ -1386,8 +1386,12 @@
         popup.visible = true; // popover on map postrender
       }
 
+      let isSearching = false;
 
       function searchLocation(name, coord) {
+        if (isSearching) {
+          return;
+        }
  
         function buildSelection(matches) {
           let selectHtml = '<b>Nearest Matches</b><br>';
@@ -1449,6 +1453,10 @@
               alertify.alert('<b>No matches</b>');
             }
           }
+        }
+        isSearching = true;
+        xmlHttp.onload = xmlHttp.onerror = function() {
+          isSearching = false;
         }
         xmlHttp.open('GET', url);
         xmlHttp.send();

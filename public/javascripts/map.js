@@ -86,7 +86,6 @@ const makeLayers = function(map, charts, minRes, maxRes) {
   if (charts.length===0) {
     return layers;
   }
-  //console.log(minRes, maxRes);
 
   const lastChart = charts[charts.length-1];
   const maxScale = lastChart.scale;
@@ -97,7 +96,6 @@ const makeLayers = function(map, charts, minRes, maxRes) {
     tileset.minRes = prev ? prev.maxRes : minRes;
     tileset.maxRes = Math.floor(tileset.minRes + (maxRes - minRes) * tileset.scale / maxScale);
     prev = charts[i];
-    //console.log(tileset.ident, tileset.scale, tileset.minRes, tileset.maxRes);
 
     const url = 'tiles/noaa/' + tileset.ident + '/{z}/{x}/{y}';
     const sounding = tileset.sounding ? ' Soundings in ' + tileset.sounding : '';
@@ -114,15 +112,40 @@ const makeLayers = function(map, charts, minRes, maxRes) {
 
       opacity: .8
     });
+    layer.ident = tileset.ident;
 
     source.on('tileloaderror', function(e) {
-      z = e.tile.getTileCoord()[0];
+
+      map._lastInteraction = null; // don't delay updates
+      map._lastCenter = null; // recalculate layers
+
+      // The idea: if we have as many errors per layer, per zoom level
+      // as tiles in the tile grid, then force a zoom out.
       if (!layer.errcnt) {
-        layer.errcnt = [];
+        layer.errcnt = new Array(20).fill(0);
       }
-      layer.errcnt[z] = (layer.errcnt[z] || 0) + 1;
-      // console.log(tileset.ident, z, layer.errcnt[z]);
-      if (layer.errcnt[z]===20-z) {
+
+      if (!layer.tileCount) {
+        layer.tileCount = [];
+      }
+
+      const coord = e.tile.getTileCoord();
+      const z = coord[0];
+      ++layer.errcnt[z];
+
+      if (!layer.tileCount[z]) {
+
+        // count tiles
+
+        layer.tileCount[z] = 0;
+        source.getTileGrid().forEachTileCoord(map._view.calculateExtent(), z, function() {
+          ++layer.tileCount[z];
+        })
+      }
+
+      // console.log(layer.ident, z, layer.errcnt[z], layer.tileCount[z]);
+
+      if (layer.errcnt[z]===layer.tileCount[z]) {
         map._view.setZoom(z-1);
       }
     })
@@ -163,7 +186,6 @@ class Map {
     this._lastInteraction = null;
     this._onLocationUpdate = opts.onLocationUpdate;
     this._onUpdateView = opts.onUpdateView;
-    this._navAids = false;
 
     this._view = new ol.View({
       zoom: this._defaultZoom,
@@ -173,7 +195,7 @@ class Map {
       center: this._location ? this._location._point : null
     })
 
-    this._view.on('change:center', this._updateView.bind(this, null));
+    this._view.on('change:center', this._updateView.bind(this));
 
     //this._view.on('change:resolution', function() {
     //  console.log(this._view.getZoom(), this._view.getResolution())
@@ -209,50 +231,46 @@ class Map {
     this._lastInteraction = new Date();
   }
 
-  _updateView(cb) {
-    let ext = this._view.calculateExtent();
+  _isLastCenterVisible(ext) {
+    return this._lastCenter && ol.extent.containsCoordinate(ext, this._lastCenter);
+  }
 
-    const isLastCenterVisible = function(map) {
-      return map._lastCenter && ol.extent.containsCoordinate(ext, map._lastCenter);
+  _finishLayers() {
+    this._updating = false;
+    if (this._locationUpdate) {
+      this._locationUpdate = false;
+      if (this._onLocationUpdate) {
+        this._onLocationUpdate(this._location._coord);
+      }
     }
+    if (this._onUpdateView) {
+      this._onUpdateView();
+    }
+  }
 
-    if (isLastCenterVisible(this)) {
+  _updateLayers(center, ext, charts) {
+    if (this._isLastCenterVisible(ext)) {
+      return;
+    }
+    this._updating = true;
+    this._lastCenter = center;
+    const minRes = this._view.getMinResolution();
+    const maxRes = this._view.getMaxResolution();
+    this._useLayers(makeLayers(this, charts, minRes, maxRes));
+    this._finishLayers();
+  }
+
+  _updateView() {
+    let ext = this._view.calculateExtent();
+    if (this._isLastCenterVisible(ext)) {
       return;
     }
 
     const center = this._view.getCenter();
 
-    const finishLayers = function(self, cb) {
-      self._updating = false;
-      if (cb) cb();
-      if (self._onUpdateView) {
-        self._onUpdateView();
-      }
-    }
-
-    const updateLayers = function(self, charts) {
-      if (isLastCenterVisible(self)) {
-        return;
-      }
-      self._updating = true;
-      self._lastCenter = center;
-      const minRes = self._view.getMinResolution();
-      const maxRes = self._view.getMaxResolution();
-      self._useLayers(makeLayers(self, charts, minRes, maxRes));
-
-      if (self._navAids) {
-        self._showNavAids(ext, function() {
-          finishLayers(self, cb);
-        })
-      }
-      else {
-        finishLayers(self, cb);
-      }
-    }
-
     if (this._chartsMeta) {
       const charts = getCharts(this._chartsMeta, center, ext);
-      updateLayers(this, charts);
+      this._updateLayers(center, ext, charts);
     }
     else {
       if (this._metaRequested) {
@@ -266,23 +284,17 @@ class Map {
         }
         this._chartsMeta = result;
         const charts = getCharts(this._chartsMeta, center, ext);
-        updateLayers(this, charts);
+        this._updateLayers(center, ext, charts);
       }.bind(this))
     }
   }
 
   _showLocation(mode) {
-    this._view.setCenter(this._location._point);
-
-    if (this._onLocationUpdate) {
-      this._onLocationUpdate(this._location._coord);
-    }
-    if (mode !== this._mode) {
-      this._lastCenter = null;
-    }
+    this._lastCenter = null;
+    this._lastInteraction = null;
     this._mode = mode;
-    this._updateView();
-    this.updateFeatures();
+    this._locationUpdate = true;
+    this._view.setCenter(this._location._point);
     return this._location;
   }
 
@@ -298,17 +310,7 @@ class Map {
     this._charts = null;
   }
 
-  _removeNavAidsLayer() {
-    if (this._buoys) {
-      if (!this._map.removeLayer(this._buoys)) {
-        alert('buoys layer not found');
-      }
-    }
-    this._buoys = null;
-  }
-
   _useLayers(charts) {
-    this._removeNavAidsLayer();
     this._removeChartLayers();
     this._charts = charts;
     for (let i = 0; i != this._charts.length; ++i) {
@@ -496,115 +498,6 @@ class Map {
   toggleRotation() {
     this._rotateView ^= true;
     return this._rotateView;
-  }
-
-  _showNavAids(extent, cb) {
-    const v = this._view;
-
-    const updateNavAidsLayer = function(map, navAids) {
-
-      let features = []
-      const image = new ol.style.Icon({
-        anchor: [0.5, 0.5],
-        anchorXUnits: 'fraction',
-        anchorYUnits: 'fraction',
-        src: 'images/icon-buoy.png',
-      });
-
-      map._nearestAid = null;
-      let dMin = 999999;
-      for (let i = 0; i != navAids.length; ++i) {
-        const b = navAids[i]
-
-        const d = getDistanceFromLonLat(map._location._coord, b.coord);
-        if (!map._nearestAid || d < dMin) {
-          map._nearestAid = b;
-          dMin = d;
-        }
-
-        const p = ol.proj.fromLonLat(b.coord);
-        let f = new ol.Feature({
-          geometry: new ol.geom.Point(p),
-        });
-
-        const text = b.name + '\n' + b.desc + ' ' + b.prop;
-
-        f.setStyle(new ol.style.Style({
-          image: image,
-        /*
-          text: new ol.style.Text({
-            text: text,
-            textAlign: 'start',
-            font: 'italic 15px arial',
-            offsetX: 16,
-            offsetY: 16,
-            fill: new ol.style.Fill({
-              color: 'rgb(0, 65, 135)'
-            })
-          })
-        */
-        }));
-        features.push(f);
-      }
-      map._removeNavAidsLayer();
-      map._buoys = new ol.layer.Vector({
-        source: new ol.source.Vector({
-          features: features,
-        }),
-
-        minResolution: v.getResolutionForZoom(18),
-        maxResolution: v.getResolutionForZoom(10)
-
-      });
-      map._map.addLayer(map._buoys);
-      if (cb) {
-        cb();
-      }
-    }
-
-    let url = 'navaids'
-
-    const lonLatMin = ol.proj.transform([extent[0], extent[1]], 'EPSG:3857', 'EPSG:4326');
-    const lonLatMax = ol.proj.transform([extent[2], extent[3]], 'EPSG:3857', 'EPSG:4326');
-    url += '/' + lonLatMin[0] + '/' + lonLatMin[1]
-    url += '/' + lonLatMax[0] + '/' + lonLatMax[1];
-
-    const xmlHttp = new XMLHttpRequest();
-
-    xmlHttp.onreadystatechange = function() {
-      if (xmlHttp.readyState===4) {
-        if (xmlHttp.status===200) {
-          updateNavAidsLayer(this, JSON.parse(xmlHttp.responseText));
-        }
-      }
-    }.bind(this);
-
-    xmlHttp.open('GET', url);
-    xmlHttp.send();
-  }
-
-
-  toggleNavAids() {
-    if (this.animation) {
-      return;
-    }
-    this._view.setZoom(this._defaultZoom);
-    this._lastCenter = null;
-    this._navAids ^= true;
-    if (!this._navAids) {
-      this._showLocation(this._mode);
-    }
-    this._updateView(function() {
-      if (this._navAids && this._nearestAid) {
-        this.animation = true;
-        this._view.animate({
-          center: ol.proj.fromLonLat(this._nearestAid.coord),
-          zoom: 14
-        }, function() {
-          this.animation = false;
-        }.bind(this))
-      }
-    }.bind(this));
   }
 
   addOverlay(overlay) {
