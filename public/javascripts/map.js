@@ -295,6 +295,7 @@ class Map {
     this._mode = mode;
     this._locationUpdate = true;
     this._view.setCenter(this._location._point);
+    this._map.render(); // hack: render popup
     return this._location;
   }
 

@@ -478,6 +478,8 @@
       }
       ol.inherits(trackingControl, ol.control.Control);
       
+      let isSearching = false;
+
       /**
        * Custom control for searching for a specific location on the charts
        */
@@ -515,6 +517,9 @@
         button.className = 'ctrl-btn';
 
         var handler = function() {
+          if (isSearching) {
+            return;
+          }
           alertify.prompt('', function(valid, value) {
             if (valid) {
               value = value.trim();
@@ -568,8 +573,8 @@
         var handler = function() {
           if (popup.visible) {
             $(popup.getElement()).popover('destroy');
-            popup.visible = popup.show = false;
           }
+          popup.visible = popup.show = false;
           if (app.hasDestination()) {
             geolocation.stop();
             const loc = app.map.showDestination();
@@ -1386,12 +1391,11 @@
         popup.visible = true; // popover on map postrender
       }
 
-      let isSearching = false;
-
       function searchLocation(name, coord) {
         if (isSearching) {
           return;
         }
+        isSearching = true;
  
         function buildSelection(matches) {
           let selectHtml = '<b>Nearest Matches</b><br>';
@@ -1421,6 +1425,7 @@
               const selectHtml = buildSelection(matches);
               
               alertify.confirm(selectHtml, function(accept) {
+                isSearching = false;
                 if (!accept) {
                   return;
                 }
@@ -1439,8 +1444,8 @@
 
                 if (popup.visible) {
                   $(popup.getElement()).popover('destroy');
-                  popup.visible = popup.show = false;  
                 }
+                popup.visible = popup.show = false;  
                 updatePopup(
                   app.map.setInspectLocation(srchCoord)._point,
                   matches[elem.selectedIndex],
@@ -1450,12 +1455,12 @@
               });
             }
             else {
+              isSearching = false;
               alertify.alert('<b>No matches</b>');
             }
           }
         }
-        isSearching = true;
-        xmlHttp.onload = xmlHttp.onerror = function() {
+        xmlHttp.onerror = function() {
           isSearching = false;
         }
         xmlHttp.open('GET', url);
