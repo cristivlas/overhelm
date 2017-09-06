@@ -25,7 +25,7 @@ function toJSON(file) {
         source: file,
         tool: 'get_noaa_metadata.js',
         metadata: metadata,
-      } /* , null, 2 */));
+      } /*, null, 2 */));
     });
   })
 }
@@ -80,7 +80,7 @@ function processExtent(ex, info) {
         info.extent[i].scale = parseInt(attr[1].trim());
       }
     }
-    /*
+
     const linearRing = findChild(extent, 'gml:LinearRing');
     if (linearRing) {
       info.extent[i].poly = [ ];
@@ -89,7 +89,7 @@ function processExtent(ex, info) {
         info.extent[i].poly.push([latLon[0], latLon[1]])
       })
     }
-    */
+
   }
 }
 
