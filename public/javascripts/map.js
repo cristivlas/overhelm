@@ -116,9 +116,6 @@ const makeLayers = function(map, charts, minRes, maxRes) {
 
     source.on('tileloaderror', function(e) {
 
-      map._lastInteraction = null; // don't delay updates
-      map._lastCenter = null; // recalculate layers
-
       // The idea: if we have as many errors per layer, per zoom level
       // as tiles in the tile grid, then force a zoom out.
       if (!layer.errcnt) {
