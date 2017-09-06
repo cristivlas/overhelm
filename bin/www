@@ -7,6 +7,7 @@
 var app = require('../app');
 var debug = require('debug')('ragnar:server');
 var fs = require('fs');
+var http = require('http');
 var https = require('https');
 
 /**
@@ -20,12 +21,12 @@ app.set('port', port);
  * Create HTTP server.
  */
 var options = {
-  key: fs.readFileSync('ssl/key.pem'),
-  ca: fs.readFileSync('ssl/csr.pem'),
-  cert: fs.readFileSync('ssl/cert.pem')
+  key: fs.readFileSync('ssl2/overhelm_com.key'),
+  ca: fs.readFileSync('ssl2/overhelm_com.ca-bundle'),
+  cert: fs.readFileSync('ssl2/overhelm_com.crt')
 }
 
-var server = https.createServer(options, app);
+var server = port===80 ? http.createServer(app) : https.createServer(options, app);
 
 /**
  * Listen on provided port, on all network interfaces.
