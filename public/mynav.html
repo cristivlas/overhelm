@@ -2,7 +2,7 @@
 <html>
   <head>
     <title>Overhelm: Chart Navigator</title>
-    
+
     <meta name="viewport" content="initial-scale=1.0, maximum-scale=1.0, user-scalable=no, width=device-width">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-title" content="Overhelm">
@@ -97,7 +97,7 @@
       .popover-title .close {
         position: relative;
         bottom: 6px;
-      } 
+      }
       .popover-title a {
         color: white;
         display: inline-block;
@@ -324,7 +324,7 @@
         setCourse() {
           this.setDestination(popup.getPosition());
         },
-        cancelCourse() { 
+        cancelCourse() {
           this.setDestination(null);
         },
         hasDestination() {
@@ -353,7 +353,8 @@
         },
         clock: {
           visible: true,
-          positioned: 0
+          positioned: 0,
+          lastUpdated: new Date()
         }
       }
 
@@ -477,7 +478,7 @@
         });
       }
       ol.inherits(trackingControl, ol.control.Control);
-      
+
       let isSearching = false;
 
       /**
@@ -504,7 +505,7 @@
             "{shift} | Z X C V B N M < > / {shift}",
             "{space}"
           ]
-        };      
+        };
         const options = opt_options || {};
 
         const button = document.createElement('button');
@@ -795,7 +796,7 @@
         });
       }
       ol.inherits(clockControl, ol.control.Control);
-      
+
       const showClockControl = function(opt_options) {
         const options = opt_options || {};
         const element = newOpenCloseWidget('Hide clock', 'Show clock', 'clock', 'show-clock', app.clock.visible);
@@ -942,7 +943,7 @@
         const day = date.getUTCDate();
         const hour = date.getUTCHours();
         const minute = date.getUTCMinutes()
-        return date.getUTCFullYear().toString() + Math.floor(month / 10) + month % 10 + 
+        return date.getUTCFullYear().toString() + Math.floor(month / 10) + month % 10 +
           + Math.floor(day / 10) + day % 10 + ' ' + Math.floor(hour / 10)
           + Math.floor(hour % 10) + ':' + Math.floor(minute / 10) + minute % 10;
       }
@@ -961,13 +962,13 @@
       /**
        * Update tide chart:
        * 1) ask the backend for the closest water level station to current location
-       * 2) in response to the async request, processWaterLevelStation sends a 
-       *    request to the NOAA web service, using a time interval centered around 
+       * 2) in response to the async request, processWaterLevelStation sends a
+       *    request to the NOAA web service, using a time interval centered around
        *    the current time.
        */
       function updateWaterLevel(coord) {
 
-        function getWaterLevel(station) {
+        const getWaterLevel = function(station) {
           const now = new Date();
 
           if (app.tide.station && station.Id === app.tide.station.Id) {
@@ -989,13 +990,13 @@
           const useNOAAData = location.search == '?noaa';
           var url;
           if (useNOAAData) {
-            url = 'https://tidesandcurrents.noaa.gov/api/datagetter?product=predictions&datum=MLLW' 
+            url = 'https://tidesandcurrents.noaa.gov/api/datagetter?product=predictions&datum=MLLW'
             + formatRequestRange(now, app.tide.station.Id);
-          } 
+          }
           else {
             url = 'tides/' + app.tide.station.Id + '/' + currentTime;
           }
-        const xmlHttp = new XMLHttpRequest();
+          const xmlHttp = new XMLHttpRequest();
           xmlHttp.onreadystatechange = processWaterLevelRequest.bind(null, stationInfo);
           xmlHttp.open('GET', url);
           xmlHttp.send();
@@ -1004,9 +1005,9 @@
         /**
          * Process response from backend.
          */
-        function processWaterLevelStation(event) {
+        const processWaterLevelStation = function(event) {
           const xmlHttp = event.currentTarget;
-          
+
           if (xmlHttp.readyState === 4) {
             if (xmlHttp.status === 200) {
               getWaterLevel(JSON.parse(xmlHttp.responseText));
@@ -1016,7 +1017,7 @@
             }
           }
         }
-        
+
         /**
          * Process response from NOAA
          */
@@ -1033,7 +1034,7 @@
               + '/' + date.getDate()
               + ' ' + dateHelper(date.getHours())
               + ':' + dateHelper(date.getMinutes());
-                                  
+
             return [date, timeString];
           }
 
@@ -1101,7 +1102,7 @@
                 }
               }
             }
-            
+
             function rebuildTicks(c) {
               function label(ticks, i) {
                 return tickDate(ticks[i])[1];
@@ -1241,9 +1242,9 @@
         if (xmlHttp.readyState === 4 && xmlHttp.status === 200) {
           console.log(xmlHttp.responseText);
           const station = JSON.parse(xmlHttp.responseText);
-          const now = new Date();            
+          const now = new Date();
 
-          const url = 
+          const url =
               'https://tidesandcurrents.noaa.gov/api/datagetter?product=currents'
               + formatRequestRange(now, station.Id);
           xmlHttp.onreadystatechange = processCurrents;
@@ -1267,7 +1268,7 @@
           const elem = popup.getElement();
           $(elem).popover('show');
           function closePopup() {
-            $(elem).popover('destroy'); 
+            $(elem).popover('destroy');
             popup.visible = popup.shown = false;
           }
           function setDestination(pos) {
@@ -1318,7 +1319,7 @@
           if (elem) {
             elem.style.height = window.innerHeight * .6 + 'px';
           }
-        })          
+        })
       }
 
       function updatePopup(pos, place, coord) {
@@ -1363,7 +1364,7 @@
           return;
         }
         isSearching = true;
- 
+
         function buildSelection(matches) {
           let selectHtml = '<b>Nearest Matches</b><br>';
           selectHtml += '<select id="searchResults" class="search-results">';
@@ -1390,7 +1391,7 @@
             const matches = JSON.parse(xmlHttp.responseText);
             if (matches && matches.length) {
               const selectHtml = buildSelection(matches);
-              
+
               alertify.confirm(selectHtml, function(accept) {
                 isSearching = false;
                 if (!accept) {
@@ -1412,7 +1413,7 @@
                 if (popup.visible) {
                   $(popup.getElement()).popover('destroy');
                 }
-                popup.visible = popup.show = false;  
+                popup.visible = popup.show = false;
                 updatePopup(
                   app.map.setInspectLocation(srchCoord)._point,
                   matches[elem.selectedIndex],
@@ -1433,7 +1434,7 @@
         xmlHttp.open('GET', url);
         xmlHttp.send();
       }
-      
+
 
       function convertDMS(coords) {
         return ol.coordinate.toStringHDMS(coords);
@@ -1441,6 +1442,7 @@
 
 
       function updateDefault() {
+        clearUpdateTimeout();
         if (!app.map._currentLocation) {
           const coord = [-122.4049, 47.6810] // Shilshole Bay
           app.map.setCurrentLocation(coord);
@@ -1474,7 +1476,7 @@
           }
         });
         enableShutdown();
-        
+
         popup = new ol.Overlay({
           element: document.getElementById('popup')
         });
@@ -1506,15 +1508,19 @@
 
       initialize();
 
-      let updateTimeout = setInterval(updateDefault, locationTimeout);
+      let updateTimeout = setTimeout(updateDefault, locationTimeout);
+
+      function clearUpdateTimeout() {
+        if (updateTimeout) {
+          clearTimeout(updateTimeout);
+          updateTimeout = null;
+        }
+      }
 
       var geolocation = new Geolocation({
         onSuccess: function(coord) {
           if (coord.lon && coord.lat) {
-            if (updateTimeout) {
-              clearInterval(updateTimeout);
-              updateTimeout = null;
-            }
+            clearUpdateTimeout();
             updateTracking(true);
             app.map.setCurrentLocation([ coord.lon, coord.lat ]);
             app.map.showCurrentLocation();
@@ -1534,8 +1540,12 @@
             return;
           }
           if (geolocation.isTracking()) {
+            const now = new Date();
+            if (now.getTime() < app.clock.lastUpdated.getTime() + 100) {
+              return;
+            }
+            app.clock.lastUpdated = now;
             if (app.clock.visible) {
-              drawClock(clock.ctx, clock.radius);
               app.clock.positioned = 0;
               positionClock();
             }
@@ -1553,10 +1563,8 @@
       swipedetect(clock.canvas, function(dir) {
         geolocation.changeSpeedUnit();
       }, true);
+
       geolocation.start();
-      if (!navigator.geolocation) {
-        updateDefault();
-      }
 
       window.addEventListener('orientationchange', handleDeviceOrientation);
 
