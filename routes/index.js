@@ -484,7 +484,9 @@ router.get('/nearestCurrentsStation/:lat/:lon', function(req, res, next) {
  */
 router.get('/location', function(req, res, next) {
   const loc = getLocation();
-
+  if (loc===undefined) {
+    return res.send(204)
+  }
   if (!__online && loc.time) {
     exec('sudo date -s "' + loc.time.toString() + '"', function(err, stdout, stderr) {
       if (err) {

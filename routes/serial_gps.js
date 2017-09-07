@@ -16,6 +16,7 @@ const myports = [
   'COM3', 'COM4', 'COM5', 'COM6', 'COM7' 
 ];
 
+let haveGPS = false;
 
 for (var i = 0; i != myports.length; ++i) {
   const port = new SerialPort(myports[i], {
@@ -26,7 +27,8 @@ for (var i = 0; i != myports.length; ++i) {
     if (err) {
       console.log(err.message);
     } 
-    else {
+    else if (!haveGPS) {
+      haveGPS = true;
       console.log(port.path + ': Ok');
 
       const GPS = require('gps');
@@ -68,4 +70,9 @@ for (var i = 0; i != myports.length; ++i) {
     }
   });
 }
+
+if (!haveGPS) {
+  location = undefined;
+}
+
 

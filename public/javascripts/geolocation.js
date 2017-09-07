@@ -24,6 +24,7 @@ class Geolocation {
     this._mobile = navigator.userAgent.match(/mobile/i);
     this._iunit = 0;
     this._units = [ 'kts', 'mph', 'km/h', '\u00B0' + (WMM ? ' True' : '') ];
+    this._useBackend = true;
     this._speedConversion = [ 1.943844, 2.236936, 3.6, 0.0 ];
     this.speed = 0;
     this.rotation = 0;
@@ -49,7 +50,7 @@ class Geolocation {
 
   start() {
     if (!this.isTracking()) {
-      if (this._mobile) {
+      if (this._mobile || !this._useBackend) {
         this._useHTML5Geolocation();
       }
       else {
@@ -104,31 +105,41 @@ class Geolocation {
     xmlHttp.send();
   }
 
+  _failoverHTML5() {
+    console.log('failover, _useBackend:', this._useBackend);
+    if (this._intervalId) {
+      clearInterval(this._intervalId);
+      this._intervalId = null;
+    }
+    this._useHTML5Geolocation();
+  }
+
   _processLocationRequest(e) {
     var xmlHttp = e.currentTarget;
-    if (xmlHttp.readyState === 4 && xmlHttp.status === 200) {
-      var loc = JSON.parse(xmlHttp.responseText);
-      if (loc) {
-        if (!this._intervalId) {
-          //
-          // First successful call? Repeat at given interval/timeout
-          //
-          this._intervalId =
-            setInterval(this._sendLocationRequest.bind(this), this._timeout);
-        }
-        if (loc.time) {
-          this._update(loc);
+    if (xmlHttp.readyState === 4) {
+      if (xmlHttp.status === 200) {
+        const loc = JSON.parse(xmlHttp.responseText);
+        if (loc) {
+          if (!this._intervalId) {
+            //
+            // First successful call? Repeat at given interval/timeout
+            //
+            this._intervalId = setInterval(this._sendLocationRequest.bind(this), this._timeout);
+          }
+          if (loc.time) {
+            this._update(loc);
+          }
+          else {
+            this.speed = 0;
+          }
         }
         else {
-          this.speed = 0;
+          this._failoverHTML5();
         }
       }
       else {
-        if (this._intervalId) {
-          clearInterval(this._intervalId);
-          this._intervalId = null;
-        }
-        this._useHTML5Geolocation();
+        this._useBackend = false; // no GPS support?
+        this._failoverHTML5();
       }
     }
   }
