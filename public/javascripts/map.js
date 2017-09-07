@@ -180,6 +180,7 @@ class Map {
     this._defaultZoom = opts.defaultZoom || 12;
     this._rotateView = false;
     this._mode = Mode.INSPECT_LOCATION;
+    this._needPosUpdate = true;
     this._lastInteraction = null;
     this._onLocationUpdate = opts.onLocationUpdate;
     this._onUpdateView = opts.onUpdateView;
@@ -368,6 +369,11 @@ class Map {
   }
 
   _updatePositionLayer() {
+    if (!this._needPosUpdate) {
+      this._posMarks.setZIndex(999);
+      return;
+    }
+
     if (this._posMarks) {
       if (!this._map.removeLayer(this._posMarks)) {
         console.log('_posMarks layer not found')
@@ -377,6 +383,7 @@ class Map {
     this._posMarks = this._newPosLayer();
     if (this._posMarks) {
       this._map.addLayer(this._posMarks);
+      this._needPosUpdate = false;
     }
   }
 
@@ -470,6 +477,7 @@ class Map {
   setCurrentLocation(coord) {
     if (!this._currentLocation || !this._currentLocation.equals(coord)) {
       this._currentLocation = new Location(coord);
+      this._needPosUpdate = true;
     }
     return this._currentLocation;
   }
@@ -477,6 +485,7 @@ class Map {
   setInspectLocation(coord) {
     if (!this._inspectLocation || !this._inspectLocation.equals(coord)) {
       this._inspectLocation = new Location(coord);
+      this._needPosUpdate = true;
     }
     return this._inspectLocation;
   }

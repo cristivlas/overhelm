@@ -106,7 +106,7 @@ class Geolocation {
   }
 
   _failoverHTML5() {
-    console.log('failover, _useBackend:', this._useBackend);
+    console.log('_useBackend:', this._useBackend);
     if (this._intervalId) {
       clearInterval(this._intervalId);
       this._intervalId = null;
@@ -216,6 +216,7 @@ class Geolocation {
     }
     this.stop();
     if (err.code === err.TIMEOUT) {
+      this._timeout *= 1.5;
       this.startAsync();
     }
     else if (err.code === err.PERMISSION_DENIED) {

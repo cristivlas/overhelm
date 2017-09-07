@@ -1207,6 +1207,7 @@ var geolocation = new Geolocation({
       updateTracking(true);
       app.map.setCurrentLocation([ coord.lon, coord.lat ]);
       app.map.showCurrentLocation();
+      app.map.updateFeatures();
       updateCoords();
     }
   },
@@ -1222,7 +1223,7 @@ var geolocation = new Geolocation({
     if (app.map && app.map._updating) {
       return;
     }
-    if (geolocation.isTracking()) {
+    // if (geolocation.isTracking()) {
       const now = new Date();
       if (now.getTime() < app.clock.lastUpdated.getTime() + 100) {
         return;
@@ -1233,7 +1234,7 @@ var geolocation = new Geolocation({
         positionClock();
       }
       app.map.updateFeatures();
-    }
+    // }
   },
   onNeedsCalibration: function() {
     alertify.alert('Compass needs calibration');
