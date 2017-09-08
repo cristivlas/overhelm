@@ -289,6 +289,9 @@ class Map {
 
   _showLocation(mode) {
     this._lastInteraction = null;
+    if (this._mode != mode) {
+      this._needPosUpdate = true;
+    }
     this._mode = mode;
     this._locationUpdate = true;
     this._view.setCenter(this._location._point);

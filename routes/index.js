@@ -485,7 +485,7 @@ router.get('/nearestCurrentsStation/:lat/:lon', function(req, res, next) {
 router.get('/location', function(req, res, next) {
   const loc = getLocation();
   if (loc===undefined) {
-    return res.send(204)
+    return res.sendStatus(204)
   }
   if (!__online && loc.time) {
     exec('sudo date -s "' + loc.time.toString() + '"', function(err, stdout, stderr) {
@@ -620,66 +620,6 @@ router.get('/search/:name/:lon/:lat', function(req, res, next) {
   });
 
   res.send(JSON.stringify(matches.slice(0, 100)));
-});
-
-
-/******************************************************************
- * Get current weather conditions from Weather Underground
- */
-router.get('/weather/:lon/:lat', function(req, res, next) {
-  
-  checkConnection();
-
-  if (!__online) {
-    return res.sendStatus(204);
-  }
-  const url = 'http://api.wunderground.com/api/c1537719c680efb0/conditions/q/'
-    + req.params.lat + ',' + req.params.lon + '.json';
-
-  let data = '';
-
-  http.get(url, function(response) {
-    response.on('data', function(chunk) {
-      data += chunk;
-    });
-    response.on('error', function(err) {
-      console.log(err);
-      return next(err);
-    });
-    response.on('end', function() {
-      //console.log(data);
-      const wu = JSON.parse(data).current_observation;
-      try {
-        const report = {
-          //image: wu.image.url,
-          image: '/images/wu_logo_130x80.png',
-          time: wu.observation_time_rfc822,
-          weather: wu.weather,
-          temp: wu.temperature_string,
-          //feelslike: wu.feelslike_string,
-          feelslike: wu.feelslike_f + ' F',
-          forecast_url: wu.ob_url,
-          wind: wu.wind_string,
-          wind_degrees: wu.wind_degrees,
-          wind_mph: wu.wind_mph,
-          humidity: wu.relative_humidity,
-          visibility: wu.visibility_mi,
-          station: wu.observation_location.city,
-          time: wu.observation_time
-        }
-        res.end(JSON.stringify(report));
-      }
-      catch(err) {
-        console.log(err);
-        return next(err);
-      }
-    });
-  })
-  .on('error', function(err) {
-    console.log(err);
-    return next(err);
-  })
-  .end();
 });
 
 
