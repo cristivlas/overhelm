@@ -320,7 +320,10 @@ class Map {
     this.updateFeatures();
   }
 
-  updateFeatures() {
+  updateFeatures(force) {
+    if (force) {
+      this._needPosUpdate = true;
+    }
     this._updateCourseLayer();
     this._updatePositionLayer();
   }

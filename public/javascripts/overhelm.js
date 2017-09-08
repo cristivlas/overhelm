@@ -1223,18 +1223,16 @@ var geolocation = new Geolocation({
     if (app.map && app.map._updating) {
       return;
     }
-    // if (geolocation.isTracking()) {
-      const now = new Date();
-      if (now.getTime() < app.clock.lastUpdated.getTime() + 100) {
-        return;
-      }
-      app.clock.lastUpdated = now;
-      if (app.clock.visible) {
-        app.clock.positioned = 0;
-        positionClock();
-      }
-      app.map.updateFeatures();
-    // }
+    const now = new Date();
+    if (now.getTime() < app.clock.lastUpdated.getTime() + 100) {
+      return;
+    }
+    app.clock.lastUpdated = now;
+    if (app.clock.visible) {
+      app.clock.positioned = 0;
+      positionClock();
+    }
+    app.map.updateFeatures(true);
   },
   onNeedsCalibration: function() {
     alertify.alert('Compass needs calibration');
