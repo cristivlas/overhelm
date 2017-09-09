@@ -16,6 +16,25 @@ var app = {
   isDestination(pos) {
     return this.hasDestination() && equalPoint(pos, this.map._destLocation._point);
   },
+
+  hideSearch(e) {
+    if (e.path) {
+      for (let i = 0; i != e.path.length; ++i) {
+        if (e.path[i].id==='search') {
+          return;
+        }
+      }
+    }
+    var elem = document.getElementById('search-btns');
+    if (elem.style.visibility === 'visible') {
+      $(elem).animate({left: '-100px'}, {
+        complete: function() {
+          elem.style.visibility='hidden';
+        }
+      });
+    }
+  },
+
   map: null,
   tzOffset: (new Date()).getTimezoneOffset() * 60000,
   powerClick: 0,
@@ -189,18 +208,26 @@ const searchControl = function(opt_options) {
       "{space}"
     ]
   };
-  const options = opt_options || {};
 
-  const button = document.createElement('button');
-  const icon = document.createElement('img');
-  icon.src = 'images/magnifier.png';
-  icon.className = 'ctrl-img';
+  var showSearchBtns = function() {
+    const btns = document.getElementById('search-btns');
+    if (btns.style.visibility === 'hidden') {
+      const srch = document.getElementById('search');
+      const rect = srch.parentElement.getBoundingClientRect();
+      btns.style.top = Math.floor(rect.top) + 'px';
+      btns.style.left = '-100px';
+      btns.style.height = Math.floor(rect.height) + 'px';
+      btns.style.visibility = 'visible';
+      $(btns).animate({
+        left: Math.ceil(rect.right) + 'px'
+      },{
+        complete: function() {
+        }
+      });
+    }
+  }
 
-  button.appendChild(icon);
-  button.title = 'Search';
-  button.className = 'ctrl-btn';
-
-  var handler = function() {
+  var locationHandler = function(e) {
     if (isSearching) {
       return;
     }
@@ -228,7 +255,34 @@ const searchControl = function(opt_options) {
       });
     }
   }
-  button.addEventListener('click', handler, false);
+  const options = opt_options || {};
+
+  // Create a div for all search buttons (locations, and possibly other things
+  // such as navigation aids, anchorages, etc.)
+  const btns = document.createElement('div');
+  btns.className = btns.id = 'search-btns';
+  btns.style.visibility = 'hidden';
+  document.body.appendChild(btns);
+
+  const locBtn = document.createElement('button');
+  locBtn.className = 'btn btn-primary custom-btn';
+  locBtn.innerHTML = 'Locations';
+  locBtn.addEventListener('click', locationHandler);
+  locBtn.title = 'Search U.S. and Canada coastal locations';
+  btns.appendChild(locBtn);
+
+  // create the main search button
+  const button = document.createElement('button');
+  const icon = document.createElement('img');
+  icon.src = 'images/magnifier.png';
+  icon.className = 'ctrl-img';
+
+  button.appendChild(icon);
+  button.title = 'Search';
+  button.className = 'ctrl-btn';
+  button.id = 'search';
+
+  button.addEventListener('click', showSearchBtns, false);
 
   var element = document.createElement('div');
   element.className = 'search ol-custom ol-unselectable ol-control';
@@ -1248,4 +1302,7 @@ swipedetect(clock.canvas, function(dir) {
 
 geolocation.start();
 
+window.addEventListener('click', app.hideSearch, true);
+window.addEventListener('touchstart', app.hideSearch, true);
 window.addEventListener('orientationchange', handleDeviceOrientation);
+

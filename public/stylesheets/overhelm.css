@@ -186,6 +186,7 @@ tr:nth-child(odd) {
 .search {
   top: 112px;
   left: .5em;
+  z-index: 1;
 }
 .ol-touch .search {
   top: 130px;
@@ -196,7 +197,20 @@ tr:nth-child(odd) {
   height: 50px;
   left: .1em;
 }
-
+.search-btns {
+  position: absolute;
+  background-color: lightblue;
+  border: 2.5px solid lightblue;
+  border-radius: 5px;
+}
+.search-btns:hover {
+  background-color: lightblue;
+  border: 2.5px solid lightblue;
+}
+.custom-btn {
+  height: 45px;
+  background-color: rgba(0,65,135, .7);
+}
 .dest {
   top: 140px;
   left: .5em;
