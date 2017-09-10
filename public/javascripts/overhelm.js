@@ -228,6 +228,7 @@ const searchControl = function(opt_options) {
   }
 
   var locationHandler = function(e) {
+    e.preventDefault();
     if (isSearching) {
       return;
     }
@@ -267,8 +268,8 @@ const searchControl = function(opt_options) {
   const locBtn = document.createElement('button');
   locBtn.className = 'btn btn-primary custom-btn';
   locBtn.innerHTML = 'Locations';
-  locBtn.addEventListener('click', locationHandler);
   locBtn.title = 'Search U.S. and Canada coastal locations';
+  locBtn.addEventListener('click', locationHandler);
   btns.appendChild(locBtn);
 
   // create the main search button
