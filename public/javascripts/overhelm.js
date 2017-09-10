@@ -25,6 +25,9 @@ var app = {
         }
       }
     }
+    else if (e.target.id==='search') {
+      return;
+    }
     var elem = document.getElementById('search-btns');
     if (elem.style.visibility === 'visible') {
       $(elem).animate({left: '-100px'}, {
@@ -228,7 +231,6 @@ const searchControl = function(opt_options) {
   }
 
   var locationHandler = function(e) {
-    e.preventDefault();
     if (isSearching) {
       return;
     }
@@ -268,6 +270,7 @@ const searchControl = function(opt_options) {
   const locBtn = document.createElement('button');
   locBtn.className = 'btn btn-primary custom-btn';
   locBtn.innerHTML = 'Locations';
+  locBtn.id = 'search';
   locBtn.title = 'Search U.S. and Canada coastal locations';
   locBtn.addEventListener('click', locationHandler);
   btns.appendChild(locBtn);
