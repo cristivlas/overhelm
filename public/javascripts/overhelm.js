@@ -1046,7 +1046,7 @@ function getForecast(lon, lat, tzOffset) {
   const spinner = new Spinner({
     length: length,
     radius: length,
-    color: 'navy',
+//    color: 'green',
   }).spin(target)
   
   forecast(lon, lat, function(err, res) {
