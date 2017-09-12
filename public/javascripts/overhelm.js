@@ -1041,7 +1041,16 @@ function getForecast(lon, lat, tzOffset) {
   if (!tzOffset) {
     tzOffset = app.tzOffset;
   }
+  const target = document.getElementById('map');
+  const length = Math.min(window.innerWidth, window.innerHeight)/20;
+  const spinner = new Spinner({
+    length: length,
+    radius: length,
+    color: 'navy',
+  }).spin(target)
+  
   forecast(lon, lat, function(err, res) {
+    spinner.stop();
     const msg = err ? err.message : formatForecast(res, lon, lat, tzOffset);
     alertify.alert(msg);
     if (!err && !isFullScreen()) {
