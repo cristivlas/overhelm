@@ -186,16 +186,7 @@ function drawCompass(ctx, radius) {
   ctx.strokeStyle='white';
   ctx.textBaseline='middle';
   ctx.textAlign='center';
-/*
-  if (!geolocation.isTracking()) {
-    ctx.translate(0, -radius*0.15);
-    ctx.fillStyle = 'white';
-    ctx.font = radius*0.15 + "px arial";
-    ctx.fillText('Geolocation paused', 0, 0);
-    ctx.translate(0, radius*0.15);
-    return;
-  }
-*/
+
   const heading = 2 * Math.PI - geolocation.rotation;
   for(let num = 0; num < 12; ++num) {
     const ang = num * Math.PI / 6 + heading;
