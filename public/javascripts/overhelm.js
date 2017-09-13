@@ -1164,12 +1164,22 @@ function searchLocation(name, coord) {
             $(popup.getElement()).popover('destroy');
           }
           popup.visible = popup.show = false;
-          updatePopup(
-            app.map.setInspectLocation(srchCoord)._point,
-            matches[elem.selectedIndex],
-            srchCoord
-          );
-          app.map.showInspectLocation();
+          const point = app.map.setInspectLocation(srchCoord)._point;
+          app.map.animation = true;
+          app.map._rotateView = false;
+          app.map._view.animate({
+            center: point,
+            rotation: 2 * Math.PI,
+            zoom: defaultZoom,
+            duration: 2000
+          }, function() {
+            app.map.animation = false;
+            app.map.showInspectLocation();
+            updatePopup(
+              point,
+              matches[elem.selectedIndex],
+              srchCoord);
+          });
         });
       }
       else {
