@@ -7,7 +7,7 @@ catch (err) {
   console.log('WorldMagneticModel not present');
 }
 
-class Geolocation {
+class GeolocationWrapper {
   constructor(opt_options) {
     var options = opt_options || {};
     this._timeout = options.timeout ? options.timeout : 3000;

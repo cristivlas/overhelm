@@ -153,7 +153,7 @@ const makeLayers = function(map, charts, minRes, maxRes) {
 }
 
 
-class Location {
+class MapLocation {
   constructor(coord) {
     roundPoint(coord);
     this._coord = coord;
@@ -174,7 +174,7 @@ const Mode = {
 }
 
 
-class Map {
+class MarineMap {
   constructor(opts) {
     this._chartsMeta = null;
     this._defaultZoom = opts.defaultZoom || 12;
@@ -482,7 +482,7 @@ class Map {
 
   setCurrentLocation(coord) {
     if (!this._currentLocation || !this._currentLocation.equals(coord)) {
-      this._currentLocation = new Location(coord);
+      this._currentLocation = new MapLocation(coord);
       this._needPosUpdate = true;
     }
     return this._currentLocation;
@@ -490,7 +490,7 @@ class Map {
 
   setInspectLocation(coord) {
     if (!this._inspectLocation || !this._inspectLocation.equals(coord)) {
-      this._inspectLocation = new Location(coord);
+      this._inspectLocation = new MapLocation(coord);
       this._needPosUpdate = true;
     }
     return this._inspectLocation;

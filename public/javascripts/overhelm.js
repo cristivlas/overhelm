@@ -1225,7 +1225,7 @@ function initialize() {
     new shutdownControl()
   ];
 
-  app.map = new Map({
+  app.map = new MarineMap({
     controls: controls,
     target: 'map',
     defaultZoom: defaultZoom,
@@ -1277,7 +1277,7 @@ function clearUpdateTimeout() {
   }
 }
 
-var geolocation = new Geolocation({
+var geolocation = new GeolocationWrapper({
   onSuccess: function(coord) {
     if (coord.lon && coord.lat) {
       clearUpdateTimeout();
