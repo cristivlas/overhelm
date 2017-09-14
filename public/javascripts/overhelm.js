@@ -1041,12 +1041,14 @@ function getForecast(lon, lat, tzOffset) {
   if (!tzOffset) {
     tzOffset = app.tzOffset;
   }
+  if (navigator.userAgent.match(/mobile/i)) { // small screen?
+    app.hide_clock();
+  }
   const target = document.getElementById('map');
   const length = Math.min(window.innerWidth, window.innerHeight)/20;
   const spinner = new Spinner({
     length: length,
     radius: length,
-//    color: 'green',
   }).spin(target)
   
   forecast(lon, lat, function(err, res) {
@@ -1266,9 +1268,8 @@ function updateCoords() {
   }
 }
 
-initialize();
 
-let updateTimeout = setTimeout(updateDefault, locationTimeout);
+let updateTimeout = null;
 
 function clearUpdateTimeout() {
   if (updateTimeout) {
@@ -1317,15 +1318,20 @@ var geolocation = new GeolocationWrapper({
   timeout: locationTimeout
 });
 
-startClock();
 
-swipedetect(clock.canvas, function(dir) {
-  geolocation.changeSpeedUnit();
-}, true);
+window.onload = function() {
+  initialize();
+  updateTimeout = setTimeout(updateDefault, locationTimeout);
+  startClock();
 
-geolocation.start();
+  swipedetect(clock.canvas, function(dir) {
+    geolocation.changeSpeedUnit();
+  }, true);
 
-window.addEventListener('click', app.hideSearch, true);
-window.addEventListener('touchstart', app.hideSearch, true);
-window.addEventListener('orientationchange', handleDeviceOrientation);
+  geolocation.start();
+
+  window.addEventListener('click', app.hideSearch, true);
+  window.addEventListener('touchstart', app.hideSearch, true);
+  window.addEventListener('orientationchange', handleDeviceOrientation);
+}
 

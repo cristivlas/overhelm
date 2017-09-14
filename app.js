@@ -4,13 +4,13 @@ var favicon = require('serve-favicon');
 var logger = require('morgan');
 var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
-var helmet = require('helmet');
+// var helmet = require('helmet');
 var index = require('./routes/index');
 var users = require('./routes/users');
 
 var app = express();
 
-app.disable('etag');
+// app.disable('etag');
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
@@ -23,7 +23,7 @@ app.use(logger('[:date[iso]] :remote-addr :method :url :status :response-time ms
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
-app.use(helmet.noCache());
+// app.use(helmet.noCache());
 app.use(express.static(path.join(__dirname, 'public'), {
   etag: false
 }));
