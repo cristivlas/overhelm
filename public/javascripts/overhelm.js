@@ -225,6 +225,7 @@ const searchControl = function(opt_options) {
         left: Math.ceil(rect.right) + 'px'
       },{
         complete: function() {
+          app.map._map.updateSize();
         }
       });
     }
