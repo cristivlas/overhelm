@@ -71,7 +71,7 @@ function tilesetInfo(t) {
   };
 }
 
-
+/*
 const sortTilesets = function(sets) {
   sets.sort(function(a, b) {
     if (a.height > b.height) return -1;
@@ -80,7 +80,7 @@ const sortTilesets = function(sets) {
   });
   return sets;
 }
-
+*/
 
 /******************************************************************
  *

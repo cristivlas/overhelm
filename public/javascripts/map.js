@@ -184,6 +184,7 @@ class MarineMap {
     this._lastInteraction = null;
     this._onLocationUpdate = opts.onLocationUpdate;
     this._onUpdateView = opts.onUpdateView;
+    this._getRotation = opts.getRotation;
 
     this._view = new ol.View({
       zoom: this._defaultZoom,
@@ -396,10 +397,10 @@ class MarineMap {
   _rotate() {
     let rotation = 0;
     if (this._rotateView) {
-      this._view.rotate(2 * Math.PI - geolocation.rotation, this._currentLocation._point);
+      this._view.rotate(2 * Math.PI - this._getRotation(), this._currentLocation._point);
     }
     else {
-      rotation = geolocation.rotation;
+      rotation = this._getRotation();
     }
     return rotation;
   }

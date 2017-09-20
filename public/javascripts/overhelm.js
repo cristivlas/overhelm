@@ -1236,6 +1236,9 @@ function initialize() {
       updateWaterLevel(coord);
     },
     onUpdateView: function(view) {
+    },
+    getRotation: function() {
+      return geolocation.rotation;
     }
   });
   enableShutdown();
