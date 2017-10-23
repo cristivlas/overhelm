@@ -161,7 +161,7 @@ class GeolocationWrapper {
         if (e.webkitCompassHeading) {
           this._heading = e.webkitCompassHeading + this._decl;
         }
-        else if (window.chrome && e.absolute) {
+        else if (window.chrome /* && e.absolute */) {
           const a = e.alpha * Math.PI / 180;
 
 // http://christine-coenen.de/blog/2014/07/02/smooth-compass-needle-in-android-or-any-angle-with-low-pass-filter/
