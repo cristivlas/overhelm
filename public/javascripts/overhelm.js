@@ -1050,6 +1050,7 @@ function getForecast(lon, lat, tzOffset) {
   const spinner = new Spinner({
     length: length,
     radius: length,
+    shadow: true,
   }).spin(target)
   
   forecast(lon, lat, function(err, res) {
