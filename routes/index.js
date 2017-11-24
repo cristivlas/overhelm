@@ -4,7 +4,8 @@ const express = require('express');
 const exec = require('child_process').exec;
 const fs = require('fs');
 const geoTZ = require('geo-tz');
-const getLocation = require(__dirname + '/serial_gps');
+const isCustomHardware = false;
+const getLocation = isCustomHardware ? require(__dirname + '/serial_gps') : null;
 const http = require('http');
 const https = require('https');
 const isOnline = require('is-online');
@@ -297,7 +298,7 @@ function serveTile(req, res, next) {
         let request = protocol.get(options, function(response) {
           response.pipe(file);
           file.on('finish', function() {
-            file.close();
+            //file.close();
             console.log(options.host, response.statusCode);
 
             if (response.statusCode===200) {
@@ -347,7 +348,7 @@ function serveTile(req, res, next) {
         });
 
         request.on('error', function(err) {
-          file.close();
+          //file.close();
           fs.unlinkSync(tmpFileName);
           console.log(err);
           next(err);
@@ -356,7 +357,7 @@ function serveTile(req, res, next) {
         request.end();
       }
       catch (err) {
-        file.close();
+        //file.close();
         fs.unlinkSync(tmpFileName);
         next(err);
       }
@@ -483,9 +484,12 @@ router.get('/nearestCurrentsStation/:lat/:lon', function(req, res, next) {
  *
  */
 router.get('/location', function(req, res, next) {
+  if (!isCustomHardware) {
+    return res.sendStatus(204);
+  }
   const loc = getLocation();
   if (loc===undefined) {
-    return res.sendStatus(204)
+    return res.sendStatus(204);
   }
   if (!__online && loc.time) {
     exec('sudo date -s "' + loc.time.toString() + '"', function(err, stdout, stderr) {
@@ -497,9 +501,6 @@ router.get('/location', function(req, res, next) {
       }
     });
   }
-
-  //console.log(loc);
-
   res.send(JSON.stringify(loc));
 });
 
