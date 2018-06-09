@@ -4,7 +4,8 @@ const express = require('express');
 const exec = require('child_process').exec;
 const fs = require('fs');
 const geoTZ = require('geo-tz');
-const getLocation = require(__dirname + '/serial_gps');
+const isCustomHardware = false;
+const getLocation = isCustomHardware ? require(__dirname + '/serial_gps') : null;
 const http = require('http');
 const https = require('https');
 const isOnline = require('is-online');
@@ -16,6 +17,7 @@ const states = require(__dirname + '/states');
 const tmp = require('tmp');
 const urlJoin = require('url-join');
 const navAids = require(__dirname + '/AidsToNavigation.json');
+//const zlib = require('zlib');
 
 const currentsStations = require(__dirname + '/Currents_Active_Stations.json');
 const waterLevelStations = require(__dirname + '/Waterlevel_Active_Stations.json');
@@ -35,6 +37,11 @@ function checkConnection() {
     console.log('online:', online);
     __online = online;
   });
+}
+
+
+function logError(err) {
+  console.log(err.stack);
 }
 
 
@@ -235,29 +242,29 @@ function serveTile(req, res, next) {
     });
   }
 
-  function isEmptyPNG(filePath) {
-    let isEmpty = true;
-    try {
-      const data = fs.readFileSync(filePath);
-      const png = PNG.sync.read(data);
-      for (let i = 0; i < png.data.length; ++i) {
-        if (png.data[i] != 0) {
-          isEmpty = false;
-          break;
-        }
-      }
-    }
-    catch (err) {
-      console.log(err.message);
-      isEmpty = false;
-    }
-    return isEmpty;
-  }
-
   function downloadAndUploadTile(filePath, req, res, next, empty) {
     console.log('Downloading: ' + filePath);
-    function ensureDirectoryExists(filePath) {
-      let dirname = path.dirname(filePath);
+
+    const isEmptyPNG = function(data) {
+      let isEmpty = true;
+      try {
+        const png = PNG.sync.read(data);
+        for (let i = 0; i < png.data.length; ++i) {
+          if (png.data[i] != 0) {
+            isEmpty = false;
+            break;
+          }
+        }
+      }
+      catch (err) {
+        logError(err);
+        isEmpty = false;
+      }
+      return isEmpty;
+    }
+
+    const ensureDirectoryExists = function(filePath) {
+      const dirname = path.dirname(filePath);
       if (fs.existsSync(dirname)) {
         return true;
       }
@@ -269,7 +276,7 @@ function serveTile(req, res, next) {
       ensureDirectoryExists(filePath);
     }
     catch (err) {
-      console.log(err.message);
+      logError(err);
       return next(err);
     }
     let tmpFileName = null;
@@ -293,56 +300,62 @@ function serveTile(req, res, next) {
       };
 
       try {
-        var protocol = service.ssl ? https : http;
-        let request = protocol.get(options, function(response) {
-          response.pipe(file);
+        const protocol = service.ssl ? https : http;
+        const request = protocol.get(options, function(response) {
+
+          if (response.statusCode!==200) {
+            fs.unlinkSync(tmpFileName);
+            console.log(filePath + ': ' + response.statusMessage);
+            res.statusCode = response.statusCode;
+            return res.send(response.statusMessage);
+          }
+
+          let tiledata = []
+          response.on('end', function() {
+            tiledata = Buffer.concat(tiledata);
+            file.write(tiledata);
+            file.end();
+          });
+
+          response.on('data', function(chunk) {
+            tiledata.push(chunk);
+          });
+
           file.on('finish', function() {
             file.close();
-            console.log(options.host, response.statusCode);
+            console.log(filePath, response.statusCode);
 
-            if (response.statusCode===200) {
-
-              console.log('Finished downloading: ' + filePath);
-
-              if (isEmptyPNG(tmpFileName)) {
-                console.log('Tile is empty: ' + filePath);
-                fs.unlink(tmpFileName, function(err) {
-                  if (err) {
-                    console.log([tmpFileName, err.message]);
-                  }
-                });
-                //
-                // update emptyTiles.txt
-                //
-                const parts = path.basename(filePath).split('.');
-                try { 
-                  const entry = parts[1] + ' ' + parts[2] + ' ' + parts[3] + '\n';
-                  console.log(empty, entry);
-                  fs.appendFileSync(empty, entry);
-                }
-                catch (err) {
-                  console.log([empty, parts, err.message]);
-                }
-                return handleEmptyTile(req, res, next);
-              }
-              fs.rename(tmpFileName, filePath, function(err) {
+            if (isEmptyPNG(tiledata)) {
+              console.log('Tile is empty: ' + filePath);
+              fs.unlink(tmpFileName, function(err) {
                 if (err) {
-                  console.log(err.message);
-                  uploadTile(tmpFileName, req, res, next, function() {
-                    fs.unlink(tmpFileName);
-                  });
-                }
-                else {
-                  uploadTile(filePath, req, res, next);
+                  console.log([tmpFileName, err.message]);
                 }
               });
+              // update emptyTiles.txt
+              const parts = path.basename(filePath).split('.');
+              try {
+                const entry = parts[1] + ' ' + parts[2] + ' ' + parts[3] + '\n';
+                console.log(empty, entry);
+                fs.appendFileSync(empty, entry);
+              }
+              catch (err) {
+                console.log([empty, parts, err.message]);
+              }
+              return handleEmptyTile(req, res, next);
             }
-            else {
-              fs.unlinkSync(tmpFileName);
-              console.log(filePath + ': ' + response.statusMessage);
-              res.statusCode = response.statusCode;
-              res.send(response.statusMessage);
-            }
+            // commit the file
+            fs.rename(tmpFileName, filePath, function(err) {
+              if (err) {
+                logError(err);
+                uploadTile(tmpFileName, req, res, next, function() {
+                  fs.unlink(tmpFileName);
+                });
+              }
+              else {
+                uploadTile(filePath, req, res, next);
+              }
+            });
           });
         });
 
@@ -404,12 +417,12 @@ function getDistanceFromLatLong(lat1,lon1,lat2,lon2) {
   }
 
   const dLat = deg2rad(lat2-lat1);  // deg2rad below
-  const dLon = deg2rad(lon2-lon1); 
-  const a = 
+  const dLon = deg2rad(lon2-lon1);
+  const a =
     Math.sin(dLat/2) * Math.sin(dLat/2) +
-    Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) * 
-    Math.sin(dLon/2) * Math.sin(dLon/2); 
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); 
+    Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) *
+    Math.sin(dLon/2) * Math.sin(dLon/2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
   return c;
 }
 
@@ -427,7 +440,7 @@ function getDistance(req, st) {
 router.get('/nearestWaterLevelStation/:lat/:lon', function(req, res, next) {
   let minDist = 999999;
   let closest = null;
-  
+
   for (let i = 0; i < waterLevelStations.length; ++i) {
     const st = waterLevelStations[i];
     var dist = getDistance(req, st);
@@ -459,7 +472,7 @@ router.get('/nearestWaterLevelStation/:lat/:lon', function(req, res, next) {
 router.get('/nearestCurrentsStation/:lat/:lon', function(req, res, next) {
   let minDist = 999999;
   let closest = null;
-  
+
   for (let i = 0; i < currentsStations.length; ++i) {
     const st = currentsStations[i];
     var dist = getDistance(req, st);
@@ -483,29 +496,29 @@ router.get('/nearestCurrentsStation/:lat/:lon', function(req, res, next) {
  *
  */
 router.get('/location', function(req, res, next) {
+  if (!isCustomHardware) {
+    return res.sendStatus(204);
+  }
   const loc = getLocation();
   if (loc===undefined) {
-    return res.sendStatus(204)
+    return res.sendStatus(204);
   }
   if (!__online && loc.time) {
     exec('sudo date -s "' + loc.time.toString() + '"', function(err, stdout, stderr) {
       if (err) {
-        console.log(err.message);
+        logError(err);
       }
       else {
         console.log('time set:', loc.time.toString());
       }
     });
   }
-
-  //console.log(loc);
-
   res.send(JSON.stringify(loc));
 });
 
 
 /******************************************************************
- * 
+ *
  */
 var tides = {}
 
@@ -515,7 +528,7 @@ router.get('/tides/:station/:time', function(req, res, next) {
   const station = req.params.station;
   if (!tides[station]) {
     tides[station] = require(
-      '../tools/tides/' 
+      '../tools/tides/'
       + req.params.station + '/' + year + '/mllw.json');
   }
   if (tides[station].error) {
@@ -556,7 +569,7 @@ let stateNames = {};
  * Search for location that matches name and is closest to lon-lat
  */
 router.get('/search/:name/:lon/:lat', function(req, res, next) {
-  
+
   function getState(s) {
     const val = states(s);
     if (val) {
