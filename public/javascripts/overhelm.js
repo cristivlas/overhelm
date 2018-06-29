@@ -1038,6 +1038,19 @@ function showPopup() {
   }
 }
 
+function makeSpinnerBackgroundElement(length) {
+  const size = length * 6;
+  const bg = document.createElement('div');
+  bg.style.width = bg.style.height = size + 'px';
+  bg.style.top = (window.innerHeight - size) / 2 + 'px';
+  bg.style.left = (window.innerWidth - size) / 2 + 'px';
+  bg.style.position = 'absolute';
+  bg.style.backgroundColor = 'rgba(0,65,135, .7)';
+  bg.style.zIndex = 100;
+  bg.style.borderRadius = '20%';
+  return bg;
+}
+
 function getForecast(lon, lat, tzOffset) {
   if (!tzOffset) {
     tzOffset = app.tzOffset;
@@ -1046,15 +1059,22 @@ function getForecast(lon, lat, tzOffset) {
     app.hide_clock();
   }
   const target = document.getElementById('map');
-  const length = Math.min(window.innerWidth, window.innerHeight)/20;
+  const length = Math.min(window.innerWidth, window.innerHeight)/30;
+  const bg = makeSpinnerBackgroundElement(length); 
+
+  target.insertBefore(bg, target.firstChild);
   const spinner = new Spinner({
     length: length,
+    width: length / 2.5,
     radius: length,
+    zIndex: 101,
+    color: 'lightblue',
     shadow: true,
-  }).spin(target)
-  
+  }).spin(bg);
+
   forecast(lon, lat, function(err, res) {
     spinner.stop();
+    target.removeChild(bg);
     const msg = err ? err.message : formatForecast(res, lon, lat, tzOffset);
     alertify.alert(msg);
     if (!err && !isFullScreen()) {
